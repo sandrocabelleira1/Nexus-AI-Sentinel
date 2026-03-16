@@ -32,11 +32,14 @@ import {
   AlertTriangle,
   ShieldAlert,
   CloudLightning,
-  Ship
+  Ship,
+  Search,
+  LayoutGrid
 } from "lucide-react";
 import { AssistantChat } from "@/components/ai/assistant-chat";
 import { Badge } from "@/components/ui/badge";
 import { PortfolioView } from "@/components/portfolio/portfolio-view";
+import { MarketExplorer } from "@/components/market/market-explorer";
 import { useCollection, useFirestore, useMemoFirebase, useUser, useAuth, initiateAnonymousSignIn, addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase";
 import { collection, query, orderBy, limit, doc } from "firebase/firestore";
 import { formatDistanceToNow } from "date-fns";
@@ -78,7 +81,7 @@ const initialMockAssets: UserAsset[] = [
 
 export default function NexusDashboard() {
   const [displayMode, setDisplayMode] = useState<DisplayMode>('Essencial');
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'portfolio'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'portfolio' | 'market'>('dashboard');
   const [assets, setAssets] = useState<UserAsset[]>(initialMockAssets);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isRecommendationOpen, setIsRecommendationOpen] = useState(false);
@@ -135,7 +138,7 @@ export default function NexusDashboard() {
     
     try {
       // 1. Binance (Criptomoedas)
-      const cryptoSymbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT'];
+      const cryptoSymbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'ADAUSDT'];
       const cryptoResponses = await Promise.all(
         cryptoSymbols.map(s => fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${s}`))
       );
@@ -152,7 +155,7 @@ export default function NexusDashboard() {
       });
 
       // 2. Brapi (B3 e FIIs)
-      const b3Tickers = 'PETR4,VALE3,HGLG11,VGIA11,IBOV11,BOVA11';
+      const b3Tickers = 'PETR4,VALE3,HGLG11,VGIA11,IBOV11,BOVA11,ITUB4,BBDC4,KNRI11';
       const b3ApiKey = '2rb5157StMMfsE1ft1ErSq';
       const b3Response = await fetch(`https://brapi.dev/api/quote/${b3Tickers}?token=${b3ApiKey}`);
       const b3Data = await b3Response.json();
@@ -169,7 +172,7 @@ export default function NexusDashboard() {
       }
 
       // 3. FMP (Ações Globais - NASDAQ/NYSE)
-      const fmpTickers = 'AAPL,MSFT,NVDA,TSLA,GOOGL';
+      const fmpTickers = 'AAPL,MSFT,NVDA,TSLA,GOOGL,AMZN,META';
       const fmpApiKey = 'SGraLM1W4QBLLjGS3bDVUS6KFmqR7PrJ';
       const fmpResponse = await fetch(`https://financialmodelingprep.com/api/v3/quote/${fmpTickers}?apikey=${fmpApiKey}`);
       const fmpData = await fmpResponse.json();
@@ -185,7 +188,7 @@ export default function NexusDashboard() {
         });
       }
 
-      // 4. Fallback / Outros
+      // 4. Fallback / Indices
       const otherTickers = [
         { t: 'IBOV', p: 132000, c: 0.45 },
         { t: 'DOLAR', p: 5.12, c: -0.21 }
@@ -253,7 +256,7 @@ export default function NexusDashboard() {
       syncLivePrices();
       const interval = setInterval(() => {
         syncLivePrices();
-      }, 30000); 
+      }, 60000); 
       return () => clearInterval(interval);
     }
   }, [user, isUserLoading, syncLivePrices]);
@@ -296,15 +299,21 @@ export default function NexusDashboard() {
         <nav className="hidden lg:flex items-center bg-[#080D18] rounded-2xl p-1 border border-white/10 shadow-2xl">
           <button 
             onClick={() => setActiveTab('dashboard')}
-            className={`flex items-center gap-2 px-10 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${activeTab === 'dashboard' ? 'nav-item-active' : 'text-muted-foreground hover:text-white'}`}
+            className={`flex items-center gap-2 px-6 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${activeTab === 'dashboard' ? 'nav-item-active' : 'text-muted-foreground hover:text-white'}`}
           >
-            <Globe className="h-4 w-4" /> DASHBOARD
+            <LayoutGrid className="h-3.5 w-3.5" /> DASHBOARD
+          </button>
+          <button 
+            onClick={() => setActiveTab('market')}
+            className={`flex items-center gap-2 px-6 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${activeTab === 'market' ? 'nav-item-active' : 'text-muted-foreground hover:text-white'}`}
+          >
+            <TrendingUp className="h-3.5 w-3.5" /> MARKET
           </button>
           <button 
             onClick={() => setActiveTab('portfolio')}
-            className={`flex items-center gap-2 px-10 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${activeTab === 'portfolio' ? 'nav-item-active' : 'text-muted-foreground hover:text-white'}`}
+            className={`flex items-center gap-2 px-6 py-2 rounded-xl text-xs font-bold transition-all duration-300 ${activeTab === 'portfolio' ? 'nav-item-active' : 'text-muted-foreground hover:text-white'}`}
           >
-            <Wallet className="h-4 w-4" /> WALLET
+            <Wallet className="h-3.5 w-3.5" /> WALLET
           </button>
         </nav>
 
@@ -331,7 +340,7 @@ export default function NexusDashboard() {
       </header>
 
       <main className="max-w-[1700px] mx-auto px-8 py-10 space-y-10 relative z-10">
-        {activeTab === 'dashboard' ? (
+        {activeTab === 'dashboard' && (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
@@ -559,7 +568,13 @@ export default function NexusDashboard() {
               </div>
             </div>
           </>
-        ) : (
+        )}
+
+        {activeTab === 'market' && (
+          <MarketExplorer prices={livePrices || []} />
+        )}
+
+        {activeTab === 'portfolio' && (
           <div className="animate-in fade-in slide-in-from-bottom-5 duration-500">
              <div className="flex items-center justify-between mb-10">
               <div className="space-y-2">
