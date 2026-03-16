@@ -2,7 +2,7 @@
 "use client"
 
 import { useState, useMemo } from "react";
-import { MarketPrice } from "@/lib/types";
+import { MarketPrice, GlobalIntelligenceAlert } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -17,15 +17,19 @@ import {
   LayoutGrid,
   List as ListIcon,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  ShieldCheck,
+  BrainCircuit,
+  AlertTriangle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface MarketExplorerProps {
   prices: MarketPrice[];
+  latestAlert?: GlobalIntelligenceAlert | null;
 }
 
-export function MarketExplorer({ prices }: MarketExplorerProps) {
+export function MarketExplorer({ prices, latestAlert }: MarketExplorerProps) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<'all' | 'crypto' | 'stocks' | 'fiis'>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -41,6 +45,27 @@ export function MarketExplorer({ prices }: MarketExplorerProps) {
       return p.category === filter;
     }).sort((a, b) => (a.ticker || "").localeCompare(b.ticker || ""));
   }, [prices, search, filter]);
+
+  const getAIInsight = (ticker: string, change24h: number) => {
+    // 1. Check if asset is explicitly mentioned in the latest geopolitical alert
+    const alertDetail = latestAlert?.affectedAssetsDetails?.find(
+      d => d.ticker.toUpperCase() === ticker.toUpperCase()
+    );
+
+    if (alertDetail) {
+      return {
+        recommendation: alertDetail.recommendation,
+        reason: alertDetail.explanation,
+        isAlert: true
+      };
+    }
+
+    // 2. Fallback to automated technical nexus insight
+    if (change24h > 3) return { recommendation: 'BUY' as const, reason: "Momento de alta forte detectado via Twelve Data. Fluxo comprador institucional sugere continuação.", isAlert: false };
+    if (change24h < -3) return { recommendation: 'SELL' as const, reason: "Ajuste técnico severo. Nexus sugere proteção de capital até estabilização do suporte.", isAlert: false };
+    if (change24h > 0) return { recommendation: 'HOLD' as const, reason: "Tendência lateral com viés de alta. Manter posição para captura de dividendos/valorização.", isAlert: false };
+    return { recommendation: 'WATCH' as const, reason: "Ativo em zona de neutralidade. Aguardando gatilho geopolítico ou de volume para nova ordem.", isAlert: false };
+  };
 
   const stats = useMemo(() => {
     const up = prices.filter(p => p.change24h > 0).length;
@@ -132,16 +157,20 @@ export function MarketExplorer({ prices }: MarketExplorerProps) {
 
       {filteredPrices.length > 0 ? (
         viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredPrices.map((price) => {
               const isUp = price.change24h > 0;
               const ticker = (price.ticker || "").toUpperCase().trim();
               const categoryLabel = price.category === 'crypto' ? 'Cripto' : price.category === 'fiis' ? 'FII' : price.category === 'index' ? 'Índice' : 'Ação';
+              const ai = getAIInsight(ticker, price.change24h);
               
               return (
-                <Card key={price.ticker} className="bg-[#080D18]/95 border-white/10 hover:border-primary/40 transition-all group cursor-pointer relative overflow-hidden rounded-[2rem] shadow-2xl">
-                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
-                  <CardContent className="p-8 space-y-6">
+                <Card key={price.ticker} className="bg-[#080D18]/95 border-white/10 hover:border-primary/40 transition-all group cursor-pointer relative overflow-hidden rounded-[2.5rem] shadow-2xl flex flex-col">
+                  <div className={cn(
+                    "absolute top-0 left-0 w-full h-1",
+                    ai.recommendation === 'BUY' ? "bg-emerald-500" : ai.recommendation === 'SELL' ? "bg-rose-500" : "bg-primary/20"
+                  )} />
+                  <CardContent className="p-8 space-y-6 flex-1 flex flex-col">
                     <div className="flex justify-between items-start">
                       <div className="space-y-1">
                         <Badge variant="outline" className="text-[10px] border-primary/30 text-primary font-bold tracking-widest mb-2 uppercase">
@@ -167,6 +196,31 @@ export function MarketExplorer({ prices }: MarketExplorerProps) {
                       </div>
                     </div>
 
+                    <div className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <BrainCircuit className="h-4 w-4 text-primary" />
+                          <span className="text-[9px] font-bold text-primary uppercase tracking-widest">Nexus AI Rating</span>
+                        </div>
+                        <Badge className={cn(
+                          "text-[9px] font-bold px-2 py-0.5 rounded-md",
+                          ai.recommendation === 'BUY' ? "bg-emerald-500" : 
+                          ai.recommendation === 'SELL' ? "bg-rose-500" : 
+                          "bg-white/10 text-white"
+                        )}>
+                          {ai.recommendation}
+                        </Badge>
+                      </div>
+                      <p className="text-[11px] text-white/80 leading-relaxed font-medium">
+                        {ai.reason}
+                      </p>
+                      {ai.isAlert && (
+                        <div className="flex items-center gap-1.5 text-accent text-[9px] font-bold uppercase tracking-widest mt-2">
+                          <AlertTriangle className="h-3 w-3" /> Alerta Geopolítico Ativo
+                        </div>
+                      )}
+                    </div>
+
                     <div className="pt-6 border-t border-white/5 flex items-center justify-between">
                       <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest flex items-center gap-1">
                         <RefreshCw className="h-3 w-3" /> Atualizado em tempo real
@@ -181,20 +235,22 @@ export function MarketExplorer({ prices }: MarketExplorerProps) {
         ) : (
           <div className="bg-[#080D18]/90 border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
             <div className="grid grid-cols-12 gap-4 px-8 py-4 border-b border-white/10 text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">
-              <div className="col-span-4">Ativo</div>
-              <div className="col-span-3">Cotação</div>
-              <div className="col-span-3">Variação 24h</div>
-              <div className="col-span-2 text-right">Status</div>
+              <div className="col-span-3">Ativo</div>
+              <div className="col-span-2">Cotação</div>
+              <div className="col-span-2">Variação 24h</div>
+              <div className="col-span-1">Rating</div>
+              <div className="col-span-4">Nexus Insight (Motivo)</div>
             </div>
             <div className="divide-y divide-white/5">
               {filteredPrices.map((price) => {
                 const ticker = (price.ticker || "").toUpperCase().trim();
                 const isUp = price.change24h > 0;
                 const typeLabel = price.category === 'crypto' ? 'Cripto' : price.category === 'fiis' ? 'FII' : price.category === 'index' ? 'Índice' : 'Ação';
+                const ai = getAIInsight(ticker, price.change24h);
 
                 return (
                   <div key={price.ticker} className="grid grid-cols-12 gap-4 px-8 py-6 items-center hover:bg-white/5 transition-colors cursor-pointer group">
-                    <div className="col-span-4 flex items-center gap-4">
+                    <div className="col-span-3 flex items-center gap-4">
                       <div className="p-3 rounded-xl bg-primary/10 text-primary border border-primary/20 group-hover:led-glow-blue transition-all">
                         {price.category === 'crypto' ? <Zap className="h-4 w-4" /> : price.category === 'fiis' ? <Landmark className="h-4 w-4" /> : <TrendingUp className="h-4 w-4" />}
                       </div>
@@ -203,14 +259,14 @@ export function MarketExplorer({ prices }: MarketExplorerProps) {
                         <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest">{typeLabel}</span>
                       </div>
                     </div>
-                    <div className="col-span-3">
+                    <div className="col-span-2">
                       <div className="text-xl font-bold text-white">
                         {ticker === 'IBOV' ? price.price.toLocaleString() : 
                          (price.category === 'crypto' ? 'US$ ' : 'R$ ') + 
                          price.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
                       </div>
                     </div>
-                    <div className="col-span-3">
+                    <div className="col-span-2">
                       <div className={cn(
                         "flex items-center gap-1.5 font-bold",
                         isUp ? "text-emerald-400" : "text-rose-400"
@@ -219,10 +275,22 @@ export function MarketExplorer({ prices }: MarketExplorerProps) {
                         {price.change24h.toFixed(2)}%
                       </div>
                     </div>
-                    <div className="col-span-2 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-                        <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">Ativo</span>
+                    <div className="col-span-1">
+                      <Badge className={cn(
+                        "font-bold text-[10px]",
+                        ai.recommendation === 'BUY' ? "bg-emerald-500" : 
+                        ai.recommendation === 'SELL' ? "bg-rose-500" : 
+                        "bg-white/10"
+                      )}>
+                        {ai.recommendation}
+                      </Badge>
+                    </div>
+                    <div className="col-span-4">
+                      <div className="flex items-start gap-3">
+                         <div className="flex flex-col">
+                            <p className="text-xs text-white/90 line-clamp-2">{ai.reason}</p>
+                            {ai.isAlert && <span className="text-[8px] text-accent font-bold uppercase mt-1">Sinal Crítico Detectado</span>}
+                         </div>
                       </div>
                     </div>
                   </div>

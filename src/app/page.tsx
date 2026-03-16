@@ -163,7 +163,7 @@ export default function NexusDashboard() {
           });
         }).catch(() => {});
 
-      // 2. Brapi API (B3 e FIIs - Foco em FIIs para garantir presença)
+      // 2. Brapi API (B3 e FIIs)
       const b3Token = '2rb5157StMMfsE1ft1ErSq';
       const b3Tickers = [
         'PETR4', 'VALE3', 'ITUB4', 'BBDC4', 'ABEV3', 'BBAS3', 'MGLU3',
@@ -185,7 +185,7 @@ export default function NexusDashboard() {
           }).catch(() => {});
       });
 
-      // 3. Binance (Backup Crypto de Alta Frequência)
+      // 3. Binance
       const cryptoSymbols = ['BTC', 'ETH', 'SOL', 'BNB', 'ADA', 'XRP'];
       cryptoSymbols.forEach(symbol => {
         fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}USDT`)
@@ -201,7 +201,7 @@ export default function NexusDashboard() {
           }).catch(() => {});
       });
 
-      // 4. FMP (Backup Global Tech)
+      // 4. FMP
       const fmpKey = 'SGraLM1W4QBLLjGS3bDVUS6KFmqR7PrJ';
       const fmpTickers = ['NVDA', 'AMD', 'INTC'];
       fmpTickers.forEach(t => {
@@ -544,7 +544,7 @@ export default function NexusDashboard() {
           </>
         )}
 
-        {activeTab === 'market' && <MarketExplorer prices={livePrices || []} />}
+        {activeTab === 'market' && <MarketExplorer prices={livePrices || []} latestAlert={latestAlert} />}
         {activeTab === 'portfolio' && (
           <div className="animate-in fade-in slide-in-from-bottom-5 duration-500">
              <div className="flex items-center justify-between mb-10">
