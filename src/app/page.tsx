@@ -133,78 +133,85 @@ export default function NexusDashboard() {
   const syncLivePrices = useCallback(async () => {
     if (!user) return;
     
-    try {
-      // 1. Cripto via Binance (Expandido)
-      const cryptoSymbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'ADAUSDT', 'XRPUSDT', 'DOTUSDT', 'LINKUSDT', 'MATICUSDT', 'DOGEUSDT'];
-      const cryptoResponses = await Promise.all(
-        cryptoSymbols.map(s => fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${s}`))
-      );
-      const cryptoData = await Promise.all(cryptoResponses.map(r => r.json()));
+    const savePrice = (ticker: string, data: Partial<MarketPrice>) => {
+      const cleanTicker = ticker.toUpperCase().trim();
+      setDocumentNonBlocking(doc(firestore, "market_prices", cleanTicker), {
+        ticker: cleanTicker,
+        updatedAt: new Date().toISOString(),
+        ...data
+      }, { merge: true });
+    };
 
-      cryptoData.forEach((tickerData) => {
-        if (tickerData.symbol) {
-          const ticker = tickerData.symbol.replace('USDT', '').toUpperCase().trim();
-          setDocumentNonBlocking(doc(firestore, "market_prices", ticker), {
-            ticker: ticker,
-            price: parseFloat(tickerData.lastPrice),
-            change24h: parseFloat(tickerData.priceChangePercent),
-            updatedAt: new Date().toISOString(),
-            category: 'crypto'
-          }, { merge: true });
-        }
+    try {
+      // 1. Criptomoedas via Binance (Top 10)
+      const cryptoSymbols = ['BTC', 'ETH', 'SOL', 'BNB', 'ADA', 'XRP', 'DOT', 'LINK', 'MATIC', 'DOGE'];
+      cryptoSymbols.forEach(symbol => {
+        fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}USDT`)
+          .then(r => r.json())
+          .then(data => {
+            if (data.lastPrice) {
+              savePrice(symbol, {
+                price: parseFloat(data.lastPrice),
+                change24h: parseFloat(data.priceChangePercent),
+                category: 'crypto'
+              });
+            }
+          }).catch(() => {});
       });
 
-      // 2. B3 e FIIs via Brapi (Lista exaustiva solicitada)
-      const b3TickersList = [
-        'PETR4', 'VALE3', 'ITUB4', 'BBDC4', 'ABEV3', 'BBAS3', 'ITSA4', 'WEGE3', 'MGLU3', 'ELET3', 'B3SA3', 
+      // 2. B3 e FIIs via Brapi (Busca Individual para maior resiliência)
+      const b3Tickers = [
+        'PETR4', 'VALE3', 'ITUB4', 'BBDC4', 'ABEV3', 'BBAS3', 'MGLU3',
         'HGLG11', 'VGIA11', 'KNRI11', 'MXRF11', 'VISC11', 'XPML11', 'IRDM11', 'CPTS11', 'XPLG11', 'KNCR11', 'BTLG11'
       ];
-      const b3TickersString = b3TickersList.map(t => `${t}.SA`).join(',');
-      const b3ApiKey = '2rb5157StMMfsE1ft1ErSq';
-      const b3Response = await fetch(`https://brapi.dev/api/quote/${b3TickersString}?token=${b3ApiKey}`);
-      const b3Data = await b3Response.json();
-
-      if (b3Data.results) {
-        b3Data.results.forEach((item: any) => {
-          const cleanTicker = item.symbol.toUpperCase().replace(/\.SA$/i, '').trim();
-          const category = cleanTicker.endsWith('11') ? 'fiis' : 'stocks';
-          setDocumentNonBlocking(doc(firestore, "market_prices", cleanTicker), {
-            ticker: cleanTicker,
-            price: item.regularMarketPrice,
-            change24h: item.regularMarketChangePercent,
-            updatedAt: new Date().toISOString(),
-            category: category
-          }, { merge: true });
-        });
-      }
-
-      // 3. Globais via FMP (Expandido)
-      const fmpTickers = 'AAPL,MSFT,NVDA,TSLA,GOOGL,AMZN,META,NFLX,AMD,INTC,PYPL,DIS';
-      const fmpApiKey = 'SGraLM1W4QBLLjGS3bDVUS6KFmqR7PrJ';
-      const fmpResponse = await fetch(`https://financialmodelingprep.com/api/v3/quote/${fmpTickers}?apikey=${fmpApiKey}`);
-      const fmpData = await fmpResponse.json();
+      const b3Token = '2rb5157StMMfsE1ft1ErSq';
       
-      if (Array.isArray(fmpData)) {
-        fmpData.forEach((item: any) => {
-          const ticker = item.symbol.toUpperCase().trim();
-          setDocumentNonBlocking(doc(firestore, "market_prices", ticker), {
-            ticker: ticker,
-            price: item.price,
-            change24h: item.changesPercentage,
-            updatedAt: new Date().toISOString(),
-            category: 'stocks'
-          }, { merge: true });
-        });
-      }
+      b3Tickers.forEach(t => {
+        fetch(`https://brapi.dev/api/quote/${t}?token=${b3Token}`)
+          .then(r => r.json())
+          .then(data => {
+            if (data.results?.[0]) {
+              const item = data.results[0];
+              savePrice(t, {
+                price: item.regularMarketPrice,
+                change24h: item.regularMarketChangePercent,
+                category: t.endsWith('11') ? 'fiis' : 'stocks'
+              });
+            }
+          }).catch(() => {});
+      });
 
-      // 4. Índices Especiais
-      setDocumentNonBlocking(doc(firestore, "market_prices", "IBOV"), {
-        ticker: "IBOV",
-        price: b3Data.results?.find((r: any) => r.symbol === 'IBOV11.SA')?.regularMarketPrice || 130000,
-        change24h: b3Data.results?.find((r: any) => r.symbol === 'IBOV11.SA')?.regularMarketChangePercent || 0.5,
-        updatedAt: new Date().toISOString(),
-        category: 'index'
-      }, { merge: true });
+      // 3. Globais via FMP (Maiores de Tech)
+      const fmpTickers = ['AAPL', 'MSFT', 'NVDA', 'TSLA', 'GOOGL', 'AMZN', 'META', 'NFLX', 'AMD', 'INTC'];
+      const fmpKey = 'SGraLM1W4QBLLjGS3bDVUS6KFmqR7PrJ';
+      
+      fmpTickers.forEach(t => {
+        fetch(`https://financialmodelingprep.com/api/v3/quote/${t}?apikey=${fmpKey}`)
+          .then(r => r.json())
+          .then(data => {
+            if (data?.[0]) {
+              const item = data[0];
+              savePrice(t, {
+                price: item.price,
+                change24h: item.changesPercentage,
+                category: 'stocks'
+              });
+            }
+          }).catch(() => {});
+      });
+
+      // 4. Índice IBOVESPA
+      fetch(`https://brapi.dev/api/quote/IBOV?token=${b3Token}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.results?.[0]) {
+            savePrice('IBOV', {
+              price: data.results[0].regularMarketPrice,
+              change24h: data.results[0].regularMarketChangePercent,
+              category: 'index'
+            });
+          }
+        }).catch(() => {});
 
     } catch (error) {
       console.error("Erro na sincronização global do Nexus:", error);
