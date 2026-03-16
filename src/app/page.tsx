@@ -75,6 +75,9 @@ export default function NexusDashboard() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isRecommendationOpen, setIsRecommendationOpen] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatInitialQuery, setChatInitialQuery] = useState<string | null>(null);
+
   const firestore = useFirestore();
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
@@ -138,6 +141,12 @@ export default function NexusDashboard() {
       return () => clearInterval(interval);
     }
   }, [user, isUserLoading, triggerGlobalScan]);
+
+  const discussWithNexus = (alertTitle: string) => {
+    setChatInitialQuery(`Nexus, vamos discutir sobre o alerta: "${alertTitle}". Qual sua visão estratégica detalhada?`);
+    setIsChatOpen(true);
+    setIsRecommendationOpen(false);
+  };
 
   if (isUserLoading) {
     return (
@@ -363,7 +372,10 @@ export default function NexusDashboard() {
                               <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest hidden sm:block">
                                 SENTINEL ID: {latestAlert.id.slice(0, 8).toUpperCase()}
                               </p>
-                              <Button className="bg-primary hover:bg-primary/90 rounded-xl px-8 gap-2 font-bold shadow-lg">
+                              <Button 
+                                onClick={() => discussWithNexus(latestAlert.title)}
+                                className="bg-primary hover:bg-primary/90 rounded-xl px-8 gap-2 font-bold shadow-lg"
+                              >
                                 <MessageSquare className="h-4 w-4" /> DISCUTIR COM NEXUS
                               </Button>
                             </DialogFooter>
@@ -580,7 +592,13 @@ export default function NexusDashboard() {
         )}
       </main>
 
-      <AssistantChat assets={assets} displayMode={displayMode} />
+      <AssistantChat 
+        assets={assets} 
+        displayMode={displayMode} 
+        externalOpen={isChatOpen}
+        onOpenChange={setIsChatOpen}
+        initialQuery={chatInitialQuery}
+      />
     </div>
   );
 }

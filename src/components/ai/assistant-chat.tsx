@@ -1,6 +1,7 @@
+
 "use client"
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { X, Send, Bot, Sparkles } from "lucide-react";
@@ -16,9 +17,12 @@ interface Message {
 interface AssistantChatProps {
   assets: UserAsset[];
   displayMode: DisplayMode;
+  externalOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  initialQuery?: string | null;
 }
 
-export function AssistantChat({ assets, displayMode }: AssistantChatProps) {
+export function AssistantChat({ assets, displayMode, externalOpen, onOpenChange, initialQuery }: AssistantChatProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     { role: 'assistant', content: "Olá, eu sou o Nexus. Como posso ajudar com seu patrimônio hoje?" }
@@ -27,25 +31,29 @@ export function AssistantChat({ assets, displayMode }: AssistantChatProps) {
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Sync with external open state
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollIntoView({ behavior: 'smooth' });
+    if (externalOpen !== undefined) {
+      setIsOpen(externalOpen);
     }
-  }, [messages]);
+  }, [externalOpen]);
 
-  const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (onOpenChange) onOpenChange(open);
+  };
 
-    const userMessage = input;
-    setInput("");
-    setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+  const handleSend = useCallback(async (text: string) => {
+    if (!text.trim() || isLoading) return;
+
+    setMessages(prev => [...prev, { role: 'user', content: text }]);
     setIsLoading(true);
 
     try {
       const result = await interactivePortfolioAssistant({
-        message: userMessage,
+        message: text,
         userAssets: assets.map(a => ({ name: a.name, type: a.type, location: a.location })),
-        globalEvents: "Mudanças geopolíticas recentes nas rotas comerciais asiáticas; alertas de alta umidade no Mato Grosso.",
+        globalEvents: "Análise baseada no monitoramento global em tempo real do Sentinel Hub.",
         displayMode: displayMode
       });
 
@@ -59,7 +67,20 @@ export function AssistantChat({ assets, displayMode }: AssistantChatProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [assets, displayMode, isLoading]);
+
+  // Handle initial query from external source
+  useEffect(() => {
+    if (initialQuery && isOpen && messages.length === 1) {
+      handleSend(initialQuery);
+    }
+  }, [initialQuery, isOpen, handleSend, messages.length]);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
 
   return (
     <div className="fixed bottom-6 right-6 z-50">
@@ -75,7 +96,7 @@ export function AssistantChat({ assets, displayMode }: AssistantChatProps) {
                 <span className="text-[10px] text-emerald-400 font-medium uppercase tracking-widest">Sentinela Ativa</span>
               </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="hover:bg-primary/20">
+            <Button variant="ghost" size="icon" onClick={() => handleOpenChange(false)} className="hover:bg-primary/20">
               <X className="h-4 w-4" />
             </Button>
           </div>
@@ -107,7 +128,7 @@ export function AssistantChat({ assets, displayMode }: AssistantChatProps) {
           </ScrollArea>
 
           <div className="p-4 border-t border-white/5">
-            <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex gap-2">
+            <form onSubmit={(e) => { e.preventDefault(); handleSend(input); setInput(""); }} className="flex gap-2">
               <Input 
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -122,7 +143,7 @@ export function AssistantChat({ assets, displayMode }: AssistantChatProps) {
         </div>
       ) : (
         <Button 
-          onClick={() => setIsOpen(true)}
+          onClick={() => handleOpenChange(true)}
           className="h-14 w-14 rounded-full bg-primary text-background shadow-lg hover:scale-110 transition-transform glow-blue p-0"
         >
           <Sparkles className="h-6 w-6" />
