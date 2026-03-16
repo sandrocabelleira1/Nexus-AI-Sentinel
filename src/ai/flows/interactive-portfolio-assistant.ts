@@ -1,30 +1,30 @@
+
 'use server';
 /**
  * @fileOverview Assistente de Portfólio Interativo com Google Search Grounding.
- * Proporciona respostas dinâmicas baseadas em dados em tempo real da internet.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 const InteractivePortfolioAssistantInputSchema = z.object({
-  message: z.string().describe('A pergunta ou mensagem do usuário para o assistente.'),
+  message: z.string().describe('A pergunta ou mensagem do usuário.'),
   userAssets: z.array(
     z.object({
-      name: z.string().describe('Nome ou ticker do ativo.'),
-      type: z.string().describe('Tipo de ativo.'),
-      location: z.string().describe('Onde o ativo está guardado.'),
+      name: z.string(),
+      type: z.string(),
+      location: z.string(),
     })
-  ).describe('Lista de ativos do usuário.'),
-  globalEvents: z.string().describe('Contexto de eventos globais já processados pelo Nexus.'),
-  displayMode: z.string().describe('Modo de exibição das explicações.'),
+  ).describe('Ativos do usuário.'),
+  globalEvents: z.string().describe('Contexto de eventos globais.'),
+  displayMode: z.string().describe('Modo de exibição.'),
 });
 export type InteractivePortfolioAssistantInput = z.infer<typeof InteractivePortfolioAssistantInputSchema>;
 
 const InteractivePortfolioAssistantOutputSchema = z.object({
   nexus_alert: z.object({
     title: z.string(),
-    event_origin: z.enum(['Geopolítica', 'Natureza', 'Tech', 'Mercado']),
+    event_origin: z.enum(['Geopolítica', 'Governo', 'Natureza', 'Tech', 'Mercado']),
     causality: z.string(),
     priority: z.number().int().min(1).max(5),
   }),
@@ -54,24 +54,24 @@ const interactivePortfolioAssistantPrompt = ai.definePrompt({
   input: { schema: InteractivePortfolioAssistantInputSchema },
   output: { schema: InteractivePortfolioAssistantOutputSchema },
   config: {
-    // Ativa o Google Search Grounding para pesquisa em tempo real
+    // Ativa o Google Search Grounding para pesquisa em tempo real no chat
     googleSearchRetrieval: {},
   },
   prompt: `### PERSONA: NEXUS (O GUARDIÃO GLOBAL CONECTADO 24/7)
-Você é o Nexus. Você tem acesso total à internet em tempo real. Sua missão é proteger o capital do usuário e encontrar janelas de lucro de 7 dias usando dados ATUAIS do mundo.
+Você é o Nexus. Você tem acesso total à internet em tempo real. Sua missão é proteger o capital do usuário e encontrar janelas de lucro de 7 dias usando dados ATUAIS.
 
 ### DIRETRIZES DE PESQUISA EM TEMPO REAL:
-1. **GROUNDING**: Sempre que o usuário perguntar sobre algo que aconteceu hoje ou sentimentos de mercado, use sua ferramenta de busca para validar notícias, discursos e preços.
-2. **SINAIS SOCIAIS**: Identifique tendências de pânico ou euforia em redes sociais e fóruns financeiros.
-3. **EVENTOS DE ÚLTIMA HORA**: Se um decreto foi assinado há 10 minutos, você deve saber e processar o impacto.
+1. **GROUNDING**: Sempre que o usuário perguntar sobre algo que aconteceu hoje ou sentimentos de mercado, use sua ferramenta de busca para validar notícias e preços.
+2. **SINAIS FRACOS**: Identifique tendências antes que se tornem notícias de massa.
+3. **CLIMA E GOVERNO**: Se um decreto foi assinado há minutos ou uma tempestade ameaça uma colheita, você deve saber.
 
 ### CONTEXTO
 Modo: {{{displayMode}}}
 Carteira: {{#each userAssets}}- {{{this.name}}} ({{{this.location}}}){{/each}}
-Nexus Monitor: {{{globalEvents}}}
-Mensagem: {{{message}}}
+Nexus Monitor Context: {{{globalEvents}}}
+Mensagem do Usuário: {{{message}}}
 
-Responda com autoridade máxima em Português do Brasil. Se necessário, cite fontes recentes da sua pesquisa.`,
+Responda com autoridade máxima em Português do Brasil.`,
 });
 
 const interactivePortfolioAssistantFlow = ai.defineFlow(

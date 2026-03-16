@@ -48,6 +48,7 @@ export function MarketExplorer({ prices, latestAlert }: MarketExplorerProps) {
   }, [prices, search, filter]);
 
   const getAIInsight = (ticker: string, change24h: number) => {
+    // Busca se o ativo está no alerta geopolítico mais recente
     const alertDetail = latestAlert?.affectedAssetsDetails?.find(
       d => d.ticker.toUpperCase() === ticker.toUpperCase()
     );
@@ -60,10 +61,11 @@ export function MarketExplorer({ prices, latestAlert }: MarketExplorerProps) {
       };
     }
 
-    if (change24h > 3) return { recommendation: 'BUY' as const, reason: "Momento de alta forte detectado via Twelve Data. Fluxo comprador institucional sugere continuação.", isAlert: false };
-    if (change24h < -3) return { recommendation: 'SELL' as const, reason: "Ajuste técnico severo. Nexus sugere proteção de capital até estabilização do suporte.", isAlert: false };
-    if (change24h > 0) return { recommendation: 'HOLD' as const, reason: "Tendência lateral com viés de alta. Manter posição para captura de dividendos/valorização.", isAlert: false };
-    return { recommendation: 'WATCH' as const, reason: "Ativo em zona de neutralidade. Aguardando gatilho geopolítico ou de volume para nova ordem.", isAlert: false };
+    // Lógica padrão de análise tática caso não haja alerta geopolítico
+    if (change24h > 3) return { recommendation: 'BUY' as const, reason: "Momento de alta forte detectado. Fluxo institucional sugere continuação na janela de 7 dias.", isAlert: false };
+    if (change24h < -3) return { recommendation: 'SELL' as const, reason: "Ajuste técnico severo detectado. Sugere-se proteção de capital até estabilização.", isAlert: false };
+    if (change24h > 0) return { recommendation: 'HOLD' as const, reason: "Tendência lateral com viés de alta. Manter posição para captura de valorização residual.", isAlert: false };
+    return { recommendation: 'WATCH' as const, reason: "Ativo em zona de neutralidade. Aguardando gatilho de volume para nova ordem estratégica.", isAlert: false };
   };
 
   const stats = useMemo(() => {
@@ -80,12 +82,12 @@ export function MarketExplorer({ prices, latestAlert }: MarketExplorerProps) {
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="space-y-2">
           <h2 className="text-5xl font-headline font-bold text-white tracking-tight">Market Explorer</h2>
-          <p className="text-muted-foreground font-medium text-lg">Radar global de ativos integrados via Nexus Sentinel Hub.</p>
+          <p className="text-muted-foreground font-medium text-lg">Radar global de ativos monitorados via Nexus Sentinel.</p>
         </div>
 
         <div className="flex items-center gap-4 bg-[#080D18]/90 border border-white/10 p-4 rounded-3xl shadow-xl">
           <div className="flex flex-col items-center px-6 border-r border-white/5">
-            <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">Ativos Ativos</span>
+            <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">Monitorados</span>
             <span className="text-xl font-bold text-white">{stats.total}</span>
           </div>
           <div className="flex flex-col items-center px-6 border-r border-white/5">
@@ -160,7 +162,7 @@ export function MarketExplorer({ prices, latestAlert }: MarketExplorerProps) {
             {filteredPrices.map((price) => {
               const isUp = price.change24h > 0;
               const ticker = (price.ticker || "").toUpperCase().trim();
-              const categoryLabel = price.category === 'crypto' ? 'Cripto' : price.category === 'fiis' ? 'FII' : price.category === 'index' ? 'Índice' : 'Ação';
+              const categoryLabel = price.category === 'crypto' ? 'Cripto' : price.category === 'fiis' ? 'FII' : 'Ação';
               const ai = getAIInsight(ticker, price.change24h);
               
               return (
@@ -173,7 +175,7 @@ export function MarketExplorer({ prices, latestAlert }: MarketExplorerProps) {
                     <div className="flex justify-between items-start">
                       <div className="space-y-1">
                         <Badge variant="outline" className="text-[10px] border-primary/30 text-primary font-bold tracking-widest mb-2 uppercase">
-                          <FinancialTerm term={categoryLabel === 'FII' ? 'FII' : categoryLabel} />
+                          <FinancialTerm term={categoryLabel}>{categoryLabel}</FinancialTerm>
                         </Badge>
                         <h3 className="text-3xl font-headline font-bold text-white led-text-blue">
                           <FinancialTerm term="TICKER">{ticker}</FinancialTerm>
@@ -219,14 +221,14 @@ export function MarketExplorer({ prices, latestAlert }: MarketExplorerProps) {
                       </p>
                       {ai.isAlert && (
                         <div className="flex items-center gap-1.5 text-accent text-[9px] font-bold uppercase tracking-widest mt-2">
-                          <AlertTriangle className="h-3 w-3" /> <FinancialTerm term="CISNE NEGRO">Alerta Geopolítico Ativo</FinancialTerm>
+                          <AlertTriangle className="h-3 w-3" /> <FinancialTerm term="CISNE NEGRO">Alerta Crítico Ativo</FinancialTerm>
                         </div>
                       )}
                     </div>
 
                     <div className="pt-6 border-t border-white/5 flex items-center justify-between">
                       <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest flex items-center gap-1">
-                        <RefreshCw className="h-3 w-3" /> Atualizado em tempo real
+                        <RefreshCw className="h-3 w-3" /> Monitoramento 24/7
                       </span>
                       <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse led-glow-blue" />
                     </div>
@@ -242,13 +244,13 @@ export function MarketExplorer({ prices, latestAlert }: MarketExplorerProps) {
               <div className="col-span-2">Cotação</div>
               <div className="col-span-2">Variação 24h</div>
               <div className="col-span-1">Rating</div>
-              <div className="col-span-4">Nexus Insight (Motivo)</div>
+              <div className="col-span-4">Nexus Insight</div>
             </div>
             <div className="divide-y divide-white/5">
               {filteredPrices.map((price) => {
                 const ticker = (price.ticker || "").toUpperCase().trim();
                 const isUp = price.change24h > 0;
-                const typeLabel = price.category === 'crypto' ? 'Cripto' : price.category === 'fiis' ? 'FII' : price.category === 'index' ? 'Índice' : 'Ação';
+                const typeLabel = price.category === 'crypto' ? 'Cripto' : price.category === 'fiis' ? 'FII' : 'Ação';
                 const ai = getAIInsight(ticker, price.change24h);
 
                 return (
@@ -260,7 +262,7 @@ export function MarketExplorer({ prices, latestAlert }: MarketExplorerProps) {
                       <div>
                         <h4 className="font-bold text-white text-lg group-hover:text-primary transition-colors">{ticker}</h4>
                         <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest">
-                          <FinancialTerm term={typeLabel === 'FII' ? 'FII' : typeLabel} />
+                           <FinancialTerm term={typeLabel}>{typeLabel}</FinancialTerm>
                         </span>
                       </div>
                     </div>

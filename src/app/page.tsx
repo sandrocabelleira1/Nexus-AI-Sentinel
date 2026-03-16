@@ -185,8 +185,8 @@ export default function NexusDashboard() {
           }).catch(() => {});
       });
 
-      // 3. Binance
-      const cryptoSymbols = ['BTC', 'ETH', 'SOL', 'BNB', 'ADA', 'XRP'];
+      // 3. Binance (Cripto Adicional)
+      const cryptoSymbols = ['SOL', 'BNB', 'ADA', 'XRP'];
       cryptoSymbols.forEach(symbol => {
         fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}USDT`)
           .then(r => r.json())
@@ -201,9 +201,9 @@ export default function NexusDashboard() {
           }).catch(() => {});
       });
 
-      // 4. FMP
+      // 4. Financial Modeling Prep (FMP) - Tech Adicional
       const fmpKey = 'SGraLM1W4QBLLjGS3bDVUS6KFmqR7PrJ';
-      const fmpTickers = ['NVDA', 'AMD', 'INTC'];
+      const fmpTickers = ['AMD', 'INTC', 'SMCI'];
       fmpTickers.forEach(t => {
         fetch(`https://financialmodelingprep.com/api/v3/quote/${t}?apikey=${fmpKey}`)
           .then(r => r.json())
@@ -230,6 +230,7 @@ export default function NexusDashboard() {
     try {
       await syncLivePrices();
 
+      // OpenWeatherMap API para Clima
       const weatherApiKey = '6c6a8bd003806f53d8c5906014616088';
       const regions = [
         { name: 'Cuiabá (Agro Hub)', q: 'Cuiaba,BR' },
@@ -244,11 +245,11 @@ export default function NexusDashboard() {
         `Clima: ${w.weather?.[0]?.description} em ${regions[i].name}`
       ).join(' | ');
 
-      const promptData = `### VARREDURA ESTRATÉGICA NEXUS 24/7 - ATUALIZADA TWELVE DATA
+      const promptData = `### VARREDURA ESTRATÉGICA NEXUS 24/7 - ATUALIZADA
       1. ANALISE DIÁRIO OFICIAL DA UNIÃO (DOU) E DECRETOS GOVERNAMENTAIS RECENTES.
       2. ANALISE DISCURSOS DO FED E COPOM SOBRE TAXAS DE JUROS.
       3. CRUZE COM CLIMA ATUAL: ${weatherContext}.
-      4. DEFINA ELO DE CAUSALIDADE PARA: FIIs, AGRO, TECH (NASDAQ) E CRIPTO.
+      4. DEFINA ELO DE CAUSALIDADE PARA: FIIs (Agro/Logística), TECH E CRIPTO.
       5. GERE ORDENS DE COMPRA/VENDA IMEDIATA PARA JANELA TÁTICA DE 7 DIAS.
       6. BUSQUE SINAIS FRACOS: MOVIMENTAÇÃO DE RESERVAS, SINAIS DE CISNE NEGRO.`;
 
@@ -289,7 +290,7 @@ export default function NexusDashboard() {
       <div className="min-h-screen bg-background flex flex-col items-center justify-center space-y-4">
         <Loader2 className="h-12 w-12 text-primary animate-spin" />
         <p className="text-primary font-headline font-bold animate-pulse tracking-widest uppercase text-center px-4">
-          Nexus Sentinel Core v2.9<br/><span className="text-[10px] opacity-60">Synchronizing Twelve Data & Global Feeds...</span>
+          Nexus Sentinel Core v2.9<br/><span className="text-[10px] opacity-60">Synchronizing Twelve Data & Global Search...</span>
         </p>
       </div>
     );
@@ -307,7 +308,7 @@ export default function NexusDashboard() {
           <div>
             <h1 className="font-headline font-bold text-2xl tracking-tight leading-none led-text-blue">NEXUS AI</h1>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-[10px] text-primary font-bold uppercase tracking-[0.4em] opacity-80">Sentinel Strategic - Twelve Data Core</span>
+              <span className="text-[10px] text-primary font-bold uppercase tracking-[0.4em] opacity-80">Sentinel Strategic - Real-Time Search Active</span>
               <Badge variant="outline" className="h-4 px-1.5 text-[8px] bg-emerald-500/10 border-emerald-500/30 text-emerald-400 font-bold">RADAR 24/7 ACTIVE</Badge>
             </div>
           </div>
@@ -371,7 +372,7 @@ export default function NexusDashboard() {
                         <Scan className="absolute inset-0 m-auto h-8 w-8 text-primary animate-pulse" />
                       </div>
                       <div className="text-center">
-                        <p className="text-primary font-headline font-bold text-xl led-text-blue uppercase tracking-tighter">Nexus Processando Decretos e Geopolítica...</p>
+                        <p className="text-primary font-headline font-bold text-xl led-text-blue uppercase tracking-tighter">Nexus Processando Decretos e Clima...</p>
                         <p className="text-muted-foreground text-xs uppercase tracking-widest mt-2">Identificando Elos de Causalidade Táticos</p>
                       </div>
                     </div>
@@ -383,7 +384,7 @@ export default function NexusDashboard() {
                             {latestAlert.marketAction} IMEDIATA
                           </Badge>
                           <Badge variant="outline" className="text-primary border-primary/30 gap-1.5 px-3 py-1">
-                            <Scale className="h-3 w-3" /> ELO GOVERNAMENTAL
+                            <Scale className="h-3 w-3" /> ELO ESTRATÉGICO
                           </Badge>
                           <span className="text-[10px] text-muted-foreground font-bold">{formatDistanceToNow(new Date(latestAlert.createdAt), { addSuffix: true, locale: ptBR })}</span>
                         </div>
@@ -449,7 +450,7 @@ export default function NexusDashboard() {
                                 <Badge className={latestAlert.marketAction === 'SELL' ? 'bg-rose-500' : 'bg-primary'}>{latestAlert.marketAction} TÁTICO</Badge>
                                 <div className="flex items-center gap-2">
                                   <Gavel className="h-4 w-4 text-primary" />
-                                  <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">NEXUS GOV PREDICTION</span>
+                                  <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">NEXUS STRATEGIC PREDICTION</span>
                                 </div>
                               </div>
                               <DialogTitle className="text-3xl font-headline font-bold text-white led-text-blue">{latestAlert.title}</DialogTitle>
@@ -516,7 +517,7 @@ export default function NexusDashboard() {
               <div className="lg:col-span-3">
                 <div className="bg-[#080D18]/90 border border-white/10 rounded-[3rem] p-10 space-y-10 h-full shadow-2xl flex flex-col">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-headline font-bold uppercase tracking-[0.4em] text-primary">GEOPOLITICAL HUB</h3>
+                    <h3 className="text-xs font-headline font-bold uppercase tracking-[0.4em] text-primary">STRATEGIC HUB</h3>
                     <div className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
                   </div>
                   <div className="space-y-6 flex-1 overflow-y-auto pr-2 custom-scrollbar">
@@ -534,7 +535,7 @@ export default function NexusDashboard() {
                     ) : (
                       <div className="h-full flex flex-col items-center justify-center opacity-20 space-y-4 text-center">
                         <Landmark className="h-12 w-12" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest">Aguardando Sinais de BCs e Governos...</span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest">Aguardando Sinais de Mercado...</span>
                       </div>
                     )}
                   </div>
@@ -550,7 +551,7 @@ export default function NexusDashboard() {
              <div className="flex items-center justify-between mb-10">
               <div className="space-y-2">
                 <h2 className="text-5xl font-headline font-bold text-white tracking-tight">Sua Wallet</h2>
-                <p className="text-muted-foreground font-medium text-lg">Proteção de capital e alocação tática baseada em previsões geopolíticas.</p>
+                <p className="text-muted-foreground font-medium text-lg">Proteção de capital e alocação tática baseada em previsões globais.</p>
               </div>
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild><Button className="bg-primary hover:bg-primary/90 rounded-2xl h-14 px-8 font-bold gap-3 shadow-[0_0_30px_rgba(37,99,235,0.3)]"><Plus className="h-5 w-5" /> REGISTRAR ATIVO</Button></DialogTrigger>

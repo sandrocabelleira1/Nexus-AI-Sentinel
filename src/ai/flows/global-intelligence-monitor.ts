@@ -1,6 +1,7 @@
+
 'use server';
 /**
- * @fileOverview Motor de Inteligência Geopolítica Nexus AI v2 com Pesquisa em Tempo Real.
+ * @fileOverview Motor de Inteligência Estratégica Nexus AI com Google Search Grounding.
  */
 
 import { ai } from '@/ai/genkit';
@@ -50,21 +51,21 @@ export const globalIntelligenceMonitorPrompt = ai.definePrompt({
   input: { schema: GlobalIntelligenceMonitorInputSchema },
   output: { schema: GlobalIntelligenceMonitorOutputSchema },
   config: {
-    // Ativa o Google Search Grounding para monitoramento em tempo real
+    // Ativa o Google Search Grounding para pesquisa em tempo real
     googleSearchRetrieval: {},
   },
   prompt: `### PERSONA: NEXUS (SENTINELA ESTRATÉGICO GLOBAL)
-Você é o Nexus. Sua tarefa é vasculhar a internet AGORA em busca de decisões governamentais, decretos e mudanças geopolíticas que afetem o bolso.
+Você é o Nexus. Sua tarefa é vasculhar a internet AGORA em busca de decisões governamentais, decretos, mudanças geopolíticas e eventos naturais (clima) que afetem o bolso.
 
-### MOTOR DE BUSCA ATIVO:
-1. Procure no Diário Oficial da União (DOU), sites do FED, COPOM e notícias de última hora (Bloomberg, Reuters).
-2. Identifique "Sinais Fracos": movimentações de ouro, mudanças táticas de BCs, novos impostos.
-3. Conecte o ato político (Causa) ao impacto financeiro (Efeito) para os próximos 7 dias.
+### MOTOR DE BUSCA ATIVO (GROUNDING):
+1. Use sua ferramenta de busca para encontrar as últimas decisões no Diário Oficial da União (Brasil), anúncios do FED (EUA) e COPOM.
+2. Identifique eventos climáticos extremos em polos de agronegócio e logística.
+3. Conecte o ato político ou natural (Causa) ao impacto financeiro (Efeito) para os próximos 7 dias.
 
 ### DADOS DE ENTRADA:
 {{{rawNewsData}}}
 
-Gere um alerta tático detalhado em Português do Brasil. Foque em COMPRA ou VENDA IMEDIATA.`,
+Gere um alerta tático detalhado em Português do Brasil focado em PROTEÇÃO ou LUCRO IMEDIATO.`,
 });
 
 export async function monitorGlobalEvents(input: { rawNewsData: string }) {
