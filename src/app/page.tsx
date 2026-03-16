@@ -19,15 +19,18 @@ import {
   Terminal,
   Plus,
   Clock,
-  Loader2
+  Loader2,
+  Scan,
+  Sparkles
 } from "lucide-react";
 import { AssistantChat } from "@/components/ai/assistant-chat";
 import { Badge } from "@/components/ui/badge";
 import { PortfolioView } from "@/components/portfolio/portfolio-view";
-import { useCollection, useFirestore, useMemoFirebase, useUser, useAuth, initiateAnonymousSignIn } from "@/firebase";
+import { useCollection, useFirestore, useMemoFirebase, useUser, useAuth, initiateAnonymousSignIn, addDocumentNonBlocking } from "@/firebase";
 import { collection, query, orderBy, limit } from "firebase/firestore";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { monitorGlobalEvents } from "@/ai/flows/global-intelligence-monitor";
 import {
   Dialog,
   DialogContent,
@@ -59,6 +62,7 @@ export default function NexusDashboard() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'portfolio'>('dashboard');
   const [assets, setAssets] = useState<UserAsset[]>(initialMockAssets);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
   const firestore = useFirestore();
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
@@ -71,7 +75,6 @@ export default function NexusDashboard() {
   }, [user, isUserLoading, auth]);
 
   // Escutando Alertas Globais do Firestore (Hub de Eventos)
-  // Só executa a query se o usuário estiver autenticado para evitar erro de permissão
   const alertsQuery = useMemoFirebase(() => {
     if (!user) return null;
     return query(
@@ -122,6 +125,35 @@ export default function NexusDashboard() {
     setAssets(prev => prev.map(a => 
       a.id === id ? { ...a, quantity: newQuantity, investedValue: newValue } : a
     ));
+  };
+
+  const triggerGlobalScan = async () => {
+    if (!user || isScanning) return;
+    setIsScanning(true);
+    
+    try {
+      const mockNews = [
+        "Tensões aumentam no Estreito de Taiwan com novos exercícios militares.",
+        "Quebra de safra histórica no Mato Grosso devido a seca prolongada afeta FIIs de agro.",
+        "Banco Central Europeu sinaliza manutenção de taxas de juros, impactando o Euro.",
+        "Nova regulamentação de criptoativos nos EUA traz otimismo ao mercado de BTC.",
+        "Ataque hacker massivo atinge infraestrutura de semicondutores na Coreia do Sul."
+      ];
+      
+      const randomNews = mockNews[Math.floor(Math.random() * mockNews.length)];
+      const result = await monitorGlobalEvents({ rawNewsData: randomNews });
+      
+      if (result) {
+        addDocumentNonBlocking(collection(firestore, "global_intelligence_alerts"), {
+          ...result,
+          createdAt: new Date().toISOString()
+        });
+      }
+    } catch (error) {
+      console.error("Erro na varredura:", error);
+    } finally {
+      setIsScanning(false);
+    }
   };
 
   if (isUserLoading) {
@@ -209,12 +241,24 @@ export default function NexusDashboard() {
               </div>
 
               <div className="lg:col-span-6">
-                <div className="bg-[#080D18]/95 border border-white/10 rounded-[3rem] p-12 h-full relative overflow-hidden flex flex-col justify-center shadow-[0_0_60px_-15px_rgba(0,0,0,0.8)] group transition-all hover:border-accent/40">
+                <div className="bg-[#080D18]/95 border border-white/10 rounded-[3rem] p-12 h-full min-h-[500px] relative overflow-hidden flex flex-col justify-center shadow-[0_0_60px_-15px_rgba(0,0,0,0.8)] group transition-all hover:border-accent/40">
                   <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-accent/40 to-transparent" />
                   <div className="absolute -top-32 -left-32 w-80 h-80 bg-primary/20 rounded-full blur-[120px] pointer-events-none group-hover:bg-primary/30 transition-colors" />
                   <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-accent/10 rounded-full blur-[120px] pointer-events-none" />
                   
-                  {isLoadingAlerts ? (
+                  {isScanning ? (
+                    <div className="flex flex-col items-center justify-center space-y-6 py-20 z-10">
+                      <div className="relative h-24 w-24">
+                        <div className="absolute inset-0 border-4 border-primary/20 rounded-full" />
+                        <div className="absolute inset-0 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                        <Sparkles className="absolute inset-0 m-auto h-8 w-8 text-primary animate-pulse" />
+                      </div>
+                      <div className="text-center space-y-2">
+                        <p className="text-primary font-headline font-bold text-xl tracking-widest led-text-blue">NEXUS SCAN EM CURSO...</p>
+                        <p className="text-muted-foreground text-sm font-medium animate-pulse">Cruzando dados de satélite e feeds geopolíticos</p>
+                      </div>
+                    </div>
+                  ) : isLoadingAlerts ? (
                     <div className="flex flex-col items-center justify-center space-y-4 py-20">
                       <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
                       <p className="text-primary font-bold animate-pulse">Sincronizando com Nexus Hub...</p>
@@ -258,16 +302,27 @@ export default function NexusDashboard() {
                       </div>
                     </div>
                   ) : (
-                    <div className="text-center py-20 space-y-4">
-                      <Terminal className="h-12 w-12 text-muted-foreground mx-auto opacity-20" />
-                      <p className="text-muted-foreground font-medium italic">Aguardando gatilhos globais...</p>
+                    <div className="text-center py-20 space-y-8 z-10 flex flex-col items-center">
+                      <div className="p-6 rounded-full bg-white/5 border border-white/10">
+                        <Terminal className="h-12 w-12 text-muted-foreground opacity-20" />
+                      </div>
+                      <div className="space-y-4">
+                        <p className="text-white/60 text-xl font-medium italic">O Hub de Eventos está em silêncio...</p>
+                        <Button 
+                          onClick={triggerGlobalScan}
+                          disabled={isScanning}
+                          className="bg-accent hover:bg-accent/90 text-white font-bold h-14 px-10 rounded-2xl gap-3 shadow-[0_0_30px_rgba(249,115,22,0.3)] transition-all hover:scale-105"
+                        >
+                          <Scan className="h-5 w-5" /> SOLICITAR VARREDURA NEXUS
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </div>
               </div>
 
               <div className="lg:col-span-3 space-y-8">
-                <div className="bg-[#080D18]/90 border border-white/10 rounded-[2.5rem] p-10 space-y-10 h-full shadow-2xl relative overflow-hidden">
+                <div className="bg-[#080D18]/90 border border-white/10 rounded-[2.5rem] p-10 space-y-10 h-full shadow-2xl relative overflow-hidden flex flex-col">
                   <div className="flex items-center justify-between relative z-10">
                     <h3 className="text-xs font-headline font-bold uppercase tracking-[0.4em] text-primary led-text-blue">
                       SENTINEL HUB
@@ -278,9 +333,9 @@ export default function NexusDashboard() {
                     </div>
                   </div>
 
-                  <div className="space-y-6 relative z-10">
+                  <div className="space-y-6 relative z-10 flex-1 overflow-y-auto pr-2 custom-scrollbar">
                     {globalAlerts?.slice(1).map((alert, idx) => (
-                      <div key={idx} className={`p-6 rounded-[2rem] bg-white/5 border border-white/10 space-y-3 transition-all hover:scale-[1.03] cursor-pointer hover:border-primary/30`}>
+                      <div key={idx} className={`p-6 rounded-[2rem] bg-white/5 border border-white/10 space-y-3 transition-all hover:scale-[1.03] cursor-pointer hover:border-primary/30 animate-in slide-in-from-right-5 duration-300`}>
                         <div className={`flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.2em] text-primary`}>
                           <span>{alert.eventOrigin}</span>
                           <span className="text-muted-foreground opacity-60">
@@ -293,6 +348,12 @@ export default function NexusDashboard() {
                         </div>
                       </div>
                     ))}
+                    {!isLoadingAlerts && (!globalAlerts || globalAlerts.length <= 1) && (
+                      <div className="h-full flex flex-col items-center justify-center opacity-20 space-y-4">
+                        <Globe className="h-12 w-12" />
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-center">Nenhum evento secundário detectado</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
