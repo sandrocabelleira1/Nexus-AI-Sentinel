@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo, useEffect, useCallback } from "react";
@@ -143,7 +142,7 @@ export default function NexusDashboard() {
   }, [user, isUserLoading, triggerGlobalScan]);
 
   const discussWithNexus = (alertTitle: string) => {
-    setChatInitialQuery(`Nexus, vamos discutir sobre o alerta: "${alertTitle}". Qual sua visão estratégica detalhada?`);
+    setChatInitialQuery(`Nexus, baseado no evento "${alertTitle}", o que devo fazer com meus ativos na carteira agora? Me dê recomendações de compra ou venda.`);
     setIsChatOpen(true);
     setIsRecommendationOpen(false);
   };
@@ -598,6 +597,7 @@ export default function NexusDashboard() {
         externalOpen={isChatOpen}
         onOpenChange={setIsChatOpen}
         initialQuery={chatInitialQuery}
+        latestAlert={latestAlert}
       />
     </div>
   );

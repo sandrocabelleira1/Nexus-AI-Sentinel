@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -7,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { X, Send, Bot, Sparkles } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { interactivePortfolioAssistant } from "@/ai/flows/interactive-portfolio-assistant";
-import { UserAsset, DisplayMode } from "@/lib/types";
+import { UserAsset, DisplayMode, GlobalIntelligenceAlert } from "@/lib/types";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -20,12 +19,13 @@ interface AssistantChatProps {
   externalOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
   initialQuery?: string | null;
+  latestAlert?: GlobalIntelligenceAlert | null;
 }
 
-export function AssistantChat({ assets, displayMode, externalOpen, onOpenChange, initialQuery }: AssistantChatProps) {
+export function AssistantChat({ assets, displayMode, externalOpen, onOpenChange, initialQuery, latestAlert }: AssistantChatProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: "Olá, eu sou o Nexus. Como posso ajudar com seu patrimônio hoje?" }
+    { role: 'assistant', content: "Olá, eu sou o Nexus. Como posso ajudar com seu patrimônio hoje? Analisei os ativos na sua Wallet e os últimos sinais globais." }
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -49,11 +49,15 @@ export function AssistantChat({ assets, displayMode, externalOpen, onOpenChange,
     setMessages(prev => [...prev, { role: 'user', content: text }]);
     setIsLoading(true);
 
+    const alertContext = latestAlert 
+      ? `ALERTA ATUAL: ${latestAlert.title}. DESCRIÇÃO: ${latestAlert.causalityExplanation}. AÇÃO SUGERIDA NO HUB: ${latestAlert.marketAction}.`
+      : "O Sentinel Hub está monitorando o globo. Nenhuma anomalia crítica imediata fora do radar.";
+
     try {
       const result = await interactivePortfolioAssistant({
         message: text,
         userAssets: assets.map(a => ({ name: a.name, type: a.type, location: a.location })),
-        globalEvents: "Análise baseada no monitoramento global em tempo real do Sentinel Hub.",
+        globalEvents: alertContext,
         displayMode: displayMode
       });
 
@@ -63,11 +67,11 @@ export function AssistantChat({ assets, displayMode, externalOpen, onOpenChange,
 
       setMessages(prev => [...prev, { role: 'assistant', content: responseText }]);
     } catch (error) {
-      setMessages(prev => [...prev, { role: 'assistant', content: "Desculpe, tive um problema ao processar sua análise. Tente novamente." }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: "Desculpe, tive um problema ao processar sua análise estratégica. Tente novamente." }]);
     } finally {
       setIsLoading(false);
     }
-  }, [assets, displayMode, isLoading]);
+  }, [assets, displayMode, isLoading, latestAlert]);
 
   // Handle initial query from external source
   useEffect(() => {
@@ -93,7 +97,7 @@ export function AssistantChat({ assets, displayMode, externalOpen, onOpenChange,
               </div>
               <div>
                 <h3 className="text-sm font-headline font-bold">Nexus AI</h3>
-                <span className="text-[10px] text-emerald-400 font-medium uppercase tracking-widest">Sentinela Ativa</span>
+                <span className="text-[10px] text-emerald-400 font-medium uppercase tracking-widest">Análise Preditiva</span>
               </div>
             </div>
             <Button variant="ghost" size="icon" onClick={() => handleOpenChange(false)} className="hover:bg-primary/20">
@@ -101,11 +105,11 @@ export function AssistantChat({ assets, displayMode, externalOpen, onOpenChange,
             </Button>
           </div>
 
-          <ScrollArea className="flex-1 h-96 p-4">
+          <ScrollArea className="flex-1 h-[450px] p-4">
             <div className="space-y-4">
               {messages.map((msg, idx) => (
                 <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[85%] p-3 rounded-2xl text-sm ${
+                  <div className={`max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed ${
                     msg.role === 'user' 
                       ? 'bg-primary text-background font-medium' 
                       : 'bg-white/5 border border-white/5 text-foreground'
@@ -127,16 +131,16 @@ export function AssistantChat({ assets, displayMode, externalOpen, onOpenChange,
             </div>
           </ScrollArea>
 
-          <div className="p-4 border-t border-white/5">
+          <div className="p-4 border-t border-white/5 bg-black/20">
             <form onSubmit={(e) => { e.preventDefault(); handleSend(input); setInput(""); }} className="flex gap-2">
               <Input 
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Pergunte qualquer coisa ao Nexus..."
-                className="bg-white/5 border-white/10 focus-visible:ring-primary"
+                placeholder="O que devo fazer com meu ouro hoje?"
+                className="bg-white/5 border-white/10 focus-visible:ring-primary h-12 rounded-xl"
               />
-              <Button type="submit" size="icon" disabled={isLoading} className="bg-primary hover:bg-primary/80 text-background">
-                <Send className="h-4 w-4" />
+              <Button type="submit" size="icon" disabled={isLoading} className="h-12 w-12 bg-primary hover:bg-primary/80 text-background rounded-xl">
+                <Send className="h-5 w-5" />
               </Button>
             </form>
           </div>
@@ -144,9 +148,9 @@ export function AssistantChat({ assets, displayMode, externalOpen, onOpenChange,
       ) : (
         <Button 
           onClick={() => handleOpenChange(true)}
-          className="h-14 w-14 rounded-full bg-primary text-background shadow-lg hover:scale-110 transition-transform glow-blue p-0"
+          className="h-16 w-16 rounded-full bg-primary text-background shadow-lg hover:scale-110 transition-transform led-glow-blue p-0"
         >
-          <Sparkles className="h-6 w-6" />
+          <Sparkles className="h-7 w-7" />
         </Button>
       )}
     </div>
