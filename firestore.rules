@@ -1,0 +1,97 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * CORE PHILOSOPHY
+     * This ruleset enforces a strict user-ownership model for personal data while maintaining a 
+     * public-read "Event Hub" for global intelligence. It prioritizes "Authorization Independence" 
+     * by leveraging path-based wildcards and denormalized ownership fields to ensure rules 
+     * remain performant and atomic without requiring cross-document lookups (get() calls).
+     *
+     * DATA STRUCTURE
+     * 1. /users/{userId}: Private profile data owned by the authenticated user.
+     * 2. /users/{userId}/assets/{assetId}: User-specific financial assets, strictly owned by the parent user.
+     * 3. /global_intelligence_alerts/{alertId}: A global feed of AI-generated insights, readable by any 
+     *    authenticated user but writable only via administrative/backend processes.
+     *
+     * KEY SECURITY DECISIONS
+     * - Ownership is validated by comparing 'request.auth.uid' against path wildcards and internal data fields.
+     * - Relational integrity is enforced during 'create' and 'update' for fields like 'userId' or 'id'.
+     * - Global alerts are set to 'read-only' for clients, as they are managed by Nexus AI (Cloud Functions).
+     * - List operations are restricted to ownership paths to prevent data leakage across users.
+     *
+     * DENORMALIZATION FOR AUTHORIZATION
+     * To avoid costly 'get()' calls, the 'userId' is explicitly required within 'Asset' documents. 
+     * This allows the rules to verify that the person requesting the document is the same person 
+     * identified in both the URL and the document body itself.
+     */
+
+    // --- Global Helper Functions ---
+
+    /** @description Checks if the user is authenticated. */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /** @description Checks if the authenticated user's UID matches the provided userId. */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /** @description Checks ownership and ensures the document exists for update/delete. */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /** @description Validates that the owner field is not being changed during an update. */
+    function isOwnerImmutable(field) {
+      return request.resource.data[field] == resource.data[field];
+    }
+
+    // --- Collection Rules ---
+
+    match /users/{userId} {
+      /**
+       * @description Rules for the UserProfile entity. Users manage their own profiles.
+       * @path /users/{userId}
+       * @allow User 'abc' (get) their own profile /users/abc.
+       * @deny User 'abc' (list) /users (listing all users is prohibited).
+       * @principle Path-based ownership and self-creation.
+       */
+      allow get: if isOwner(userId);
+      allow list: if false; // Users cannot list the global users collection for privacy.
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && isOwnerImmutable('id');
+      allow delete: if isExistingOwner(userId);
+    }
+
+    match /users/{userId}/assets/{assetId} {
+      /**
+       * @description Rules for the Asset entity. Assets are private to the user.
+       * @path /users/{userId}/assets/{assetId}
+       * @allow User 'abc' (list) /users/abc/assets.
+       * @deny User 'xyz' (get) /users/abc/assets/asset123.
+       * @principle Denormalized ownership validation for subcollections.
+       */
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && isOwnerImmutable('userId');
+      allow delete: if isExistingOwner(userId);
+    }
+
+    match /global_intelligence_alerts/{alertId} {
+      /**
+       * @description Rules for the GlobalIntelligenceAlert entity. Read-only hub for users.
+       * @path /global_intelligence_alerts/{alertId}
+       * @allow Any signed-in user (list) all alerts.
+       * @deny Any user (create) a new alert (Nexus AI backend only).
+       * @principle Public-read for authenticated users with system-restricted writes.
+       */
+      allow get, list: if isSignedIn();
+      allow create: if false; // Writable only by Service Accounts/Cloud Functions (which bypass rules).
+      allow update: if false; // Writable only by Service Accounts/Cloud Functions.
+      allow delete: if false; // Writable only by Service Accounts/Cloud Functions.
+    }
+  }
+}
