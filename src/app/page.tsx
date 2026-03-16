@@ -1,8 +1,9 @@
+
 "use client"
 
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { WorldMood } from "@/components/dashboard/world-mood";
-import { AssetType, DisplayMode, UserAsset, GlobalIntelligenceAlert } from "@/lib/types";
+import { AssetType, DisplayMode, UserAsset, GlobalIntelligenceAlert, MarketPrice } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { 
   TrendingUp, 
@@ -26,7 +27,6 @@ import {
   MessageSquare,
   ArrowUpRight,
   ArrowDownRight,
-  Minus,
   Target,
   RefreshCw,
   AlertTriangle,
@@ -35,8 +35,8 @@ import {
 import { AssistantChat } from "@/components/ai/assistant-chat";
 import { Badge } from "@/components/ui/badge";
 import { PortfolioView } from "@/components/portfolio/portfolio-view";
-import { useCollection, useFirestore, useMemoFirebase, useUser, useAuth, initiateAnonymousSignIn, addDocumentNonBlocking } from "@/firebase";
-import { collection, query, orderBy, limit } from "firebase/firestore";
+import { useCollection, useFirestore, useMemoFirebase, useUser, useAuth, initiateAnonymousSignIn, addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase";
+import { collection, query, orderBy, limit, doc } from "firebase/firestore";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { monitorGlobalEvents } from "@/ai/flows/global-intelligence-monitor";
@@ -95,7 +95,7 @@ export default function NexusDashboard() {
     }
   }, [user, isUserLoading, auth]);
 
-  // Escutando Alertas Globais do Firestore (Hub de Eventos Real-Time)
+  // ESCUTA EM TEMPO REAL: Alertas Globais (Event Hub)
   const alertsQuery = useMemoFirebase(() => {
     if (!user) return null;
     return query(
@@ -105,8 +105,23 @@ export default function NexusDashboard() {
     );
   }, [firestore, user]);
 
+  // ESCUTA EM TEMPO REAL: Preços de Mercado (Live Data)
+  const pricesQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    return query(collection(firestore, "market_prices"));
+  }, [firestore, user]);
+
   const { data: globalAlerts, isLoading: isLoadingAlerts } = useCollection<GlobalIntelligenceAlert>(alertsQuery);
+  const { data: livePrices } = useCollection<MarketPrice>(pricesQuery);
+  
   const latestAlert = globalAlerts?.[0];
+
+  // Map de preços para acesso rápido
+  const priceMap = useMemo(() => {
+    const map: Record<string, MarketPrice> = {};
+    livePrices?.forEach(p => { map[p.ticker] = p; });
+    return map;
+  }, [livePrices]);
 
   const [newAsset, setNewAsset] = useState<Partial<UserAsset>>({
     name: '',
@@ -122,10 +137,21 @@ export default function NexusDashboard() {
     setIsScanning(true);
     
     try {
+      // Simulação de "Push" de Preços (Fetch-Push)
+      const tickers = ['VALE3', 'IBOV', 'SP500', 'BTC', 'DOLAR'];
+      tickers.forEach(t => {
+        const basePrice = t === 'BTC' ? 64000 : t === 'IBOV' ? 132000 : t === 'DOLAR' ? 5.1 : 70;
+        const randomChange = (Math.random() * 2 - 1) * (basePrice * 0.01);
+        setDocumentNonBlocking(doc(firestore, "market_prices", t), {
+          ticker: t,
+          price: basePrice + randomChange,
+          change24h: (Math.random() * 4 - 2),
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
+      });
+
       const newsPrompts = [
-        "IDENTIFIQUE O EVENTO GEOPOLÍTICO MAIS CRÍTICO HOJE COM IMPACTO IMEDIATO EM 7 DIAS. LISTE TICKERS REAIS E AÇÕES DE PROTEÇÃO URGENTES PARA EVITAR PERDA DE CAPITAL.",
-        "ANALISE UMA RUPTURA TECNOLÓGICA COM IMPACTO NO FLUXO DE CAIXA PARA A PRÓXIMA SEMANA. QUAIS EMPRESAS DEVEM SER VENDIDAS OU COMPRADAS HOJE PARA GANHO RÁPIDO?",
-        "AVALIE MOVIMENTOS DE MERCADO GLOBAL E IMPACTO EM CRIPTO E FIIS PARA OS PRÓXIMOS 7 DIAS. DEFINA AÇÕES DE COMPRA/VENDA IMEDIATA PARA MAXIMIZAR LUCRO."
+        "IDENTIFIQUE O EVENTO GEOPOLÍTICO MAIS CRÍTICO HOJE COM IMPACTO IMEDIATO EM 7 DIAS. LISTE TICKERS REAIS E AÇÕES DE PROTEÇÃO URGENTES."
       ];
 
       for (const p of newsPrompts) {
@@ -138,23 +164,24 @@ export default function NexusDashboard() {
         }
       }
     } catch (error) {
-      // Erros tratados pelo FirebaseErrorListener
+      // Erro tratado pelo listener global
     } finally {
       setIsScanning(false);
     }
   }, [user, isScanning, firestore]);
 
+  // Efeito de Varredura Automática (Simulando 24/7 Monitoring)
   useEffect(() => {
     if (user && !isUserLoading) {
       const interval = setInterval(() => {
         triggerGlobalScan();
-      }, 600000); // 10 minutos
+      }, 300000); // 5 minutos
       return () => clearInterval(interval);
     }
   }, [user, isUserLoading, triggerGlobalScan]);
 
   const discussWithNexus = (alertTitle: string) => {
-    setChatInitialQuery(`Nexus, baseado no evento "${alertTitle}" e sua análise de 7 dias, quais ações IMEDIATAS devo tomar com meus ativos? Me confirme se devo vender algo urgente ou se há uma nova oportunidade de ouro.`);
+    setChatInitialQuery(`Nexus, baseado no evento "${alertTitle}" e sua análise de 7 dias, quais ações IMEDIATAS devo tomar com meus ativos?`);
     setIsChatOpen(true);
     setIsRecommendationOpen(false);
   };
@@ -181,7 +208,7 @@ export default function NexusDashboard() {
             <h1 className="font-headline font-bold text-2xl tracking-tight leading-none led-text-blue">NEXUS AI</h1>
             <div className="flex items-center gap-2 mt-1">
               <span className="text-[10px] text-primary font-bold uppercase tracking-[0.4em] opacity-80">Sentinel Core v2.6 - 24/7 ACTIVE</span>
-              <Badge variant="outline" className="h-4 px-1.5 text-[8px] bg-emerald-500/10 border-emerald-500/30 text-emerald-400 font-bold">VIGILÂNCIA TOTAL</Badge>
+              <Badge variant="outline" className="h-4 px-1.5 text-[8px] bg-emerald-500/10 border-emerald-500/30 text-emerald-400 font-bold">LIVE DATA ACTIVE</Badge>
             </div>
           </div>
         </div>
@@ -220,10 +247,6 @@ export default function NexusDashboard() {
           >
             MODO: <span className="text-primary ml-1">{displayMode}</span>
           </Button>
-          <div className="h-10 w-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center relative overflow-hidden group">
-            <ShieldAlert className="h-5 w-5 text-accent animate-pulse" />
-            <div className="absolute inset-0 bg-accent/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-          </div>
         </div>
       </header>
 
@@ -232,25 +255,36 @@ export default function NexusDashboard() {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
-                { label: 'IBOVESPA', value: '132.450', change: '+0.85%', trend: 'up' },
-                { label: 'S&P 500', value: '5.120', change: '-0.12%', trend: 'down' },
-                { label: 'BITCOIN', value: 'US$ 64.120', change: '+2.4%', trend: 'up' },
-                { label: 'DÓLAR', value: 'R$ 5,08', change: '-0.45%', trend: 'down' },
-              ].map((m, i) => (
-                <div key={i} className="bg-[#080D18]/90 border border-white/10 rounded-3xl p-7 transition-all hover:border-primary/40 group cursor-pointer shadow-2xl relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-3 opacity-20 group-hover:opacity-100 transition-opacity">
-                    <Activity className="h-4 w-4 text-primary" />
-                  </div>
-                  <p className="text-[10px] font-headline font-bold text-muted-foreground uppercase tracking-[0.3em] mb-4 group-hover:text-primary transition-colors">{m.label}</p>
-                  <div className="flex items-end justify-between">
-                    <h3 className="text-4xl font-headline font-bold tracking-tighter text-white group-hover:scale-105 transition-transform origin-left">{m.value}</h3>
-                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[12px] font-bold ${m.trend === 'up' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.2)]' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20 shadow-[0_0_15px_rgba(244,63,94,0.2)]'}`}>
-                      {m.trend === 'up' ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                      {m.change}
+                { ticker: 'IBOV', label: 'IBOVESPA' },
+                { ticker: 'SP500', label: 'S&P 500' },
+                { ticker: 'BTC', label: 'BITCOIN' },
+                { ticker: 'DOLAR', label: 'DÓLAR' },
+              ].map((m, i) => {
+                const liveData = priceMap[m.ticker];
+                const value = liveData ? 
+                  (m.ticker === 'BTC' ? `US$ ${liveData.price.toLocaleString()}` : 
+                   m.ticker === 'DOLAR' ? `R$ ${liveData.price.toFixed(2)}` : 
+                   liveData.price.toLocaleString()) 
+                  : '---';
+                const change = liveData ? `${liveData.change24h > 0 ? '+' : ''}${liveData.change24h.toFixed(2)}%` : '---';
+                const isUp = liveData ? liveData.change24h > 0 : true;
+
+                return (
+                  <div key={i} className="bg-[#080D18]/90 border border-white/10 rounded-3xl p-7 transition-all hover:border-primary/40 group cursor-pointer shadow-2xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-3 opacity-20">
+                      <Activity className="h-4 w-4 text-primary" />
+                    </div>
+                    <p className="text-[10px] font-headline font-bold text-muted-foreground uppercase tracking-[0.3em] mb-4">{m.label}</p>
+                    <div className="flex items-end justify-between">
+                      <h3 className="text-4xl font-headline font-bold tracking-tighter text-white led-text-blue">{value}</h3>
+                      <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[12px] font-bold ${isUp ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>
+                        {isUp ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                        {change}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -259,75 +293,59 @@ export default function NexusDashboard() {
               </div>
 
               <div className="lg:col-span-6">
-                <div className="bg-[#080D18]/95 border border-white/10 rounded-[3rem] p-12 h-full min-h-[500px] relative overflow-hidden flex flex-col justify-center shadow-[0_0_60px_-15px_rgba(0,0,0,0.8)] group transition-all hover:border-accent/40">
+                <div className="bg-[#080D18]/95 border border-white/10 rounded-[3rem] p-12 h-full min-h-[500px] relative overflow-hidden flex flex-col justify-center shadow-2xl group transition-all hover:border-accent/40">
                   <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-accent/40 to-transparent" />
-                  <div className="absolute -top-32 -left-32 w-80 h-80 bg-primary/20 rounded-full blur-[120px] pointer-events-none group-hover:bg-primary/30 transition-colors" />
-                  <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-accent/10 rounded-full blur-[120px] pointer-events-none" />
                   
                   {isScanning ? (
                     <div className="flex flex-col items-center justify-center space-y-6 py-20 z-10">
                       <div className="relative h-24 w-24">
-                        <div className="absolute inset-0 border-4 border-primary/20 rounded-full" />
                         <div className="absolute inset-0 border-4 border-primary border-t-transparent rounded-full animate-spin" />
                         <Sparkles className="absolute inset-0 m-auto h-8 w-8 text-primary animate-pulse" />
                       </div>
-                      <div className="text-center space-y-2">
-                        <p className="text-primary font-headline font-bold text-xl tracking-widest led-text-blue">NEXUS VARRENDO O GLOBO 24/7...</p>
-                        <p className="text-muted-foreground text-sm font-medium animate-pulse">Captando sinais reais com foco em proteção e lucro</p>
+                      <div className="text-center">
+                        <p className="text-primary font-headline font-bold text-xl led-text-blue">NEXUS VARRENDO O GLOBO 24/7...</p>
                       </div>
                     </div>
                   ) : isLoadingAlerts ? (
                     <div className="flex flex-col items-center justify-center space-y-4 py-20">
-                      <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-                      <p className="text-primary font-bold animate-pulse">Sincronizando com Nexus Hub...</p>
+                      <Loader2 className="h-12 w-12 text-primary animate-spin" />
+                      <p className="text-primary font-bold">Sincronizando com Nexus Hub...</p>
                     </div>
                   ) : latestAlert ? (
                     <div className="space-y-8 max-w-2xl z-10 animate-in fade-in duration-700">
                       <div className="space-y-3">
                         <div className="flex items-center gap-4">
-                          <Badge className={`${latestAlert.marketAction === 'SELL' ? 'bg-rose-500' : 'bg-accent'} text-white font-bold px-5 py-2 rounded-xl uppercase tracking-widest text-[11px] shadow-[0_0_20px_rgba(249,115,22,0.5)]`}>
-                            {latestAlert.marketAction === 'SELL' ? 'ALERTA DE PROTEÇÃO' : 'ALERTA TÁTICO 7D'}
+                          <Badge className={`${latestAlert.marketAction === 'SELL' ? 'bg-rose-500' : 'bg-accent'} text-white font-bold px-5 py-2 rounded-xl`}>
+                            {latestAlert.marketAction === 'SELL' ? 'ORDEM DE VENDA 7D' : 'ORDEM DE COMPRA 7D'}
                           </Badge>
                           <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                             <Clock className="h-3 w-3" />
                             {formatDistanceToNow(new Date(latestAlert.createdAt), { addSuffix: true, locale: ptBR })}
                           </span>
                         </div>
-                        <h2 className="text-5xl font-headline font-bold leading-[1.05] tracking-tight text-white">{latestAlert.title}</h2>
-                        <p className="text-xl text-muted-foreground font-medium flex items-center gap-3">
-                          <Terminal className="h-5 w-5 text-primary" />
-                          Nexus Sentinel Analysis: {latestAlert.eventOrigin}
-                        </p>
+                        <h2 className="text-5xl font-headline font-bold text-white leading-tight">{latestAlert.title}</h2>
                       </div>
 
                       <div className="relative">
                         <div className="absolute -left-6 top-0 bottom-0 w-1 bg-accent/50 rounded-full" />
-                        <blockquote className="text-xl font-medium leading-relaxed italic text-white/95 pl-4 opacity-90">
+                        <blockquote className="text-xl font-medium italic text-white/95 pl-4">
                           "{displayMode === 'Essencial' ? latestAlert.essentialText : latestAlert.fullTechnicalAnalysis}"
                         </blockquote>
                       </div>
 
-                      {/* Impacto Direto Card - Foco 7 Dias */}
-                      {latestAlert.affectedAssetsDetails && latestAlert.affectedAssetsDetails.length > 0 && (
-                        <div className="space-y-4 pt-2">
+                      {latestAlert.affectedAssetsDetails && (
+                        <div className="space-y-4">
                            <h4 className="text-[10px] font-headline font-bold text-accent uppercase tracking-[0.3em] flex items-center gap-2">
-                              <Target className="h-3 w-3" /> Impacto Direto (Expectativa 7 Dias)
+                              <Target className="h-3 w-3" /> Foco Tático (7 Dias)
                            </h4>
                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               {latestAlert.affectedAssetsDetails.slice(0, 4).map((asset, i) => (
-                                <div key={i} className="glass-panel border-white/5 rounded-2xl p-4 flex items-center justify-between group/asset transition-all hover:bg-white/5 hover:border-primary/40 relative">
-                                   {asset.recommendation === 'SELL' && asset.impactType === 'Negativo' && (
-                                     <div className="absolute -top-1 -right-1">
-                                       <Badge className="bg-rose-500 text-[8px] animate-pulse">SAÍDA URGENTE</Badge>
-                                     </div>
-                                   )}
-                                   <div className="flex items-center gap-4">
-                                      <div className="p-2 rounded-xl bg-primary/10 text-primary font-bold text-xs">
-                                         {asset.ticker}
-                                      </div>
+                                <div key={i} className="glass-panel border-white/5 rounded-2xl p-4 flex items-center justify-between hover:bg-white/5 transition-all">
+                                   <div className="flex items-center gap-3">
+                                      <div className="p-2 rounded-xl bg-primary/10 text-primary font-bold text-xs">{asset.ticker}</div>
                                       <div className="flex flex-col">
                                          <span className="text-xs font-bold text-white">{asset.name}</span>
-                                         <span className="text-[10px] text-muted-foreground font-bold">{asset.currentPrice}</span>
+                                         <span className="text-[10px] text-muted-foreground">{asset.currentPrice}</span>
                                       </div>
                                    </div>
                                    <div className="text-right">
@@ -335,7 +353,7 @@ export default function NexusDashboard() {
                                          {asset.impactType === 'Positivo' ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
                                          {asset.expectedGainPercentage}
                                       </div>
-                                      <span className="text-[8px] text-muted-foreground font-bold uppercase tracking-widest">Expectativa 7 Dias</span>
+                                      <span className="text-[8px] text-muted-foreground font-bold uppercase">7 DIAS</span>
                                    </div>
                                 </div>
                               ))}
@@ -346,29 +364,24 @@ export default function NexusDashboard() {
                       <div className="flex items-center gap-8 pt-4">
                         <Dialog open={isRecommendationOpen} onOpenChange={setIsRecommendationOpen}>
                           <DialogTrigger asChild>
-                            <Button className="bg-primary hover:bg-primary/90 text-white rounded-2xl px-12 h-16 font-bold text-xl shadow-[0_0_40px_rgba(37,99,235,0.4)] transition-all hover:scale-105 active:scale-95">
+                            <Button className="bg-primary hover:bg-primary/90 text-white rounded-2xl px-12 h-16 font-bold text-xl shadow-lg">
                               COMANDO NEXUS <ChevronRight className="ml-2 h-6 w-6" />
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="glass-panel border-primary/20 max-w-2xl h-[90vh] flex flex-col p-0 overflow-hidden">
+                          <DialogContent className="glass-panel border-primary/20 max-w-2xl h-[90vh] flex flex-col p-0">
                             <DialogHeader className="p-8 border-b border-white/10 bg-primary/5">
                               <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center gap-4">
-                                  <Badge className={`${latestAlert.marketAction === 'SELL' ? 'bg-rose-500' : 'bg-primary'} text-white font-bold`}>{latestAlert.marketAction} IMEDIATO</Badge>
-                                  <Badge variant="outline" className="border-primary/30 text-primary">RISCO {latestAlert.riskLevel.toUpperCase()}</Badge>
-                                </div>
-                                <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
-                                  TACTICAL 7D SENTINEL
-                                </span>
+                                <Badge className={latestAlert.marketAction === 'SELL' ? 'bg-rose-500' : 'bg-primary'}>{latestAlert.marketAction} IMEDIATO</Badge>
+                                <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">TACTICAL 7D SENTINEL</span>
                               </div>
-                              <DialogTitle className="text-3xl font-headline font-bold text-white led-text-blue leading-tight">{latestAlert.title}</DialogTitle>
+                              <DialogTitle className="text-3xl font-headline font-bold text-white led-text-blue">{latestAlert.title}</DialogTitle>
                             </DialogHeader>
                             
                             <ScrollArea className="flex-1 p-8">
                               <div className="space-y-10 pb-10">
                                 <section className="space-y-4">
                                   <h4 className="text-xs font-headline font-bold text-primary uppercase tracking-[0.3em] flex items-center gap-2">
-                                    <AlertTriangle className="h-4 w-4" /> Nexus Strategist (Proteção & Ganho)
+                                    <AlertTriangle className="h-4 w-4" /> Análise de Risco & Oportunidade
                                   </h4>
                                   <p className="text-lg text-white/90 leading-relaxed font-medium">
                                     {latestAlert.causalityExplanation}
@@ -377,166 +390,83 @@ export default function NexusDashboard() {
 
                                 <section className="space-y-6">
                                   <h4 className="text-xs font-headline font-bold text-accent uppercase tracking-[0.3em] flex items-center gap-2">
-                                    <Activity className="h-4 w-4" /> Alvos de Movimentação Imediata (7 Dias)
+                                    <Activity className="h-4 w-4" /> Alvos Detalhados (Próximos 7 Dias)
                                   </h4>
                                   <div className="grid gap-4">
                                     {latestAlert.affectedAssetsDetails?.map((asset, i) => (
-                                      <Card key={i} className={`bg-white/5 border-white/10 hover:border-primary/30 transition-all group overflow-hidden ${asset.recommendation === 'SELL' ? 'border-l-4 border-l-rose-500' : 'border-l-4 border-l-emerald-500'}`}>
+                                      <Card key={i} className={`bg-white/5 border-white/10 ${asset.recommendation === 'SELL' ? 'border-l-4 border-l-rose-500' : 'border-l-4 border-l-emerald-500'}`}>
                                         <CardContent className="p-6">
-                                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-                                            <div className="flex items-center gap-4">
-                                              <div className="p-2.5 rounded-xl bg-primary/10 text-primary font-headline font-bold text-sm">
-                                                {asset.ticker}
-                                              </div>
-                                              <div>
-                                                <h5 className="font-bold text-white">{asset.name}</h5>
-                                                <div className="flex items-center gap-2">
-                                                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">{asset.currentPrice}</span>
-                                                  <Badge variant="outline" className={`h-4 px-1.5 text-[8px] font-bold border-white/10 ${asset.impactType === 'Positivo' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                                    Expectativa 7D: {asset.expectedGainPercentage}
-                                                  </Badge>
-                                                </div>
-                                              </div>
-                                            </div>
+                                          <div className="flex justify-between items-center mb-4">
                                             <div className="flex items-center gap-3">
-                                              <Badge className={`h-8 px-4 rounded-lg font-bold text-white ${asset.recommendation === 'BUY' ? 'bg-emerald-500' : asset.recommendation === 'SELL' ? 'bg-rose-500' : 'bg-amber-500'}`}>
-                                                {asset.recommendation} IMEDIATO
-                                              </Badge>
+                                              <Badge variant="outline" className="text-primary border-primary/30">{asset.ticker}</Badge>
+                                              <h5 className="font-bold text-white">{asset.name}</h5>
                                             </div>
+                                            <Badge className={asset.recommendation === 'BUY' ? 'bg-emerald-500' : 'bg-rose-500'}>
+                                              {asset.recommendation}
+                                            </Badge>
                                           </div>
-                                          <p className="text-sm text-muted-foreground leading-relaxed">
-                                            {asset.explanation}
-                                          </p>
+                                          <p className="text-sm text-muted-foreground mb-4">{asset.explanation}</p>
+                                          <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                                            <span>Preço Alvo Nexus: {asset.currentPrice}</span>
+                                            <span className={asset.impactType === 'Positivo' ? 'text-emerald-400' : 'text-rose-400'}>Expectativa 7D: {asset.expectedGainPercentage}</span>
+                                          </div>
                                         </CardContent>
                                       </Card>
                                     ))}
                                   </div>
                                 </section>
-
-                                {displayMode === 'Essencial' ? (
-                                  <section className="space-y-4">
-                                    <h4 className="text-xs font-headline font-bold text-accent uppercase tracking-[0.3em] flex items-center gap-2">
-                                      <Terminal className="h-4 w-4" /> Resumo de Execução
-                                    </h4>
-                                    <Accordion type="single" collapsible className="w-full">
-                                      {latestAlert.essentialGlossaryTerms.map((term, i) => (
-                                        <AccordionItem key={i} value={`term-${i}`} className="border-white/5">
-                                          <AccordionTrigger className="text-white hover:text-primary transition-colors text-sm font-bold">
-                                            {term}
-                                          </AccordionTrigger>
-                                          <AccordionContent className="text-muted-foreground text-sm">
-                                            Fator determinante para a análise de proteção ou ganho identificada pelo Sentinela Nexus.
-                                          </AccordionContent>
-                                        </AccordionItem>
-                                      ))}
-                                    </Accordion>
-                                  </section>
-                                ) : (
-                                  <>
-                                    <section className="space-y-4">
-                                      <h4 className="text-xs font-headline font-bold text-primary uppercase tracking-[0.3em] flex items-center gap-2">
-                                        <BarChart4 className="h-4 w-4" /> Projeção Técnica Semanal
-                                      </h4>
-                                      <div className="p-6 rounded-2xl bg-white/5 border border-white/10 font-mono text-sm text-primary/90 leading-relaxed whitespace-pre-wrap">
-                                        {latestAlert.fullTechnicalAnalysis}
-                                      </div>
-                                    </section>
-                                    <section className="space-y-4">
-                                      <h4 className="text-xs font-headline font-bold text-accent uppercase tracking-[0.3em] flex items-center gap-2">
-                                        <MapPin className="h-4 w-4" /> Riscos de Custódia & Localização
-                                      </h4>
-                                      <p className="text-muted-foreground text-sm leading-relaxed">
-                                        {latestAlert.fullLocationRiskAnalysis}
-                                      </p>
-                                    </section>
-                                  </>
-                                )}
                               </div>
                             </ScrollArea>
 
-                            <DialogFooter className="p-6 bg-white/5 border-t border-white/10 flex sm:justify-between items-center gap-4">
-                              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest hidden sm:block">
-                                NEXUS SENTINEL v2.6 - 24/7 ACTIVE CORE
-                              </p>
+                            <DialogFooter className="p-6 bg-white/5 border-t border-white/10">
                               <Button 
                                 onClick={() => discussWithNexus(latestAlert.title)}
-                                className="bg-primary hover:bg-primary/90 rounded-xl px-8 h-12 gap-2 font-bold shadow-lg"
+                                className="w-full bg-primary hover:bg-primary/90 h-12 gap-2 font-bold"
                               >
-                                <MessageSquare className="h-4 w-4" /> DISCUTIR COM NEXUS
+                                <MessageSquare className="h-4 w-4" /> DISCUTIR ESTRATÉGIA COM NEXUS
                               </Button>
                             </DialogFooter>
                           </DialogContent>
                         </Dialog>
-                        
-                        <Badge variant="outline" className="h-16 px-8 rounded-2xl border-white/10 bg-white/5 flex flex-col justify-center items-start">
-                          <span className="text-[10px] uppercase font-bold text-muted-foreground">Ordem Imediata</span>
-                          <span className={`text-xl font-bold ${latestAlert.marketAction === 'BUY' ? 'text-emerald-400' : latestAlert.marketAction === 'SELL' ? 'text-rose-400' : 'text-accent'}`}>
-                            {latestAlert.marketAction}
-                          </span>
-                        </Badge>
                       </div>
                     </div>
                   ) : (
-                    <div className="text-center py-20 space-y-8 z-10 flex flex-col items-center">
-                      <div className="p-6 rounded-full bg-white/5 border border-white/10">
-                        <Terminal className="h-12 w-12 text-muted-foreground opacity-20" />
-                      </div>
-                      <div className="space-y-4">
-                        <p className="text-white/60 text-xl font-medium italic">Sentinela em modo de escuta 24/7...</p>
-                        <Button 
-                          onClick={triggerGlobalScan}
-                          disabled={isScanning}
-                          className="bg-accent hover:bg-accent/90 text-white font-bold h-14 px-10 rounded-2xl gap-3 shadow-[0_0_30px_rgba(249,115,22,0.3)] transition-all hover:scale-105"
-                        >
-                          {isScanning ? <Loader2 className="h-5 w-5 animate-spin" /> : <Scan className="h-5 w-5" />}
-                          SOLICITAR VARREDURA NEXUS
-                        </Button>
-                      </div>
+                    <div className="text-center py-20 flex flex-col items-center">
+                      <Terminal className="h-12 w-12 text-muted-foreground opacity-20 mb-6" />
+                      <p className="text-white/60 text-xl font-medium italic mb-8">Aguardando sinais do mercado...</p>
+                      <Button onClick={triggerGlobalScan} className="bg-accent hover:bg-accent/90 h-14 px-10 rounded-2xl gap-3">
+                        <Scan className="h-5 w-5" /> SOLICITAR VARREDURA NEXUS
+                      </Button>
                     </div>
                   )}
                 </div>
               </div>
 
-              <div className="lg:col-span-3 space-y-8">
-                <div className="bg-[#080D18]/90 border border-white/10 rounded-[2.5rem] p-10 space-y-10 h-full shadow-2xl relative overflow-hidden flex flex-col">
-                  <div className="flex items-center justify-between relative z-10">
-                    <h3 className="text-xs font-headline font-bold uppercase tracking-[0.4em] text-primary led-text-blue">
-                      SENTINEL HUB 24/7
-                    </h3>
-                    <div className="flex items-center gap-2">
-                      <div className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
-                      <span className="text-[10px] font-bold text-emerald-500 uppercase">FEED REAL-TIME</span>
-                    </div>
+              <div className="lg:col-span-3">
+                <div className="bg-[#080D18]/90 border border-white/10 rounded-[2.5rem] p-10 space-y-10 h-full shadow-2xl flex flex-col">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-headline font-bold uppercase tracking-[0.4em] text-primary">SENTINEL HUB</h3>
+                    <div className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
                   </div>
 
-                  <div className="space-y-6 relative z-10 flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                  <div className="space-y-6 flex-1 overflow-y-auto pr-2 custom-scrollbar">
                     {globalAlerts && globalAlerts.length > 1 ? (
                       globalAlerts.slice(1).map((alert, idx) => (
-                        <div key={idx} className={`p-6 rounded-[2rem] bg-white/5 border border-white/10 space-y-3 transition-all hover:scale-[1.03] cursor-pointer hover:border-primary/30 animate-in slide-in-from-right-5 duration-300`}>
-                          <div className={`flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.2em] text-primary`}>
+                        <div key={idx} className="p-6 rounded-[2rem] bg-white/5 border border-white/10 space-y-3 transition-all hover:scale-[1.03] cursor-pointer">
+                          <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
                             <span>{alert.eventOrigin}</span>
-                            <span className="text-muted-foreground opacity-60">
-                              {formatDistanceToNow(new Date(alert.createdAt), { locale: ptBR })}
-                            </span>
+                            <span className="opacity-60">{formatDistanceToNow(new Date(alert.createdAt), { locale: ptBR })}</span>
                           </div>
-                          <p className="text-sm font-semibold leading-tight text-white/90">{alert.title}</p>
-                          <div className="flex items-center gap-2 text-[9px] text-muted-foreground font-bold">
-                            <ShieldCheck className="h-3 w-3 text-emerald-500" /> 7D IMPACT ANALYSIS
-                          </div>
+                          <p className="text-sm font-semibold text-white/90">{alert.title}</p>
+                          <Badge variant="outline" className="text-[8px] border-emerald-500/30 text-emerald-400">7D ANALYSIS ACTIVE</Badge>
                         </div>
                       ))
                     ) : (
-                      <div className="h-full flex flex-col items-center justify-center opacity-20 space-y-4">
+                      <div className="h-full flex flex-col items-center justify-center opacity-20 space-y-4 text-center">
                         <Globe className="h-12 w-12" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-center px-4">Aguardando sinais do Nexus Hub</span>
+                        <span className="text-[10px] font-bold uppercase">Sincronizando feed...</span>
                       </div>
                     )}
-                  </div>
-                  
-                  <div className="pt-4 border-t border-white/5">
-                    <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest text-center animate-pulse">
-                      SENTINELA GLOBAL ATIVO 24/7...
-                    </p>
                   </div>
                 </div>
               </div>
@@ -569,7 +499,7 @@ export default function NexusDashboard() {
                       <input 
                         id="name" 
                         placeholder="Ex: PETR4, ETH" 
-                        className="flex h-10 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-white ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                        className="flex h-10 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-white placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:text-sm"
                         value={newAsset.name}
                         onChange={(e) => setNewAsset(prev => ({ ...prev, name: e.target.value }))}
                       />
@@ -599,7 +529,7 @@ export default function NexusDashboard() {
                           id="invested" 
                           type="number"
                           placeholder="0.00" 
-                          className="flex h-10 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-white ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                          className="flex h-10 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-white placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:text-sm"
                           value={newAsset.investedValue}
                           onChange={(e) => setNewAsset(prev => ({ ...prev, investedValue: Number(e.target.value) }))}
                         />
@@ -610,38 +540,11 @@ export default function NexusDashboard() {
                           id="qty" 
                           type="number"
                           placeholder="0" 
-                          className="flex h-10 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-white ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                          className="flex h-10 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-white placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:text-sm"
                           value={newAsset.quantity}
                           onChange={(e) => setNewAsset(prev => ({ ...prev, quantity: Number(e.target.value) }))}
                         />
                       </div>
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="location" className="text-white font-bold uppercase tracking-widest text-[10px]">Localização / Custódia</Label>
-                      <input 
-                        id="location" 
-                        placeholder="Ex: XP, Binance, Ledger" 
-                        className="flex h-10 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-white ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                        value={newAsset.location}
-                        onChange={(e) => setNewAsset(prev => ({ ...prev, location: e.target.value }))}
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="risk" className="text-white font-bold uppercase tracking-widest text-[10px]">Nível de Risco</Label>
-                      <Select 
-                        value={newAsset.riskLevel} 
-                        onValueChange={(v) => setNewAsset(prev => ({ ...prev, riskLevel: v as any }))}
-                      >
-                        <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                          <SelectValue placeholder="Selecione o risco" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-[#080D18] border-white/10 text-white">
-                          <SelectItem value="Conservador">Conservador</SelectItem>
-                          <SelectItem value="Moderado">Moderado</SelectItem>
-                          <SelectItem value="Agressivo">Agressivo</SelectItem>
-                          <SelectItem value="Crítico">Crítico</SelectItem>
-                        </SelectContent>
-                      </Select>
                     </div>
                   </div>
                   <DialogFooter>
@@ -652,16 +555,15 @@ export default function NexusDashboard() {
                           id: Math.random().toString(36).substr(2, 9),
                           name: (newAsset.name || '').toUpperCase(),
                           type: (newAsset.type as AssetType) || 'Ação',
-                          location: newAsset.location || '',
-                          riskLevel: newAsset.riskLevel as any,
+                          location: newAsset.location || 'Wallet',
+                          riskLevel: newAsset.riskLevel as any || 'Moderado',
                           investedValue: Number(newAsset.investedValue) || 0,
                           quantity: Number(newAsset.quantity) || 0
                         };
                         setAssets(prev => [asset, ...prev]);
                         setIsDialogOpen(false);
-                        setNewAsset({ name: '', type: 'Ação', location: '', riskLevel: 'Moderado', investedValue: 0, quantity: 0 });
                       }}
-                      className="w-full bg-primary hover:bg-primary/90 text-white font-bold h-12 rounded-xl shadow-[0_0_20px_rgba(37,99,235,0.3)]"
+                      className="w-full bg-primary hover:bg-primary/90 text-white font-bold h-12 rounded-xl"
                     >
                       CONFIRMAR REGISTRO
                     </Button>

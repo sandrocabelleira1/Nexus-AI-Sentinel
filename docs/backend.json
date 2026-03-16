@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "UserProfile": {
@@ -152,26 +153,26 @@
         },
         "affectedAssetTickerSymbols": {
           "type": "array",
-          "description": "An array of ticker symbols for assets identified as being affected by this alert. (Relationship: GlobalIntelligenceAlert N:N Asset via Ticker Symbol)"
+          "description": "An array of ticker symbols for assets identified as being affected by this alert."
         },
         "essentialText": {
           "type": "string",
-          "description": "A simplified, analogy-based explanation of the alert content, suitable for 'Essential' display mode."
+          "description": "A simplified explanation suitable for 'Essential' display mode."
         },
         "essentialGlossaryTerms": {
           "type": "array",
-          "description": "A list of financial terms and their simplified definitions, relevant to the 'Essential' display mode explanation.",
+          "description": "Relevant financial terms.",
           "items": {
             "type": "string"
           }
         },
         "fullTechnicalAnalysis": {
           "type": "string",
-          "description": "Raw data, technical correlations, and numerical predictions, suitable for 'Full' display mode for professionals."
+          "description": "Raw data and technical correlations."
         },
         "fullLocationRiskAnalysis": {
           "type": "string",
-          "description": "An analysis of asset risk specifically based on their storage location, suitable for 'Full' display mode."
+          "description": "Analysis of asset risk based on storage location."
         }
       },
       "required": [
@@ -189,6 +190,19 @@
         "fullTechnicalAnalysis",
         "fullLocationRiskAnalysis"
       ]
+    },
+    "MarketPrice": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MarketPrice",
+      "type": "object",
+      "description": "Real-time market price for a specific ticker symbol, updated by the Nexus engine.",
+      "properties": {
+        "ticker": { "type": "string" },
+        "price": { "type": "number" },
+        "change24h": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ticker", "price", "updatedAt"]
     }
   },
   "auth": {
@@ -206,7 +220,7 @@
           "schema": {
             "$ref": "#/backend/entities/UserProfile"
           },
-          "description": "Stores individual user profiles. The 'userId' in the path directly corresponds to the Firebase Authentication UID, making it the owner. Access is restricted to the owner."
+          "description": "Stores individual user profiles."
         }
       },
       {
@@ -216,17 +230,7 @@
           "schema": {
             "$ref": "#/backend/entities/Asset"
           },
-          "description": "Stores user-registered financial assets. Each document includes 'userId' which is denormalized from the parent path to ensure authorization independence and atomic security rules. Access is restricted to the owner ('userId').",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user who owns the asset (Firebase Authentication UID)."
-            },
-            {
-              "name": "assetId",
-              "description": "The unique identifier for the specific financial asset."
-            }
-          ]
+          "description": "Stores user-registered financial assets."
         }
       },
       {
@@ -236,16 +240,20 @@
           "schema": {
             "$ref": "#/backend/entities/GlobalIntelligenceAlert"
           },
-          "description": "A global hub for AI-generated predictive financial alerts. Accessible to all authenticated users for reading and listing, but only writable by trusted backend services (e.g., Cloud Functions). This collection serves as the 'Event Hub' for 'onSnapshot' listeners.",
-          "params": [
-            {
-              "name": "alertId",
-              "description": "The unique identifier for the global intelligence alert."
-            }
-          ]
+          "description": "A global hub for AI-generated predictive financial alerts."
+        }
+      },
+      {
+        "path": "/market_prices/{ticker}",
+        "definition": {
+          "entityName": "MarketPrice",
+          "schema": {
+            "$ref": "#/backend/entities/MarketPrice"
+          },
+          "description": "Real-time market data feed for various assets."
         }
       }
     ],
-    "reasoning": "The Firestore data structure is designed to adhere strictly to the core design principles and strategy mandates, prioritizing security, scalability, and debuggability. \n\n**Authorization Independence (CRITICAL) and Denormalization (Strategy A):**\n\n*   **User Profiles (`/users/{userId}`):** User profiles are stored directly under their unique Firebase Authentication UID. This inherently makes access rules simple and atomic: `allow read, write: request.auth.uid == userId`. No `get()` operation is required to determine ownership, as the owner's UID is part of the document path. This path-based ownership ensures authorization independence.\n\n*   **User Assets (`/users/{userId}/assets/{assetId}`):** Assets, which belong to a specific user, are organized as a subcollection under the respective user's profile. Crucially, each `Asset` document includes a `userId` field that matches the `userId` wildcard in its path (`/users/{userId}/assets/{assetId}`). This denormalization of the `userId` (owner's UID) into every asset document is a direct implementation of Authorization Independence via Denormalization (Strategy A). It allows security rules to evaluate ownership locally within the `Asset` document (`allow read, write: request.auth.uid == resource.data.userId && request.auth.uid == userId`) without needing to fetch the parent `UserProfile` document. This avoids hierarchical authorization dependencies, enabling atomic operations and simplifying rule debugging.\n\n*   **Global Intelligence Alerts (`/global_intelligence_alerts/{alertId}`):** This collection serves as a public-read 'Event Hub' as described, where AI-generated alerts are deposited. It is a top-level collection, meaning it has no parent dependency for authorization. All documents within this collection share the same security posture (read-only for all authenticated users). This structure ensures inherent authorization independence and simplifies rules to `allow read: request.auth != null`.\n\n**Structural Segregation (Strategy B):**\n\n*   The structure clearly segregates private user data (`/users/{userId}`, `/users/{userId}/assets/{assetId}`) from global, publicly accessible data (`/global_intelligence_alerts/{alertId}`). This segregation ensures that all documents within a given collection share a homogeneous security posture, simplifying security rules and preventing accidental exposure of private data.\n\n**Querying for Authorization Purposes (QAPs - Rules are not Filters):**\n\n*   **User Profiles:** Users can `get` or `list` their own profile directly by their `userId`. Listing all user profiles by a regular user is prevented by rules, thus supporting QAPs.\n\n*   **User Assets:** A user can efficiently `list` all their own assets by querying the `assets` subcollection under their `userId` (e.g., `db.collection('users').doc(request.auth.uid).collection('assets')`). The `userId` field in the document (denormalized) and the path ensure that this query is secure and respects ownership without relying on filtering. This aligns perfectly with QAPs, as the security rules ensure only the owner can access their assets.\n\n*   **Global Intelligence Alerts:** All authenticated users can `list` and `read` alerts from the `/global_intelligence_alerts` collection. The application's `onSnapshot` listener will operate securely, as the rules allow full read access for authenticated users, which is the intended public-read behavior for this global feed. No complex filters are needed for authorization.\n\n**Access Modeling (Strategy C) and Data Clarity (Strategy D):**\n\n*   **Path-Based Ownership:** Utilizes `/users/{userId}` for `UserProfile` and `/users/{userId}/assets/{assetId}` for `Asset` to explicitly link data to its owner, simplifying security rules.\n*   **Radical Consistency:** Wildcards are descriptive (`{userId}`, `{assetId}`, `{alertId}`). Field names like `ownerId` (inferred from `userId` in `Asset`) and `createdAt`/`updatedAt` are consistent across schemas. State modeling is clear with fields like `preferredDisplayMode` (in `UserProfile`) and content segregation (`essentialText`, `fullTechnicalAnalysis` in `GlobalIntelligenceAlert`) that the client consumes based on user preferences rather than server-side authorization.\n\nThis robust structure minimizes the complexity of security rules, supports efficient queries, and ensures that the Nexus AI Sentinel remains secure and scalable within the Firebase ecosystem."
+    "reasoning": "A estrutura de dados foi expandida para incluir a coleção /market_prices, permitindo o ciclo Fetch-Push-Listen solicitado. O uso de caminhos planos otimiza a performance do onSnapshot e simplifica as regras de segurança para dados públicos/globais."
   }
 }

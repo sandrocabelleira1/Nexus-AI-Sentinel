@@ -1,45 +1,21 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * CORE PHILOSOPHY
-     * This ruleset enforces a strict user-ownership model for personal data while maintaining a 
-     * public-read "Event Hub" for global intelligence. It prioritizes "Authorization Independence" 
-     * by leveraging path-based wildcards and denormalized ownership fields to ensure rules 
-     * remain performant and atomic without requiring cross-document lookups (get() calls).
-     *
-     * DATA STRUCTURE
-     * 1. /users/{userId}: Private profile data owned by the authenticated user.
-     * 2. /users/{userId}/assets/{assetId}: User-specific financial assets, strictly owned by the parent user.
-     * 3. /global_intelligence_alerts/{alertId}: A global feed of AI-generated insights, readable by any 
-     *    authenticated user.
-     *
-     * KEY SECURITY DECISIONS
-     * - Ownership is validated by comparing 'request.auth.uid' against path wildcards and internal data fields.
-     * - Relational integrity is enforced during 'create' and 'update' for fields like 'userId' or 'id'.
-     * - Global alerts are set to 'read-only' for standard clients in production, but allowed 'create' 
-     *   for prototype simulation.
-     */
-
     // --- Global Helper Functions ---
-
-    /** @description Checks if the user is authenticated. */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /** @description Checks if the authenticated user's UID matches the provided userId. */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /** @description Checks ownership and ensures the document exists for update/delete. */
     function isExistingOwner(userId) {
       return isOwner(userId) && resource != null;
     }
 
-    /** @description Validates that the owner field is not being changed during an update. */
     function isOwnerImmutable(field) {
       return request.resource.data[field] == resource.data[field];
     }
@@ -62,13 +38,18 @@ service cloud.firestore {
     }
 
     match /global_intelligence_alerts/{alertId} {
+      allow get, list: if isSignedIn();
+      allow create: if isSignedIn(); 
+      allow update, delete: if false;
+    }
+
+    match /market_prices/{ticker} {
       /**
-       * @description Rules for the GlobalIntelligenceAlert entity.
-       * Permite criação por usuários autenticados apenas para simulação do protótipo Nexus.
+       * @description Feed de preços em tempo real.
+       * Leitura pública para usuários logados. Escrita permitida para simulação do protótipo.
        */
       allow get, list: if isSignedIn();
-      allow create: if isSignedIn(); // Permitido temporariamente para a simulação do agente.
-      allow update: if false;
+      allow create, update: if isSignedIn();
       allow delete: if false;
     }
   }

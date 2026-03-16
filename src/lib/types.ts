@@ -1,3 +1,4 @@
+
 export type AssetType = 'Ação' | 'Criptomoeda' | 'Fundo Imobiliário' | 'Commodity' | 'Moeda';
 
 export interface UserAsset {
@@ -20,6 +21,7 @@ export interface AffectedAssetDetail {
   impactType: 'Positivo' | 'Negativo' | 'Neutro';
   explanation: string;
   recommendation: 'BUY' | 'SELL' | 'HOLD' | 'WATCH';
+  longTermOutlook: string;
 }
 
 export interface GlobalIntelligenceAlert {
@@ -37,4 +39,12 @@ export interface GlobalIntelligenceAlert {
   essentialGlossaryTerms: string[];
   fullTechnicalAnalysis: string;
   fullLocationRiskAnalysis: string;
+}
+
+export interface MarketPrice {
+  id: string;
+  ticker: string;
+  price: number;
+  change24h: number;
+  updatedAt: string;
 }
