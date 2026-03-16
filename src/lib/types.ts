@@ -16,6 +16,7 @@ export interface AffectedAssetDetail {
   ticker: string;
   name: string;
   currentPrice: string;
+  expectedGainPercentage: string;
   impactType: 'Positivo' | 'Negativo' | 'Neutro';
   explanation: string;
   recommendation: 'BUY' | 'SELL' | 'HOLD' | 'WATCH';

@@ -11,7 +11,6 @@ import {
   Globe, 
   Wallet, 
   Zap, 
-  Map as MapIcon, 
   ChevronRight,
   Activity,
   ShieldCheck,
@@ -27,7 +26,8 @@ import {
   MessageSquare,
   ArrowUpRight,
   ArrowDownRight,
-  Minus
+  Minus,
+  Target
 } from "lucide-react";
 import { AssistantChat } from "@/components/ai/assistant-chat";
 import { Badge } from "@/components/ui/badge";
@@ -119,7 +119,6 @@ export default function NexusDashboard() {
     setIsScanning(true);
     
     try {
-      // Gerando 3 alertas reais simultâneos para povoar o Hub
       const newsPrompts = [
         "IDENTIFIQUE O EVENTO GEOPOLÍTICO MAIS CRÍTICO HOJE E SEU IMPACTO EM EMPRESAS DE ENERGIA E COMMODITIES.",
         "ANALISE UMA RUPTURA TECNOLÓGICA REAL (IA OU SEMICONDUTORES) E QUAIS EMPRESAS LIDERAM OU SOFREM.",
@@ -295,7 +294,27 @@ export default function NexusDashboard() {
                         </blockquote>
                       </div>
 
-                      <div className="flex items-center gap-8 pt-8">
+                      {/* Imediato Ativos Card Summary */}
+                      {latestAlert.affectedAssetsDetails && (
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
+                           {latestAlert.affectedAssetsDetails.slice(0, 3).map((asset, i) => (
+                             <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-2 group/asset transition-all hover:border-primary/40">
+                               <div className="flex items-center justify-between">
+                                  <span className="text-[10px] font-headline font-bold text-primary tracking-widest">{asset.ticker}</span>
+                                  <Badge className={`h-4 px-1.5 text-[8px] font-bold ${asset.impactType === 'Positivo' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+                                    {asset.expectedGainPercentage}
+                                  </Badge>
+                               </div>
+                               <div className="flex flex-col">
+                                 <span className="text-xs font-bold text-white truncate">{asset.name}</span>
+                                 <span className="text-[10px] text-muted-foreground font-medium">{asset.currentPrice}</span>
+                               </div>
+                             </div>
+                           ))}
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-8 pt-4">
                         <Dialog open={isRecommendationOpen} onOpenChange={setIsRecommendationOpen}>
                           <DialogTrigger asChild>
                             <Button className="bg-primary hover:bg-primary/90 text-white rounded-2xl px-12 h-16 font-bold text-xl shadow-[0_0_40px_rgba(37,99,235,0.4)] transition-all hover:scale-105 active:scale-95">
@@ -342,7 +361,12 @@ export default function NexusDashboard() {
                                               </div>
                                               <div>
                                                 <h5 className="font-bold text-white">{asset.name}</h5>
-                                                <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">{asset.currentPrice}</span>
+                                                <div className="flex items-center gap-2">
+                                                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">{asset.currentPrice}</span>
+                                                  <Badge variant="outline" className={`h-4 px-1.5 text-[8px] font-bold border-white/10 ${asset.impactType === 'Positivo' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                                    Ganhos: {asset.expectedGainPercentage}
+                                                  </Badge>
+                                                </div>
                                               </div>
                                             </div>
                                             <div className="flex items-center gap-3">

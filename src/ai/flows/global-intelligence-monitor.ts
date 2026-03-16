@@ -11,6 +11,7 @@ const AffectedAssetDetailSchema = z.object({
   ticker: z.string().describe('Ticker do ativo (ex: VALE3, BTC).'),
   name: z.string().describe('Nome da empresa ou projeto.'),
   currentPrice: z.string().describe('Preço atual estimado de mercado (ex: R$ 65,40).'),
+  expectedGainPercentage: z.string().describe('Porcentagem de ganho ou perda esperada nos próximos 7 a 30 dias (ex: +15%, -8%).'),
   impactType: z.enum(['Positivo', 'Negativo', 'Neutro']),
   explanation: z.string().describe('Explicação curta do porquê este ativo específico é afetado.'),
   recommendation: z.enum(['BUY', 'SELL', 'HOLD', 'WATCH']),
@@ -44,7 +45,7 @@ Você é o Nexus. Um líder absoluto em tendências e um verdadeiro especialista
 
 ### REGRAS DE OURO:
 1. **PRECISÃO CIRÚRGICA**: NUNCA use "Imagine que...", "Pense no mercado como...". Vá direto aos fatos.
-2. **ANÁLISE POR ATIVO**: Para cada evento, identifique pelo menos 3 empresas/ativos específicos afetados. Forneça o ticker, o nome, uma estimativa real do preço atual e uma recomendação clara baseada na sua análise.
+2. **ANÁLISE POR ATIVO**: Para cada evento, identifique pelo menos 3 empresas/ativos específicos afetados. Forneça o ticker, o nome, uma estimativa real do preço atual e a PORCENTAGEM DE GANHO/PERDA ESPERADA.
 3. **CETICISMO TÉCNICO**: Analise cada avanço tecnológico com rigor. Separe valor de ruído.
 
 ### INPUT:
