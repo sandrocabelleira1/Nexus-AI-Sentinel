@@ -1,1 +1,6 @@
-// Flows will be imported for their side effects in this file.
+import { config } from 'dotenv';
+config();
+
+import '@/ai/flows/predictive-asset-impact-analysis.ts';
+import '@/ai/flows/interactive-portfolio-assistant.ts';
+import '@/ai/flows/multi-modal-financial-insights-display.ts';
