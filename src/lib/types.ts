@@ -24,12 +24,21 @@ export interface AffectedAssetDetail {
   longTermOutlook: string;
 }
 
+export interface GeopoliticalCausality {
+  event: string;
+  identification: string;
+  mapping: string[];
+  simulation: string;
+  prediction: string;
+}
+
 export interface GlobalIntelligenceAlert {
   id: string;
   createdAt: string;
   title: string;
-  eventOrigin: 'Geopolítica' | 'Natureza' | 'Tech' | 'Mercado';
+  eventOrigin: 'Geopolítica' | 'Governo' | 'Natureza' | 'Tech' | 'Mercado';
   causalityExplanation: string;
+  causalityLink?: GeopoliticalCausality;
   priority: number;
   marketAction: 'BUY' | 'SELL' | 'HOLD' | 'WATCH';
   riskLevel: 'Conservador' | 'Moderado' | 'Agressivo' | 'Crítico';
