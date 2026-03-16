@@ -32,15 +32,23 @@ export function MarketExplorer({ prices }: MarketExplorerProps) {
 
   const filteredPrices = useMemo(() => {
     return prices.filter(p => {
-      const ticker = p.ticker.toUpperCase().trim();
-      const matchesSearch = ticker.includes(search.toUpperCase());
+      // Limpeza robusta do ticker para comparação
+      const ticker = (p.ticker || "").toUpperCase().trim();
+      const matchesSearch = ticker.includes(search.toUpperCase().trim());
       
-      if (filter === 'all') return matchesSearch;
-      if (filter === 'crypto') return matchesSearch && (ticker.length <= 4 || ticker === 'BITCOIN' || ticker === 'ETHEREUM' || ticker === 'SOLANA');
-      if (filter === 'stocks') return matchesSearch && ticker.length > 4 && !ticker.endsWith('11');
-      if (filter === 'fiis') return matchesSearch && ticker.endsWith('11');
-      return matchesSearch;
-    }).sort((a, b) => a.ticker.localeCompare(b.ticker));
+      if (!matchesSearch) return false;
+      if (filter === 'all') return true;
+      
+      const isIndex = ticker === 'IBOV' || ticker === 'DOLAR';
+      const endsIn11 = ticker.endsWith('11');
+      const isShort = ticker.length <= 4 && !isIndex;
+
+      if (filter === 'crypto') return isShort;
+      if (filter === 'stocks') return !isShort && !endsIn11 && !isIndex;
+      if (filter === 'fiis') return endsIn11;
+      
+      return true;
+    }).sort((a, b) => (a.ticker || "").localeCompare(b.ticker || ""));
   }, [prices, search, filter]);
 
   const stats = useMemo(() => {
@@ -80,7 +88,7 @@ export function MarketExplorer({ prices }: MarketExplorerProps) {
         <div className="relative flex-1">
           <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-primary opacity-50" />
           <Input 
-            placeholder="Pesquisar ticker (ex: BTC, VALE3, NVDA)..."
+            placeholder="Pesquisar ticker (ex: BTC, VALE3, HGLG11)..."
             className="h-16 pl-16 bg-[#080D18]/90 border-white/10 rounded-2xl text-lg font-medium focus-visible:ring-primary"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -131,115 +139,117 @@ export function MarketExplorer({ prices }: MarketExplorerProps) {
         </div>
       </div>
 
-      {viewMode === 'grid' ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {filteredPrices.map((price) => {
-            const isUp = price.change24h > 0;
-            const ticker = price.ticker.toUpperCase();
-            const isIndex = ticker === 'IBOV' || ticker === 'DOLAR';
-            const isFII = ticker.endsWith('11');
-            const isCrypto = ticker.length <= 4 && !isIndex;
-            
-            return (
-              <Card key={price.ticker} className="bg-[#080D18]/95 border-white/10 hover:border-primary/40 transition-all group cursor-pointer relative overflow-hidden rounded-[2rem] shadow-2xl">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
-                <CardContent className="p-8 space-y-6">
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-1">
-                      <Badge variant="outline" className="text-[10px] border-primary/30 text-primary font-bold tracking-widest mb-2 uppercase">
-                        {isCrypto ? 'Cripto' : isFII ? 'FII' : isIndex ? 'Índice' : 'Ação'}
-                      </Badge>
-                      <h3 className="text-3xl font-headline font-bold text-white led-text-blue">{ticker}</h3>
-                    </div>
-                    <div className={cn(
-                      "p-3 rounded-xl border font-bold flex items-center gap-1 text-xs",
-                      isUp ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-rose-500/10 text-rose-400 border-rose-500/20"
-                    )}>
-                      {isUp ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                      {price.change24h.toFixed(2)}%
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em]">Cotação Atual</span>
-                    <div className="text-3xl font-bold text-white">
-                      {ticker === 'IBOV' ? price.price.toLocaleString() : 
-                       (isCrypto ? 'US$ ' : 'R$ ') + 
-                       price.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
-                    </div>
-                  </div>
-
-                  <div className="pt-6 border-t border-white/5 flex items-center justify-between">
-                    <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest flex items-center gap-1">
-                      <RefreshCw className="h-3 w-3" /> Atualizado em tempo real
-                    </span>
-                    <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse led-glow-blue" />
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="bg-[#080D18]/90 border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
-          <div className="grid grid-cols-12 gap-4 px-8 py-4 border-b border-white/10 text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">
-            <div className="col-span-4">Ativo</div>
-            <div className="col-span-3">Cotação</div>
-            <div className="col-span-3">Variação 24h</div>
-            <div className="col-span-2 text-right">Status</div>
-          </div>
-          <div className="divide-y divide-white/5">
+      {filteredPrices.length > 0 ? (
+        viewMode === 'grid' ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {filteredPrices.map((price) => {
-              const ticker = price.ticker.toUpperCase();
               const isUp = price.change24h > 0;
+              const ticker = (price.ticker || "").toUpperCase().trim();
               const isIndex = ticker === 'IBOV' || ticker === 'DOLAR';
               const isFII = ticker.endsWith('11');
-              const typeLabel = isCrypto ? 'Cripto' : isFII ? 'FII' : isIndex ? 'Índice' : 'Ação';
-
+              const isCrypto = ticker.length <= 4 && !isIndex;
+              
               return (
-                <div key={price.ticker} className="grid grid-cols-12 gap-4 px-8 py-6 items-center hover:bg-white/5 transition-colors cursor-pointer group">
-                  <div className="col-span-4 flex items-center gap-4">
-                    <div className="p-3 rounded-xl bg-primary/10 text-primary border border-primary/20 group-hover:led-glow-blue transition-all">
-                      {isCrypto ? <Zap className="h-4 w-4" /> : isFII ? <Landmark className="h-4 w-4" /> : <TrendingUp className="h-4 w-4" />}
+                <Card key={price.ticker} className="bg-[#080D18]/95 border-white/10 hover:border-primary/40 transition-all group cursor-pointer relative overflow-hidden rounded-[2rem] shadow-2xl">
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+                  <CardContent className="p-8 space-y-6">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-1">
+                        <Badge variant="outline" className="text-[10px] border-primary/30 text-primary font-bold tracking-widest mb-2 uppercase">
+                          {isCrypto ? 'Cripto' : isFII ? 'FII' : isIndex ? 'Índice' : 'Ação'}
+                        </Badge>
+                        <h3 className="text-3xl font-headline font-bold text-white led-text-blue">{ticker}</h3>
+                      </div>
+                      <div className={cn(
+                        "p-3 rounded-xl border font-bold flex items-center gap-1 text-xs",
+                        isUp ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                      )}>
+                        {isUp ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                        {price.change24h.toFixed(2)}%
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-bold text-white text-lg group-hover:text-primary transition-colors">{ticker}</h4>
-                      <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest">{typeLabel}</span>
+
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em]">Cotação Atual</span>
+                      <div className="text-3xl font-bold text-white">
+                        {ticker === 'IBOV' ? price.price.toLocaleString() : 
+                         (isCrypto ? 'US$ ' : 'R$ ') + 
+                         price.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                      </div>
                     </div>
-                  </div>
-                  <div className="col-span-3">
-                    <div className="text-xl font-bold text-white">
-                      {ticker === 'IBOV' ? price.price.toLocaleString() : 
-                       (isCrypto ? 'US$ ' : 'R$ ') + 
-                       price.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+
+                    <div className="pt-6 border-t border-white/5 flex items-center justify-between">
+                      <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest flex items-center gap-1">
+                        <RefreshCw className="h-3 w-3" /> Atualizado em tempo real
+                      </span>
+                      <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse led-glow-blue" />
                     </div>
-                  </div>
-                  <div className="col-span-3">
-                    <div className={cn(
-                      "flex items-center gap-1.5 font-bold",
-                      isUp ? "text-emerald-400" : "text-rose-400"
-                    )}>
-                      {isUp ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
-                      {price.change24h.toFixed(2)}%
-                    </div>
-                  </div>
-                  <div className="col-span-2 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-                      <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">Ativo</span>
-                    </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               );
             })}
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="bg-[#080D18]/90 border border-white/10 rounded-3xl overflow-hidden shadow-2xl">
+            <div className="grid grid-cols-12 gap-4 px-8 py-4 border-b border-white/10 text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">
+              <div className="col-span-4">Ativo</div>
+              <div className="col-span-3">Cotação</div>
+              <div className="col-span-3">Variação 24h</div>
+              <div className="col-span-2 text-right">Status</div>
+            </div>
+            <div className="divide-y divide-white/5">
+              {filteredPrices.map((price) => {
+                const ticker = (price.ticker || "").toUpperCase().trim();
+                const isUp = price.change24h > 0;
+                const isIndex = ticker === 'IBOV' || ticker === 'DOLAR';
+                const isFII = ticker.endsWith('11');
+                const isCrypto = ticker.length <= 4 && !isIndex;
+                const typeLabel = isCrypto ? 'Cripto' : isFII ? 'FII' : isIndex ? 'Índice' : 'Ação';
 
-      {filteredPrices.length === 0 && (
-        <div className="col-span-full py-20 text-center space-y-4 opacity-40">
-          <Search className="h-12 w-12 mx-auto" />
-          <p className="text-xl font-medium">Nenhum ativo encontrado para "{search}"</p>
+                return (
+                  <div key={price.ticker} className="grid grid-cols-12 gap-4 px-8 py-6 items-center hover:bg-white/5 transition-colors cursor-pointer group">
+                    <div className="col-span-4 flex items-center gap-4">
+                      <div className="p-3 rounded-xl bg-primary/10 text-primary border border-primary/20 group-hover:led-glow-blue transition-all">
+                        {isCrypto ? <Zap className="h-4 w-4" /> : isFII ? <Landmark className="h-4 w-4" /> : <TrendingUp className="h-4 w-4" />}
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-white text-lg group-hover:text-primary transition-colors">{ticker}</h4>
+                        <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest">{typeLabel}</span>
+                      </div>
+                    </div>
+                    <div className="col-span-3">
+                      <div className="text-xl font-bold text-white">
+                        {ticker === 'IBOV' ? price.price.toLocaleString() : 
+                         (isCrypto ? 'US$ ' : 'R$ ') + 
+                         price.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                      </div>
+                    </div>
+                    <div className="col-span-3">
+                      <div className={cn(
+                        "flex items-center gap-1.5 font-bold",
+                        isUp ? "text-emerald-400" : "text-rose-400"
+                      )}>
+                        {isUp ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
+                        {price.change24h.toFixed(2)}%
+                      </div>
+                    </div>
+                    <div className="col-span-2 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                        <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">Ativo</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )
+      ) : (
+        <div className="col-span-full py-40 text-center space-y-4 opacity-40 flex flex-col items-center">
+          <Search className="h-16 w-16 mb-4" />
+          <p className="text-2xl font-medium">Nenhum ativo encontrado para "{search}"</p>
+          <p className="text-sm">Tente uma nova busca ou acione a Varredura Forçada no topo.</p>
         </div>
       )}
     </div>

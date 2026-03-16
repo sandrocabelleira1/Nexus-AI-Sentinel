@@ -124,19 +124,11 @@ export default function NexusDashboard() {
   const priceMap = useMemo(() => {
     const map: Record<string, MarketPrice> = {};
     livePrices?.forEach(p => { 
-      map[p.ticker.toUpperCase()] = p; 
+      const ticker = p.ticker?.toUpperCase().trim();
+      if (ticker) map[ticker] = p; 
     });
     return map;
   }, [livePrices]);
-
-  const [newAsset, setNewAsset] = useState<Partial<UserAsset>>({
-    name: '',
-    type: 'Ação',
-    location: '',
-    riskLevel: 'Moderado',
-    investedValue: 0,
-    quantity: 0
-  });
 
   const syncLivePrices = useCallback(async () => {
     if (!user) return;
@@ -151,7 +143,7 @@ export default function NexusDashboard() {
 
       cryptoData.forEach((tickerData) => {
         if (tickerData.symbol) {
-          const ticker = tickerData.symbol.replace('USDT', '');
+          const ticker = tickerData.symbol.replace('USDT', '').toUpperCase().trim();
           setDocumentNonBlocking(doc(firestore, "market_prices", ticker), {
             ticker: ticker,
             price: parseFloat(tickerData.lastPrice),
@@ -161,7 +153,7 @@ export default function NexusDashboard() {
         }
       });
 
-      // 2. B3 e FIIs via Brapi (adicionando .SA para melhor compatibilidade)
+      // 2. B3 e FIIs via Brapi (Tratamento robusto de sufixo)
       const b3Tickers = 'PETR4.SA,VALE3.SA,HGLG11.SA,VGIA11.SA,IBOV11.SA,BOVA11.SA,ITUB4.SA,BBDC4.SA,KNRI11.SA';
       const b3ApiKey = '2rb5157StMMfsE1ft1ErSq';
       const b3Response = await fetch(`https://brapi.dev/api/quote/${b3Tickers}?token=${b3ApiKey}`);
@@ -169,7 +161,8 @@ export default function NexusDashboard() {
 
       if (b3Data.results) {
         b3Data.results.forEach((item: any) => {
-          const cleanTicker = item.symbol.replace('.SA', '');
+          // Remove .SA de forma insensível a maiúsculas/minúsculas
+          const cleanTicker = item.symbol.toUpperCase().replace(/\.SA$/i, '').trim();
           setDocumentNonBlocking(doc(firestore, "market_prices", cleanTicker), {
             ticker: cleanTicker,
             price: item.regularMarketPrice,
@@ -187,8 +180,9 @@ export default function NexusDashboard() {
       
       if (Array.isArray(fmpData)) {
         fmpData.forEach((item: any) => {
-          setDocumentNonBlocking(doc(firestore, "market_prices", item.symbol), {
-            ticker: item.symbol,
+          const ticker = item.symbol.toUpperCase().trim();
+          setDocumentNonBlocking(doc(firestore, "market_prices", ticker), {
+            ticker: ticker,
             price: item.price,
             change24h: item.changesPercentage,
             updatedAt: new Date().toISOString()
