@@ -1,8 +1,9 @@
+
 "use client"
 
 import { useState } from "react";
 import { WorldMood } from "@/components/dashboard/world-mood";
-import { DisplayMode, UserAsset } from "@/lib/types";
+import { AssetType, DisplayMode, UserAsset } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { 
   TrendingUp, 
@@ -21,11 +22,46 @@ import {
 import { AssistantChat } from "@/components/ai/assistant-chat";
 import { Badge } from "@/components/ui/badge";
 import { PortfolioView } from "@/components/portfolio/portfolio-view";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const initialMockAssets: UserAsset[] = [
+  { id: '1', name: 'VALE3', type: 'Ação', location: 'XP Investimentos', riskLevel: 'Moderado' },
+  { id: '2', name: 'BITCOIN', type: 'Criptomoeda', location: 'Ledger Nano X', riskLevel: 'Agressivo' },
+  { id: '3', name: 'HGLG11', type: 'Fundo Imobiliário', location: 'BTG Pactual', riskLevel: 'Conservador' },
+  { id: '4', name: 'OURO', type: 'Commodity', location: 'Reserva Física', riskLevel: 'Conservador' },
+];
 
 export default function NexusDashboard() {
   const [displayMode, setDisplayMode] = useState<DisplayMode>('Essencial');
   const [activeTab, setActiveTab] = useState<'dashboard' | 'portfolio'>('dashboard');
+  const [assets, setAssets] = useState<UserAsset[]>(initialMockAssets);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   
+  // Form State
+  const [newAsset, setNewAsset] = useState<Partial<UserAsset>>({
+    name: '',
+    type: 'Ação',
+    location: '',
+    riskLevel: 'Moderado'
+  });
+
   const metrics = [
     { label: 'IBOVESPA', value: '132.450', change: '+0.85%', trend: 'up' },
     { label: 'S&P 500', value: '5.120', change: '-0.12%', trend: 'down' },
@@ -33,12 +69,21 @@ export default function NexusDashboard() {
     { label: 'DÓLAR', value: 'R$ 5,08', change: '-0.45%', trend: 'down' },
   ];
 
-  const mockAssets: UserAsset[] = [
-    { id: '1', name: 'VALE3', type: 'Ação', location: 'XP Investimentos', riskLevel: 'Moderado' },
-    { id: '2', name: 'BITCOIN', type: 'Criptomoeda', location: 'Ledger Nano X', riskLevel: 'Agressivo' },
-    { id: '3', name: 'HGLG11', type: 'Fundo Imobiliário', location: 'BTG Pactual', riskLevel: 'Conservador' },
-    { id: '4', name: 'OURO', type: 'Commodity', location: 'Reserva Física', riskLevel: 'Conservador' },
-  ];
+  const handleAddAsset = () => {
+    if (!newAsset.name || !newAsset.location) return;
+    
+    const asset: UserAsset = {
+      id: Math.random().toString(36).substr(2, 9),
+      name: newAsset.name,
+      type: (newAsset.type as AssetType) || 'Ação',
+      location: newAsset.location,
+      riskLevel: newAsset.riskLevel as any
+    };
+
+    setAssets(prev => [asset, ...prev]);
+    setIsDialogOpen(false);
+    setNewAsset({ name: '', type: 'Ação', location: '', riskLevel: 'Moderado' });
+  };
 
   return (
     <div className="min-h-screen relative selection:bg-primary selection:text-white">
@@ -201,16 +246,95 @@ export default function NexusDashboard() {
                 <h2 className="text-5xl font-headline font-bold text-white tracking-tight">Sua Wallet</h2>
                 <p className="text-muted-foreground font-medium text-lg">Monitoramento em tempo real de ativos globais.</p>
               </div>
-              <Button className="bg-primary hover:bg-primary/90 rounded-2xl h-14 px-8 font-bold gap-3 shadow-[0_0_30px_rgba(37,99,235,0.3)]">
-                <Plus className="h-5 w-5" /> ADICIONAR ATIVO
-              </Button>
+              
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-primary hover:bg-primary/90 rounded-2xl h-14 px-8 font-bold gap-3 shadow-[0_0_30px_rgba(37,99,235,0.3)]">
+                    <Plus className="h-5 w-5" /> ADICIONAR ATIVO
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="glass-panel border-primary/20 sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle className="text-2xl font-headline font-bold text-white led-text-blue">Novo Ativo</DialogTitle>
+                    <DialogDescription className="text-muted-foreground">
+                      Registre um novo ativo na sua Wallet Sentinel.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-6 py-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="name" className="text-white font-bold uppercase tracking-widest text-[10px]">Nome do Ativo (Ticker)</Label>
+                      <Input 
+                        id="name" 
+                        placeholder="Ex: PETR4, ETH" 
+                        className="bg-white/5 border-white/10 text-white"
+                        value={newAsset.name}
+                        onChange={(e) => setNewAsset(prev => ({ ...prev, name: e.target.value }))}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="type" className="text-white font-bold uppercase tracking-widest text-[10px]">Tipo</Label>
+                      <Select 
+                        value={newAsset.type} 
+                        onValueChange={(v) => setNewAsset(prev => ({ ...prev, type: v as any }))}
+                      >
+                        <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                          <SelectValue placeholder="Selecione o tipo" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#080D18] border-white/10 text-white">
+                          <SelectItem value="Ação">Ação</SelectItem>
+                          <SelectItem value="Criptomoeda">Criptomoeda</SelectItem>
+                          <SelectItem value="Fundo Imobiliário">Fundo Imobiliário</SelectItem>
+                          <SelectItem value="Commodity">Commodity</SelectItem>
+                          <SelectItem value="Moeda">Moeda</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="location" className="text-white font-bold uppercase tracking-widest text-[10px]">Localização / Custódia</Label>
+                      <Input 
+                        id="location" 
+                        placeholder="Ex: XP, Binance, Ledger" 
+                        className="bg-white/5 border-white/10 text-white"
+                        value={newAsset.location}
+                        onChange={(e) => setNewAsset(prev => ({ ...prev, location: e.target.value }))}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="risk" className="text-white font-bold uppercase tracking-widest text-[10px]">Nível de Risco</Label>
+                      <Select 
+                        value={newAsset.riskLevel} 
+                        onValueChange={(v) => setNewAsset(prev => ({ ...prev, riskLevel: v as any }))}
+                      >
+                        <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                          <SelectValue placeholder="Selecione o risco" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#080D18] border-white/10 text-white">
+                          <SelectItem value="Conservador">Conservador</SelectItem>
+                          <SelectItem value="Moderado">Moderado</SelectItem>
+                          <SelectItem value="Agressivo">Agressivo</SelectItem>
+                          <SelectItem value="Crítico">Crítico</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button 
+                      type="submit" 
+                      onClick={handleAddAsset}
+                      className="w-full bg-primary hover:bg-primary/90 text-white font-bold h-12 rounded-xl shadow-[0_0_20px_rgba(37,99,235,0.3)]"
+                    >
+                      CONFIRMAR REGISTRO
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
-            <PortfolioView assets={mockAssets} />
+            <PortfolioView assets={assets} />
           </div>
         )}
       </main>
 
-      <AssistantChat assets={mockAssets} displayMode={displayMode} />
+      <AssistantChat assets={assets} displayMode={displayMode} />
     </div>
   );
 }
