@@ -120,9 +120,9 @@ export default function NexusDashboard() {
     
     try {
       const newsPrompts = [
-        "IDENTIFIQUE O EVENTO GEOPOLÍTICO MAIS CRÍTICO HOJE E SEU IMPACTO EM EMPRESAS DE ENERGIA E COMMODITIES.",
-        "ANALISE UMA RUPTURA TECNOLÓGICA REAL (IA OU SEMICONDUTORES) E QUAIS EMPRESAS LIDERAM OU SOFREM.",
-        "AVALIE UMA DECISÃO DE BANCO CENTRAL OU MOVIMENTO DE MERCADO GLOBAL E IMPACTO EM CRIPTO E FIIS."
+        "IDENTIFIQUE O EVENTO GEOPOLÍTICO MAIS CRÍTICO HOJE E SEU IMPACTO EM EMPRESAS DE ENERGIA E COMMODITIES. LISTE TICKERS REAIS, PREÇOS E GANHOS ESPERADOS.",
+        "ANALISE UMA RUPTURA TECNOLÓGICA REAL (IA OU SEMICONDUTORES) E QUAIS EMPRESAS LIDERAM OU SOFREM. LISTE TICKERS REAIS, PREÇOS E GANHOS ESPERADOS.",
+        "AVALIE UMA DECISÃO DE BANCO CENTRAL OU MOVIMENTO DE MERCADO GLOBAL E IMPACTO EM CRIPTO E FIIS. LISTE TICKERS REAIS, PREÇOS E GANHOS ESPERADOS."
       ];
 
       for (const p of newsPrompts) {
@@ -295,7 +295,7 @@ export default function NexusDashboard() {
                       </div>
 
                       {/* Imediato Ativos Card Summary */}
-                      {latestAlert.affectedAssetsDetails && (
+                      {latestAlert.affectedAssetsDetails && latestAlert.affectedAssetsDetails.length > 0 && (
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
                            {latestAlert.affectedAssetsDetails.slice(0, 3).map((asset, i) => (
                              <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-2 group/asset transition-all hover:border-primary/40">

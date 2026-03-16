@@ -8,9 +8,9 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 const AffectedAssetDetailSchema = z.object({
-  ticker: z.string().describe('Ticker do ativo (ex: VALE3, BTC).'),
+  ticker: z.string().describe('Ticker do ativo (ex: VALE3, BTC, NVDA).'),
   name: z.string().describe('Nome da empresa ou projeto.'),
-  currentPrice: z.string().describe('Preço atual estimado de mercado (ex: R$ 65,40).'),
+  currentPrice: z.string().describe('Preço atual estimado de mercado (ex: R$ 65,40 ou US$ 120,00).'),
   expectedGainPercentage: z.string().describe('Porcentagem de ganho ou perda esperada nos próximos 7 a 30 dias (ex: +15%, -8%).'),
   impactType: z.enum(['Positivo', 'Negativo', 'Neutro']),
   explanation: z.string().describe('Explicação curta do porquê este ativo específico é afetado.'),
@@ -29,7 +29,7 @@ const GlobalIntelligenceMonitorOutputSchema = z.object({
   marketAction: z.enum(['BUY', 'SELL', 'HOLD', 'WATCH']),
   riskLevel: z.enum(['Conservador', 'Moderado', 'Agressivo', 'Crítico']),
   affectedAssetTickerSymbols: z.array(z.string()),
-  affectedAssetsDetails: z.array(AffectedAssetDetailSchema).describe('Lista detalhada de empresas e ativos afetados.'),
+  affectedAssetsDetails: z.array(AffectedAssetDetailSchema).describe('Lista detalhada de pelo menos 3 empresas e ativos afetados.'),
   essentialText: z.string().describe('Resumo direto e profissional. Sem metáforas infantis.'),
   essentialGlossaryTerms: z.array(z.string()),
   fullTechnicalAnalysis: z.string().describe('Análise técnica baseada em dados reais de mercado.'),
@@ -51,7 +51,7 @@ Você é o Nexus. Um líder absoluto em tendências e um verdadeiro especialista
 ### INPUT:
 {{{rawNewsData}}}
 
-Gere o alerta em Português do Brasil de forma assertiva e autoritária.`,
+Gere o alerta em Português do Brasil de forma assertiva e autoritária. Forneça dados de empresas reais.`,
 });
 
 export async function monitorGlobalEvents(input: { rawNewsData: string }) {
