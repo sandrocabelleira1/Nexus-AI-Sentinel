@@ -134,7 +134,7 @@ export default function NexusDashboard() {
     if (!user) return;
     
     const savePrice = (ticker: string, data: Partial<MarketPrice>) => {
-      const cleanTicker = ticker.toUpperCase().trim();
+      const cleanTicker = ticker.toUpperCase().replace('.SA', '').trim();
       setDocumentNonBlocking(doc(firestore, "market_prices", cleanTicker), {
         ticker: cleanTicker,
         updatedAt: new Date().toISOString(),
@@ -143,28 +143,32 @@ export default function NexusDashboard() {
     };
 
     try {
-      // 1. Criptomoedas via Binance (Top 10)
-      const cryptoSymbols = ['BTC', 'ETH', 'SOL', 'BNB', 'ADA', 'XRP', 'DOT', 'LINK', 'MATIC', 'DOGE'];
-      cryptoSymbols.forEach(symbol => {
-        fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}USDT`)
-          .then(r => r.json())
-          .then(data => {
-            if (data.lastPrice) {
-              savePrice(symbol, {
-                price: parseFloat(data.lastPrice),
-                change24h: parseFloat(data.priceChangePercent),
-                category: 'crypto'
+      // 1. Twelve Data API (Global Coverage)
+      const twelveDataKey = '1dfd3b0de4ee45beb09371dee7fc399f';
+      const globalSymbols = 'AAPL,MSFT,GOOGL,AMZN,TSLA,META,NVDA,BTC/USD,ETH/USD,SPY,QQQ';
+      
+      fetch(`https://api.twelvedata.com/quote?symbol=${globalSymbols}&apikey=${twelveDataKey}`)
+        .then(r => r.json())
+        .then(data => {
+          Object.keys(data).forEach(symbol => {
+            const item = data[symbol];
+            if (item && item.price) {
+              const ticker = symbol.split('/')[0];
+              savePrice(ticker, {
+                price: parseFloat(item.price),
+                change24h: parseFloat(item.percent_change || 0),
+                category: ticker === 'BTC' || ticker === 'ETH' ? 'crypto' : 'stocks'
               });
             }
-          }).catch(() => {});
-      });
+          });
+        }).catch(() => {});
 
-      // 2. B3 e FIIs via Brapi (Busca Individual para maior resiliência)
+      // 2. Brapi API (B3 e FIIs - Foco em FIIs para garantir presença)
+      const b3Token = '2rb5157StMMfsE1ft1ErSq';
       const b3Tickers = [
         'PETR4', 'VALE3', 'ITUB4', 'BBDC4', 'ABEV3', 'BBAS3', 'MGLU3',
-        'HGLG11', 'VGIA11', 'KNRI11', 'MXRF11', 'VISC11', 'XPML11', 'IRDM11', 'CPTS11', 'XPLG11', 'KNCR11', 'BTLG11'
+        'HGLG11', 'VGIA11', 'KNRI11', 'MXRF11', 'VISC11', 'XPML11', 'IRDM11', 'CPTS11', 'XPLG11', 'KNCR11', 'BTLG11', 'VINO11', 'RECT11'
       ];
-      const b3Token = '2rb5157StMMfsE1ft1ErSq';
       
       b3Tickers.forEach(t => {
         fetch(`https://brapi.dev/api/quote/${t}?token=${b3Token}`)
@@ -181,40 +185,41 @@ export default function NexusDashboard() {
           }).catch(() => {});
       });
 
-      // 3. Globais via FMP (Maiores de Tech)
-      const fmpTickers = ['AAPL', 'MSFT', 'NVDA', 'TSLA', 'GOOGL', 'AMZN', 'META', 'NFLX', 'AMD', 'INTC'];
+      // 3. Binance (Backup Crypto de Alta Frequência)
+      const cryptoSymbols = ['BTC', 'ETH', 'SOL', 'BNB', 'ADA', 'XRP'];
+      cryptoSymbols.forEach(symbol => {
+        fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}USDT`)
+          .then(r => r.json())
+          .then(data => {
+            if (data.lastPrice) {
+              savePrice(symbol, {
+                price: parseFloat(data.lastPrice),
+                change24h: parseFloat(data.priceChangePercent),
+                category: 'crypto'
+              });
+            }
+          }).catch(() => {});
+      });
+
+      // 4. FMP (Backup Global Tech)
       const fmpKey = 'SGraLM1W4QBLLjGS3bDVUS6KFmqR7PrJ';
-      
+      const fmpTickers = ['NVDA', 'AMD', 'INTC'];
       fmpTickers.forEach(t => {
         fetch(`https://financialmodelingprep.com/api/v3/quote/${t}?apikey=${fmpKey}`)
           .then(r => r.json())
           .then(data => {
             if (data?.[0]) {
-              const item = data[0];
               savePrice(t, {
-                price: item.price,
-                change24h: item.changesPercentage,
+                price: data[0].price,
+                change24h: data[0].changesPercentage,
                 category: 'stocks'
               });
             }
           }).catch(() => {});
       });
 
-      // 4. Índice IBOVESPA
-      fetch(`https://brapi.dev/api/quote/IBOV?token=${b3Token}`)
-        .then(r => r.json())
-        .then(data => {
-          if (data.results?.[0]) {
-            savePrice('IBOV', {
-              price: data.results[0].regularMarketPrice,
-              change24h: data.results[0].regularMarketChangePercent,
-              category: 'index'
-            });
-          }
-        }).catch(() => {});
-
     } catch (error) {
-      console.error("Erro na sincronização global do Nexus:", error);
+      console.error("Nexus Sync Engine Failure:", error);
     }
   }, [user, firestore]);
 
@@ -239,7 +244,7 @@ export default function NexusDashboard() {
         `Clima: ${w.weather?.[0]?.description} em ${regions[i].name}`
       ).join(' | ');
 
-      const promptData = `### VARREDURA ESTRATÉGICA NEXUS 24/7
+      const promptData = `### VARREDURA ESTRATÉGICA NEXUS 24/7 - ATUALIZADA TWELVE DATA
       1. ANALISE DIÁRIO OFICIAL DA UNIÃO (DOU) E DECRETOS GOVERNAMENTAIS RECENTES.
       2. ANALISE DISCURSOS DO FED E COPOM SOBRE TAXAS DE JUROS.
       3. CRUZE COM CLIMA ATUAL: ${weatherContext}.
@@ -284,7 +289,7 @@ export default function NexusDashboard() {
       <div className="min-h-screen bg-background flex flex-col items-center justify-center space-y-4">
         <Loader2 className="h-12 w-12 text-primary animate-spin" />
         <p className="text-primary font-headline font-bold animate-pulse tracking-widest uppercase text-center px-4">
-          Nexus Sentinel Core v2.8<br/><span className="text-[10px] opacity-60">Synchronizing Geopolitical & Market Feeds...</span>
+          Nexus Sentinel Core v2.9<br/><span className="text-[10px] opacity-60">Synchronizing Twelve Data & Global Feeds...</span>
         </p>
       </div>
     );
@@ -302,7 +307,7 @@ export default function NexusDashboard() {
           <div>
             <h1 className="font-headline font-bold text-2xl tracking-tight leading-none led-text-blue">NEXUS AI</h1>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-[10px] text-primary font-bold uppercase tracking-[0.4em] opacity-80">Sentinel Strategic - Geopolitical Core</span>
+              <span className="text-[10px] text-primary font-bold uppercase tracking-[0.4em] opacity-80">Sentinel Strategic - Twelve Data Core</span>
               <Badge variant="outline" className="h-4 px-1.5 text-[8px] bg-emerald-500/10 border-emerald-500/30 text-emerald-400 font-bold">RADAR 24/7 ACTIVE</Badge>
             </div>
           </div>
@@ -330,7 +335,7 @@ export default function NexusDashboard() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
                 { ticker: 'IBOV', label: 'IBOVESPA' },
-                { ticker: 'VGIA11', label: 'AGRO FII' },
+                { ticker: 'HGLG11', label: 'HGLG LOGÍSTICA' },
                 { ticker: 'BTC', label: 'BITCOIN' },
                 { ticker: 'NVDA', label: 'NVIDIA' },
               ].map((m, i) => {
