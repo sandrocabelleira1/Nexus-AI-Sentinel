@@ -1,69 +1,70 @@
-
 'use server';
 /**
- * @fileOverview Motor de Inteligência Geopolítica Nexus AI v2.
- * Monitora Diários Oficiais, Bancos Centrais e Geopolítica Global em busca de Sinais Fracos.
+ * @fileOverview Motor de Inteligência Geopolítica Nexus AI v2 com Pesquisa em Tempo Real.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 const AffectedAssetDetailSchema = z.object({
-  ticker: z.string().describe('Ticker do ativo (ex: VALE3, BTC, NVDA).'),
-  name: z.string().describe('Nome da empresa ou projeto.'),
-  currentPrice: z.string().describe('Preço atual estimado de mercado.'),
-  expectedGainPercentage: z.string().describe('Porcentagem de ganho ou perda esperada nos próximos 7 dias.'),
+  ticker: z.string(),
+  name: z.string(),
+  currentPrice: z.string(),
+  expectedGainPercentage: z.string(),
   impactType: z.enum(['Positivo', 'Negativo', 'Neutro']),
-  explanation: z.string().describe('Explicação do Elo de Causalidade para este ativo específico.'),
+  explanation: z.string(),
   recommendation: z.enum(['BUY', 'SELL', 'HOLD', 'WATCH']),
-  longTermOutlook: z.string().describe('Perspectiva estratégica para além dos 7 dias.'),
+  longTermOutlook: z.string(),
 });
 
 const GeopoliticalCausalitySchema = z.object({
-  event: z.string().describe('O fato bruto (ex: Novo decreto de taxação ou movimentação de ouro por governos).'),
-  identification: z.string().describe('Identificação da fonte primária (ex: Diário Oficial da União, FED, COPOM).'),
-  mapping: z.array(z.string()).describe('Setores e ativos mapeados como vulneráveis ou beneficiados.'),
-  simulation: z.string().describe('Simulação do impacto nos rendimentos e fluxo de caixa.'),
-  prediction: z.string().describe('Previsão probabilística do movimento de mercado para a próxima semana.'),
+  event: z.string(),
+  identification: z.string(),
+  mapping: z.array(z.string()),
+  simulation: z.string(),
+  prediction: z.string(),
 });
 
 const GlobalIntelligenceMonitorInputSchema = z.object({
-  rawNewsData: z.string().describe('Dados reais de notícias, decretos governamentais e mercados mundiais.'),
+  rawNewsData: z.string(),
 });
 
 const GlobalIntelligenceMonitorOutputSchema = z.object({
-  title: z.string().describe('Título conciso do alerta.'),
+  title: z.string(),
   eventOrigin: z.enum(['Geopolítica', 'Governo', 'Natureza', 'Tech', 'Mercado']),
-  causalityExplanation: z.string().describe('Explicação detalhada do Elo de Causalidade.'),
-  causalityLink: GeopoliticalCausalitySchema.describe('Estrutura lógica do motor de previsão geopolítica.'),
+  causalityExplanation: z.string(),
+  causalityLink: GeopoliticalCausalitySchema,
   priority: z.number().int().min(1).max(5),
   marketAction: z.enum(['BUY', 'SELL', 'HOLD', 'WATCH']),
   riskLevel: z.enum(['Conservador', 'Moderado', 'Agressivo', 'Crítico']),
   affectedAssetTickerSymbols: z.array(z.string()),
   affectedAssetsDetails: z.array(AffectedAssetDetailSchema),
-  essentialText: z.string().describe('Resumo focado em ação imediata (Compra/Venda).'),
+  essentialText: z.string(),
   essentialGlossaryTerms: z.array(z.string()),
-  fullTechnicalAnalysis: z.string().describe('Análise técnica baseada em dados reais.'),
-  fullLocationRiskAnalysis: z.string().describe('Análise de risco baseada em custódia.'),
+  fullTechnicalAnalysis: z.string(),
+  fullLocationRiskAnalysis: z.string(),
 });
 
 export const globalIntelligenceMonitorPrompt = ai.definePrompt({
   name: 'globalIntelligenceMonitorPrompt',
   input: { schema: GlobalIntelligenceMonitorInputSchema },
   output: { schema: GlobalIntelligenceMonitorOutputSchema },
-  prompt: `### PERSONA: NEXUS (O GUARDIÃO E ESTRATEGISTA GEOPOLÍTICO 24/7)
-Você é o Nexus. Seu objetivo é garantir que o usuário ganhe dinheiro e evitar que perca dinheiro. Você é incansável, cético e focado em resultados.
+  config: {
+    // Ativa o Google Search Grounding para monitoramento em tempo real
+    googleSearchRetrieval: {},
+  },
+  prompt: `### PERSONA: NEXUS (SENTINELA ESTRATÉGICO GLOBAL)
+Você é o Nexus. Sua tarefa é vasculhar a internet AGORA em busca de decisões governamentais, decretos e mudanças geopolíticas que afetem o bolso.
 
-### DIRETRIZES DO MOTOR DE SENTINELA:
-1. **SINAIS FRACOS E CISNES NEGROS**: Procure por movimentos anômalos de governos (movimentação de reservas de ouro, novos decretos, mudanças de tom em discursos de BCs).
-2. **ELO DE CAUSALIDADE (CAUSALITY LINK)**: Conecte o ato político (ex: taxação de dividendos) ao impacto no bolso (ex: queda do IFIX). Explique o PORQUÊ.
-3. **JANELA TÁTICA (7 DIAS)**: Identifique janelas de lucro rápido. Seja direto: se o ativo está em declínio, ordene VENDA IMEDIATA. Se há oportunidade, ordene COMPRA IMEDIATA.
-4. **FONTES DE ESCUTA**: Analise como se tivesse acesso ao Diário Oficial da União (DOU), discursos do FED/COPOM e Projetos de Lei.
+### MOTOR DE BUSCA ATIVO:
+1. Procure no Diário Oficial da União (DOU), sites do FED, COPOM e notícias de última hora (Bloomberg, Reuters).
+2. Identifique "Sinais Fracos": movimentações de ouro, mudanças táticas de BCs, novos impostos.
+3. Conecte o ato político (Causa) ao impacto financeiro (Efeito) para os próximos 7 dias.
 
-### INPUT:
+### DADOS DE ENTRADA:
 {{{rawNewsData}}}
 
-Gere o alerta estratégico em Português do Brasil com autoridade máxima. Foque em proteger o patrimônio e capturar o lucro de curto prazo.`,
+Gere um alerta tático detalhado em Português do Brasil. Foque em COMPRA ou VENDA IMEDIATA.`,
 });
 
 export async function monitorGlobalEvents(input: { rawNewsData: string }) {
