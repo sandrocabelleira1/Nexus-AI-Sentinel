@@ -1,12 +1,13 @@
+
 "use client"
 
 import { UserAsset } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Wallet, Zap, TrendingUp, Landmark, Boxes, Plus, Minus, Calculator } from "lucide-react";
+import { Wallet, Zap, TrendingUp, Landmark, Boxes, Plus, Minus, Calculator, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -28,8 +29,40 @@ export function AssetCard({ asset, onUpdate }: AssetCardProps) {
   const [isBuyOpen, setIsBuyOpen] = useState(false);
   const [isSellOpen, setIsSellOpen] = useState(false);
   
-  const [transValue, setTransValue] = useState<number>(0);
-  const [transQty, setTransQty] = useState<number>(0);
+  // Transaction State
+  const [totalValue, setTotalValue] = useState<number>(0);
+  const [unitPrice, setUnitPrice] = useState<number>(0);
+  const [quantity, setQuantity] = useState<number>(0);
+
+  // Auto-calculate logic
+  const handleValueChange = (val: number) => {
+    setTotalValue(val);
+    if (unitPrice > 0) {
+      setQuantity(Number((val / unitPrice).toFixed(4)));
+    }
+  };
+
+  const handlePriceChange = (price: number) => {
+    setUnitPrice(price);
+    if (price > 0 && totalValue > 0) {
+      setQuantity(Number((totalValue / price).toFixed(4)));
+    }
+  };
+
+  const handleQuantityChange = (qty: number) => {
+    setQuantity(qty);
+    if (qty > 0 && unitPrice > 0) {
+      setTotalValue(Number((qty * unitPrice).toFixed(2)));
+    } else if (qty > 0 && totalValue > 0) {
+      setUnitPrice(Number((totalValue / qty).toFixed(2)));
+    }
+  };
+
+  const resetForm = () => {
+    setTotalValue(0);
+    setUnitPrice(0);
+    setQuantity(0);
+  };
 
   const getRiskStyles = (risk?: string) => {
     switch (risk) {
@@ -61,14 +94,13 @@ export function AssetCard({ asset, onUpdate }: AssetCardProps) {
 
   const handleTransaction = (type: 'buy' | 'sell') => {
     const multiplier = type === 'buy' ? 1 : -1;
-    const newQty = Math.max(0, asset.quantity + (transQty * multiplier));
-    const newVal = Math.max(0, asset.investedValue + (transValue * multiplier));
+    const newQty = Math.max(0, asset.quantity + (quantity * multiplier));
+    const newVal = Math.max(0, asset.investedValue + (totalValue * multiplier));
     
     onUpdate(asset.id, newQty, newVal);
     setIsBuyOpen(false);
     setIsSellOpen(false);
-    setTransValue(0);
-    setTransQty(0);
+    resetForm();
   };
 
   return (
@@ -101,14 +133,14 @@ export function AssetCard({ asset, onUpdate }: AssetCardProps) {
               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(asset.investedValue)}
             </div>
             <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
-              QTD: {asset.quantity.toLocaleString()}
+              QTD: {asset.quantity.toLocaleString(undefined, { maximumFractionDigits: 4 })}
             </div>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3 pt-2">
-          {/* Botão Comprar com Modal */}
-          <Dialog open={isBuyOpen} onOpenChange={setIsBuyOpen}>
+          {/* Botão Comprar com Calculadora */}
+          <Dialog open={isBuyOpen} onOpenChange={(open) => { setIsBuyOpen(open); if(!open) resetForm(); }}>
             <DialogTrigger asChild>
               <Button 
                 size="sm" 
@@ -121,38 +153,52 @@ export function AssetCard({ asset, onUpdate }: AssetCardProps) {
             <DialogContent className="glass-panel border-emerald-500/20 sm:max-w-[400px]">
               <DialogHeader>
                 <DialogTitle className="text-2xl font-headline font-bold text-emerald-400 flex items-center gap-3">
-                  <Calculator className="h-6 w-6" /> Nova Compra
+                  <Calculator className="h-6 w-6" /> Novo Aporte
                 </DialogTitle>
                 <DialogDescription className="text-muted-foreground">
-                  Aporte de capital em {asset.name}.
+                  O Nexus calculará a quantidade com base no valor ou preço unitário.
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-6 py-6">
                 <div className="grid gap-2">
-                  <Label className="text-white font-bold uppercase tracking-widest text-[10px]">Valor do Aporte (R$)</Label>
+                  <Label className="text-white font-bold uppercase tracking-widest text-[10px]">Valor Total do Aporte (R$)</Label>
                   <Input 
                     type="number" 
                     placeholder="0.00" 
                     className="bg-white/5 border-white/10 text-white"
-                    value={transValue || ""}
-                    onChange={(e) => setTransValue(Number(e.target.value))}
+                    value={totalValue || ""}
+                    onChange={(e) => handleValueChange(Number(e.target.value))}
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label className="text-white font-bold uppercase tracking-widest text-[10px]">Quantidade Comprada</Label>
+                  <Label className="text-white font-bold uppercase tracking-widest text-[10px]">Preço Unitário Pago (R$)</Label>
                   <Input 
                     type="number" 
-                    placeholder="0" 
+                    placeholder="0.00" 
                     className="bg-white/5 border-white/10 text-white"
-                    value={transQty || ""}
-                    onChange={(e) => setTransQty(Number(e.target.value))}
+                    value={unitPrice || ""}
+                    onChange={(e) => handlePriceChange(Number(e.target.value))}
                   />
+                </div>
+                <div className="grid gap-2 relative">
+                  <Label className="text-white font-bold uppercase tracking-widest text-[10px]">Quantidade Adquirida</Label>
+                  <Input 
+                    type="number" 
+                    placeholder="0.0000" 
+                    className="bg-white/5 border-white/10 text-white pr-10"
+                    value={quantity || ""}
+                    onChange={(e) => handleQuantityChange(Number(e.target.value))}
+                  />
+                  <div className="absolute right-3 bottom-2.5 opacity-40">
+                    <Info className="h-4 w-4 text-emerald-400" />
+                  </div>
                 </div>
               </div>
               <DialogFooter>
                 <Button 
                   onClick={() => handleTransaction('buy')}
-                  className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold h-12 rounded-xl"
+                  disabled={!quantity || !totalValue}
+                  className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold h-12 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)]"
                 >
                   CONFIRMAR APORTE
                 </Button>
@@ -160,8 +206,8 @@ export function AssetCard({ asset, onUpdate }: AssetCardProps) {
             </DialogContent>
           </Dialog>
 
-          {/* Botão Vender com Modal */}
-          <Dialog open={isSellOpen} onOpenChange={setIsSellOpen}>
+          {/* Botão Vender com Calculadora */}
+          <Dialog open={isSellOpen} onOpenChange={(open) => { setIsSellOpen(open); if(!open) resetForm(); }}>
             <DialogTrigger asChild>
               <Button 
                 size="sm" 
@@ -175,39 +221,53 @@ export function AssetCard({ asset, onUpdate }: AssetCardProps) {
             <DialogContent className="glass-panel border-rose-500/20 sm:max-w-[400px]">
               <DialogHeader>
                 <DialogTitle className="text-2xl font-headline font-bold text-rose-400 flex items-center gap-3">
-                  <Calculator className="h-6 w-6" /> Liquidar Ativo
+                  <Calculator className="h-6 w-6" /> Liquidar Posição
                 </DialogTitle>
                 <DialogDescription className="text-muted-foreground">
-                  Venda de posição de {asset.name}.
+                  Informe o valor da venda ou a quantidade para cálculo automático.
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-6 py-6">
                 <div className="grid gap-2">
-                  <Label className="text-white font-bold uppercase tracking-widest text-[10px]">Valor da Venda (R$)</Label>
+                  <Label className="text-white font-bold uppercase tracking-widest text-[10px]">Valor Bruto da Venda (R$)</Label>
                   <Input 
                     type="number" 
                     placeholder="0.00" 
                     className="bg-white/5 border-white/10 text-white"
-                    value={transValue || ""}
-                    onChange={(e) => setTransValue(Number(e.target.value))}
+                    value={totalValue || ""}
+                    onChange={(e) => handleValueChange(Number(e.target.value))}
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label className="text-white font-bold uppercase tracking-widest text-[10px]">Quantidade Vendida</Label>
+                  <Label className="text-white font-bold uppercase tracking-widest text-[10px]">Preço de Venda Unitário (R$)</Label>
                   <Input 
                     type="number" 
-                    placeholder="0" 
+                    placeholder="0.00" 
+                    className="bg-white/5 border-white/10 text-white"
+                    value={unitPrice || ""}
+                    onChange={(e) => handlePriceChange(Number(e.target.value))}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label className="text-white font-bold uppercase tracking-widest text-[10px]">Quantidade a Liquidar</Label>
+                  <Input 
+                    type="number" 
+                    placeholder="0.0000" 
                     max={asset.quantity}
                     className="bg-white/5 border-white/10 text-white"
-                    value={transQty || ""}
-                    onChange={(e) => setTransQty(Number(e.target.value))}
+                    value={quantity || ""}
+                    onChange={(e) => handleQuantityChange(Number(e.target.value))}
                   />
+                  {quantity > asset.quantity && (
+                    <span className="text-[10px] text-rose-400 font-bold uppercase">Saldo insuficiente na Wallet</span>
+                  )}
                 </div>
               </div>
               <DialogFooter>
                 <Button 
                   onClick={() => handleTransaction('sell')}
-                  className="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold h-12 rounded-xl"
+                  disabled={!quantity || !totalValue || quantity > asset.quantity}
+                  className="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold h-12 rounded-xl shadow-[0_0_20px_rgba(244,63,94,0.3)]"
                 >
                   CONFIRMAR VENDA
                 </Button>
