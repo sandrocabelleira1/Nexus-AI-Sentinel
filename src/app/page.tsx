@@ -219,7 +219,8 @@ export default function NexusDashboard() {
       2. ANALISE DISCURSOS DO FED E COPOM SOBRE TAXAS DE JUROS.
       3. CRUZE COM CLIMA ATUAL: ${weatherContext}.
       4. DEFINA ELO DE CAUSALIDADE PARA: FIIs, AGRO, TECH (NASDAQ) E CRIPTO.
-      5. GERE ORDENS DE COMPRA/VENDA IMEDIATA PARA JANELA TÁTICA DE 7 DIAS.`;
+      5. GERE ORDENS DE COMPRA/VENDA IMEDIATA PARA JANELA TÁTICA DE 7 DIAS.
+      6. BUSQUE SINAIS FRACOS: MOVIMENTAÇÃO DE RESERVAS, SINAIS DE CISNE NEGRO.`;
 
       const result = await monitorGlobalEvents({ rawNewsData: promptData });
       if (result) {
