@@ -1,14 +1,15 @@
+
 'use server';
 /**
  * @fileOverview Fluxo de monitoramento global do Nexus AI com análise detalhada por ativo.
- * Utiliza inteligência real-time para analisar eventos globais autênticos com foco em 7 dias e longo prazo.
+ * Utiliza inteligência real-time para analisar eventos globais autênticos e climáticos.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 const AffectedAssetDetailSchema = z.object({
-  ticker: z.string().describe('Ticker do ativo (ex: VALE3, BTC, NVDA).'),
+  ticker: z.string().describe('Ticker do ativo (ex: VALE3, BTC, VGIA11).'),
   name: z.string().describe('Nome da empresa ou projeto.'),
   currentPrice: z.string().describe('Preço atual estimado de mercado (ex: R$ 65,40 ou US$ 120,00).'),
   expectedGainPercentage: z.string().describe('Porcentagem de ganho ou perda esperada nos próximos 7 dias (ex: +15%, -8%).'),
@@ -19,7 +20,7 @@ const AffectedAssetDetailSchema = z.object({
 });
 
 const GlobalIntelligenceMonitorInputSchema = z.object({
-  rawNewsData: z.string().describe('Instrução para busca de dados reais ou feed de notícias atual.'),
+  rawNewsData: z.string().describe('Instrução para busca de dados reais, feed de notícias e dados climáticos atualizados.'),
 });
 
 const GlobalIntelligenceMonitorOutputSchema = z.object({
@@ -45,10 +46,10 @@ export const globalIntelligenceMonitorPrompt = ai.definePrompt({
 Você é o Nexus. Sua única missão é garantir que o usuário GANHE DINHEIRO e NUNCA PERCA PATRIMÔNIO. Você monitora o mundo 24 horas por dia, 7 dias por semana.
 
 ### DIRETRIZES DE COMANDO:
-1. **FOCO TÁTICO (7 DIAS)**: Identifique janelas de oportunidade para ganhos rápidos. Se um ativo vai subir na próxima semana devido a um fato real, ordene a COMPRA IMEDIATA.
-2. **PROTEÇÃO DE CAPITAL**: Se um ativo está em declínio ou risco iminente, seja implacável: ordene a VENDA IMEDIATA. Não deixe o usuário perder dinheiro por hesitação.
-3. **VISÃO DE LONGO PRAZO**: Além do ganho rápido, avalie se o evento cria uma base sólida para crescimento sustentável.
-4. **PRECISÃO CIRÚRGICA**: Use tickers reais, preços estimados e justificativas baseadas em fluxo de caixa e geopolítica.
+1. **FOCO TÁTICO (7 DIAS)**: Identifique janelas de oportunidade para ganhos rápidos. Se um ativo vai subir na próxima semana devido a um fato real ou climático, ordene a COMPRA IMEDIATA.
+2. **PROTEÇÃO DE CAPITAL**: Se um ativo está em declínio ou risco iminente, seja implacável: ordene a VENDA IMEDIATA.
+3. **CLIMA E NATUREZA**: Analise profundamente como dados de clima afetam FIIs de Agronegócio (VGIA11, etc.) e Logística (HGLG11, portos). Use o ceticismo analítico para prever quebras de safra ou gargalos logísticos.
+4. **PRECISÃO CIRÚRGICA**: Use tickers reais, preços estimados e justificativas baseadas em fluxo de caixa, geopolítica e meteorologia.
 
 ### INPUT:
 {{{rawNewsData}}}

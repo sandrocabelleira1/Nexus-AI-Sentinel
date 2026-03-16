@@ -30,7 +30,9 @@ import {
   Target,
   RefreshCw,
   AlertTriangle,
-  ShieldAlert
+  ShieldAlert,
+  CloudLightning,
+  Ship
 } from "lucide-react";
 import { AssistantChat } from "@/components/ai/assistant-chat";
 import { Badge } from "@/components/ui/badge";
@@ -71,7 +73,7 @@ const initialMockAssets: UserAsset[] = [
   { id: '1', name: 'VALE3', type: 'Ação', location: 'XP Investimentos', riskLevel: 'Moderado', investedValue: 45000, quantity: 500 },
   { id: '2', name: 'BITCOIN', type: 'Criptomoeda', location: 'Ledger Nano X', riskLevel: 'Agressivo', investedValue: 120000, quantity: 0.42 },
   { id: '3', name: 'HGLG11', type: 'Fundo Imobiliário', location: 'BTG Pactual', riskLevel: 'Conservador', investedValue: 32000, quantity: 200 },
-  { id: '4', name: 'PETR4', type: 'Ação', location: 'Inter', riskLevel: 'Agressivo', investedValue: 25000, quantity: 600 },
+  { id: '4', name: 'VGIA11', type: 'Fundo Imobiliário', location: 'XP Investimentos', riskLevel: 'Moderado', investedValue: 15000, quantity: 1500 },
 ];
 
 export default function NexusDashboard() {
@@ -88,14 +90,12 @@ export default function NexusDashboard() {
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
 
-  // Autenticação anônima automática
   useEffect(() => {
     if (!user && !isUserLoading) {
       initiateAnonymousSignIn(auth);
     }
   }, [user, isUserLoading, auth]);
 
-  // ESCUTA EM TEMPO REAL: Alertas Globais (Event Hub)
   const alertsQuery = useMemoFirebase(() => {
     if (!user) return null;
     return query(
@@ -105,7 +105,6 @@ export default function NexusDashboard() {
     );
   }, [firestore, user]);
 
-  // ESCUTA EM TEMPO REAL: Preços de Mercado (Live Data)
   const pricesQuery = useMemoFirebase(() => {
     if (!user) return null;
     return query(collection(firestore, "market_prices"));
@@ -131,12 +130,10 @@ export default function NexusDashboard() {
     quantity: 0
   });
 
-  // FUNÇÃO DE SINCRONIZAÇÃO GLOBAL (BINANCE + B3/FIIs)
   const syncLivePrices = useCallback(async () => {
     if (!user) return;
     
     try {
-      // 1. FETCH CRIPTO (BINANCE)
       const cryptoSymbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT'];
       const cryptoResponses = await Promise.all(
         cryptoSymbols.map(s => fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${s}`))
@@ -153,8 +150,7 @@ export default function NexusDashboard() {
         }, { merge: true });
       });
 
-      // 2. FETCH B3 & FIIs (BRAPI) - Token: 2rb5157StMMfsE1ft1ErSq
-      const b3Tickers = 'PETR4,VALE3,HGLG11,IBOV11,BOVA11';
+      const b3Tickers = 'PETR4,VALE3,HGLG11,VGIA11,IBOV11,BOVA11';
       const b3Response = await fetch(`https://brapi.dev/api/quote/${b3Tickers}?token=2rb5157StMMfsE1ft1ErSq`);
       const b3Data = await b3Response.json();
 
@@ -169,7 +165,6 @@ export default function NexusDashboard() {
         });
       }
 
-      // 3. FALLBACK/ESTÁTICOS (IBOV INDEX & DÓLAR)
       const otherTickers = [
         { t: 'IBOV', p: 132000, c: 0.45 },
         { t: 'DOLAR', p: 5.12, c: -0.21 }
@@ -195,33 +190,44 @@ export default function NexusDashboard() {
     setIsScanning(true);
     
     try {
-      // Forçamos a sincronização de preços reais
       await syncLivePrices();
 
-      const newsPrompts = [
-        "VARREDURA TÁTICA 7 DIAS: ANALISE O IMPACTO GEOPOLÍTICO NOS ATIVOS B3, FIIs E CRIPTO. EMITA ORDENS DE COMPRA OU VENDA IMEDIATA PARA PROTEÇÃO E GANHO RÁPIDO."
+      const weatherApiKey = '6c6a8bd003806f53d8c5906014616088';
+      const regions = [
+        { name: 'Cuiabá (Agro Hub)', q: 'Cuiaba,BR' },
+        { name: 'Santos (Porto Logística)', q: 'Santos,BR' }
       ];
+      
+      const weatherResponses = await Promise.all(
+        regions.map(r => fetch(`https://api.openweathermap.org/data/2.5/weather?q=${r.q}&appid=${weatherApiKey}&units=metric`))
+      );
+      const weatherData = await Promise.all(weatherResponses.map(r => r.json()));
+      
+      const weatherContext = weatherData.map((w, i) => 
+        `Região: ${regions[i].name} - Clima: ${w.weather?.[0]?.description}, Temp: ${w.main?.temp}°C, Humidade: ${w.main?.humidity}%`
+      ).join(' | ');
 
-      for (const p of newsPrompts) {
-        const result = await monitorGlobalEvents({ rawNewsData: p });
-        if (result) {
-          addDocumentNonBlocking(collection(firestore, "global_intelligence_alerts"), {
-            ...result,
-            createdAt: new Date().toISOString()
-          });
-        }
+      const promptData = `VARREDURA TÁTICA 7 DIAS. ANALISE IMPACTO GEOPOLÍTICO E CLIMÁTICO. 
+      CONTEXTO CLIMA REAL: ${weatherContext}. 
+      FOCO ESPECIAL: FIIs de Agronegócio (como VGIA11) e Logística (como HGLG11). EMITA ORDENS DE EXECUÇÃO IMEDIATA.`;
+
+      const result = await monitorGlobalEvents({ rawNewsData: promptData });
+      if (result) {
+        addDocumentNonBlocking(collection(firestore, "global_intelligence_alerts"), {
+          ...result,
+          createdAt: new Date().toISOString()
+        });
       }
     } catch (error) {
-      // Erro propagado via FirebaseErrorListener
+      console.error("Erro na varredura climática/geopolítica:", error);
     } finally {
       setIsScanning(false);
     }
   }, [user, isScanning, firestore, syncLivePrices]);
 
-  // INTERVALO DE VIGILÂNCIA 24/7 (Sincronização a cada 30 segundos para respeitar rate limits)
   useEffect(() => {
     if (user && !isUserLoading) {
-      syncLivePrices(); // Sync inicial
+      syncLivePrices();
       const interval = setInterval(() => {
         syncLivePrices();
       }, 30000); 
@@ -230,7 +236,7 @@ export default function NexusDashboard() {
   }, [user, isUserLoading, syncLivePrices]);
 
   const discussWithNexus = (alertTitle: string) => {
-    setChatInitialQuery(`Nexus, baseado no evento "${alertTitle}" e sua análise de 7 dias, quais ações IMEDIATAS devo tomar com meus ativos PETR4, VALE3 e Criptos?`);
+    setChatInitialQuery(`Nexus, baseado no evento "${alertTitle}" e nas condições climáticas identificadas, quais ações IMEDIATAS devo tomar com meus FIIs e Ações?`);
     setIsChatOpen(true);
     setIsRecommendationOpen(false);
   };
@@ -240,7 +246,7 @@ export default function NexusDashboard() {
       <div className="min-h-screen bg-background flex flex-col items-center justify-center space-y-4">
         <Loader2 className="h-12 w-12 text-primary animate-spin" />
         <p className="text-primary font-headline font-bold animate-pulse tracking-widest uppercase text-center px-4">
-          Nexus Sentinel Core v2.8<br/><span className="text-[10px] opacity-60">Synchronizing Global Market Feeds (B3 + Binance)...</span>
+          Nexus Sentinel Core v2.8<br/><span className="text-[10px] opacity-60">Synchronizing Market & Weather Feeds...</span>
         </p>
       </div>
     );
@@ -258,8 +264,8 @@ export default function NexusDashboard() {
           <div>
             <h1 className="font-headline font-bold text-2xl tracking-tight leading-none led-text-blue">NEXUS AI</h1>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-[10px] text-primary font-bold uppercase tracking-[0.4em] opacity-80">Sentinel Strategic v2.8 - B3/BINANCE LIVE</span>
-              <Badge variant="outline" className="h-4 px-1.5 text-[8px] bg-emerald-500/10 border-emerald-500/30 text-emerald-400 font-bold">ACTIVE FEED</Badge>
+              <span className="text-[10px] text-primary font-bold uppercase tracking-[0.4em] opacity-80">Sentinel Strategic - Real-Time Hub</span>
+              <Badge variant="outline" className="h-4 px-1.5 text-[8px] bg-emerald-500/10 border-emerald-500/30 text-emerald-400 font-bold">WEATHER + MARKET ACTIVE</Badge>
             </div>
           </div>
         </div>
@@ -307,7 +313,7 @@ export default function NexusDashboard() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
                 { ticker: 'IBOV', label: 'IBOVESPA INDEX' },
-                { ticker: 'VALE3', label: 'VALE3 (B3)' },
+                { ticker: 'VGIA11', label: 'AGRO FII (REAL-TIME)' },
                 { ticker: 'BTC', label: 'BITCOIN (BINANCE)' },
                 { ticker: 'DOLAR', label: 'DÓLAR REAL-TIME' },
               ].map((m, i) => {
@@ -355,8 +361,8 @@ export default function NexusDashboard() {
                         <Scan className="absolute inset-0 m-auto h-8 w-8 text-primary animate-pulse" />
                       </div>
                       <div className="text-center">
-                        <p className="text-primary font-headline font-bold text-xl led-text-blue">NEXUS VARRENDO B3 & BINANCE...</p>
-                        <p className="text-muted-foreground text-xs uppercase tracking-widest mt-2">Vigilância Tática 24/7 Ativa</p>
+                        <p className="text-primary font-headline font-bold text-xl led-text-blue">NEXUS VARRENDO CLIMA E MERCADOS...</p>
+                        <p className="text-muted-foreground text-xs uppercase tracking-widest mt-2">Sincronizando Feed OpenWeatherMap + B3</p>
                       </div>
                     </div>
                   ) : isLoadingAlerts ? (
@@ -375,6 +381,11 @@ export default function NexusDashboard() {
                             <Clock className="h-3 w-3" />
                             {formatDistanceToNow(new Date(latestAlert.createdAt), { addSuffix: true, locale: ptBR })}
                           </span>
+                          {latestAlert.eventOrigin === 'Natureza' && (
+                            <Badge variant="outline" className="text-blue-400 border-blue-400/30 gap-1.5 px-3 py-1">
+                              <CloudLightning className="h-3 w-3" /> CLIMA MONITORADO
+                            </Badge>
+                          )}
                         </div>
                         <h2 className="text-5xl font-headline font-bold text-white leading-tight tracking-tight">{latestAlert.title}</h2>
                       </div>
@@ -425,7 +436,10 @@ export default function NexusDashboard() {
                             <DialogHeader className="p-8 border-b border-white/10 bg-primary/5">
                               <div className="flex items-center justify-between mb-4">
                                 <Badge className={latestAlert.marketAction === 'SELL' ? 'bg-rose-500' : 'bg-primary'}>{latestAlert.marketAction} IMEDIATO</Badge>
-                                <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">SENTINEL HUB 24/7</span>
+                                <div className="flex items-center gap-2">
+                                  {latestAlert.eventOrigin === 'Natureza' && <Ship className="h-4 w-4 text-blue-400" />}
+                                  <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">SENTINEL CLIMA + AGRO</span>
+                                </div>
                               </div>
                               <DialogTitle className="text-3xl font-headline font-bold text-white led-text-blue">{latestAlert.title}</DialogTitle>
                             </DialogHeader>
