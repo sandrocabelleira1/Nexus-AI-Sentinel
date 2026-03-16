@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { WorldMood } from "@/components/dashboard/world-mood";
-import { AssetType, DisplayMode, UserAsset } from "@/lib/types";
+import { AssetType, DisplayMode, UserAsset, GlobalIntelligenceAlert } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { 
   TrendingUp, 
@@ -16,11 +16,16 @@ import {
   Activity,
   ShieldCheck,
   Terminal,
-  Plus
+  Plus,
+  Clock
 } from "lucide-react";
 import { AssistantChat } from "@/components/ai/assistant-chat";
 import { Badge } from "@/components/ui/badge";
 import { PortfolioView } from "@/components/portfolio/portfolio-view";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { collection, query, orderBy, limit } from "firebase/firestore";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import {
   Dialog,
   DialogContent,
@@ -52,8 +57,20 @@ export default function NexusDashboard() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'portfolio'>('dashboard');
   const [assets, setAssets] = useState<UserAsset[]>(initialMockAssets);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  
-  // Form State
+  const firestore = useFirestore();
+
+  // Escutando Alertas Globais do Firestore (Hub de Eventos)
+  const alertsQuery = useMemoFirebase(() => {
+    return query(
+      collection(firestore, "global_intelligence_alerts"),
+      orderBy("createdAt", "desc"),
+      limit(5)
+    );
+  }, [firestore]);
+
+  const { data: globalAlerts, isLoading: isLoadingAlerts } = useCollection<GlobalIntelligenceAlert>(alertsQuery);
+  const latestAlert = globalAlerts?.[0];
+
   const [newAsset, setNewAsset] = useState<Partial<UserAsset>>({
     name: '',
     type: 'Ação',
@@ -96,10 +113,8 @@ export default function NexusDashboard() {
 
   return (
     <div className="min-h-screen relative selection:bg-primary selection:text-white">
-      {/* Grade Cibernética de Fundo */}
       <div className="fixed inset-0 cyber-grid pointer-events-none opacity-20" />
 
-      {/* Header Estilo Centro de Comando */}
       <header className="h-20 border-b border-white/10 px-8 flex items-center justify-between sticky top-0 bg-background/80 backdrop-blur-2xl z-50">
         <div className="flex items-center gap-5">
           <div className="p-3 rounded-2xl bg-primary/20 border border-primary/40 led-glow-blue animate-pulse">
@@ -148,7 +163,6 @@ export default function NexusDashboard() {
       <main className="max-w-[1700px] mx-auto px-8 py-10 space-y-10 relative z-10">
         {activeTab === 'dashboard' ? (
           <>
-            {/* Metric Grid - LED Accents */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {metrics.map((m, i) => (
                 <div key={i} className="bg-[#080D18]/90 border border-white/10 rounded-3xl p-7 transition-all hover:border-primary/40 group cursor-pointer shadow-2xl relative overflow-hidden">
@@ -167,79 +181,93 @@ export default function NexusDashboard() {
               ))}
             </div>
 
-            {/* Central Dashboard Area */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-              {/* World Mood Gauge */}
               <div className="lg:col-span-3">
                 <WorldMood />
               </div>
 
-              {/* Main Intelligence Card */}
               <div className="lg:col-span-6">
                 <div className="bg-[#080D18]/95 border border-white/10 rounded-[3rem] p-12 h-full relative overflow-hidden flex flex-col justify-center shadow-[0_0_60px_-15px_rgba(0,0,0,0.8)] group transition-all hover:border-accent/40">
                   <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-accent/40 to-transparent" />
                   <div className="absolute -top-32 -left-32 w-80 h-80 bg-primary/20 rounded-full blur-[120px] pointer-events-none group-hover:bg-primary/30 transition-colors" />
                   <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-accent/10 rounded-full blur-[120px] pointer-events-none" />
                   
-                  <div className="absolute top-12 right-12 p-6 rounded-3xl bg-accent/10 border border-accent/20 shadow-[0_0_40px_rgba(249,115,22,0.2)]">
-                    <Zap className="h-10 w-10 text-accent animate-pulse" />
-                  </div>
-                  
-                  <div className="space-y-10 max-w-2xl z-10">
-                    <div className="space-y-3">
-                      <Badge className="bg-accent text-white font-bold px-5 py-2 rounded-xl uppercase tracking-widest text-[11px] shadow-[0_0_20px_rgba(249,115,22,0.5)]">ALERTA CRÍTICO</Badge>
-                      <h2 className="text-6xl font-headline font-bold leading-[1.05] tracking-tight text-white">Impacto Geopolítico</h2>
-                      <p className="text-xl text-muted-foreground font-medium flex items-center gap-3">
-                        <Terminal className="h-5 w-5 text-primary" />
-                        Nexus detectou anomalias nas rotas do minério.
-                      </p>
+                  {isLoadingAlerts ? (
+                    <div className="flex flex-col items-center justify-center space-y-4 py-20">
+                      <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                      <p className="text-primary font-bold animate-pulse">Sincronizando com Nexus Hub...</p>
                     </div>
+                  ) : latestAlert ? (
+                    <div className="space-y-10 max-w-2xl z-10 animate-in fade-in duration-700">
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-4">
+                          <Badge className="bg-accent text-white font-bold px-5 py-2 rounded-xl uppercase tracking-widest text-[11px] shadow-[0_0_20px_rgba(249,115,22,0.5)]">
+                            ALERTA {latestAlert.priority >= 4 ? 'CRÍTICO' : 'INTELIGENTE'}
+                          </Badge>
+                          <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {formatDistanceToNow(new Date(latestAlert.createdAt), { addSuffix: true, locale: ptBR })}
+                          </span>
+                        </div>
+                        <h2 className="text-5xl font-headline font-bold leading-[1.05] tracking-tight text-white">{latestAlert.title}</h2>
+                        <p className="text-xl text-muted-foreground font-medium flex items-center gap-3">
+                          <Terminal className="h-5 w-5 text-primary" />
+                          Nexus: {latestAlert.eventOrigin}
+                        </p>
+                      </div>
 
-                    <div className="relative">
-                      <div className="absolute -left-6 top-0 bottom-0 w-1 bg-accent/50 rounded-full" />
-                      <blockquote className="text-2xl font-medium leading-relaxed italic text-white/95 pl-4">
-                        "O novo pacote de estímulo de Pequim está gerando um influxo de <span className="text-accent led-text-accent font-bold">R$ 4.2B</span> em commodities. Sua posição em <span className="text-primary underline underline-offset-[12px] decoration-primary/40 led-text-blue">Vale (VALE3)</span> está 15% abaixo do preço-justo preditivo."
-                      </blockquote>
-                    </div>
+                      <div className="relative">
+                        <div className="absolute -left-6 top-0 bottom-0 w-1 bg-accent/50 rounded-full" />
+                        <blockquote className="text-2xl font-medium leading-relaxed italic text-white/95 pl-4">
+                          "{displayMode === 'Essencial' ? latestAlert.essentialText : latestAlert.fullTechnicalAnalysis}"
+                        </blockquote>
+                      </div>
 
-                    <div className="flex items-center gap-8 pt-8">
-                      <Button className="bg-primary hover:bg-primary/90 text-white rounded-2xl px-12 h-16 font-bold text-xl shadow-[0_0_40px_rgba(37,99,235,0.4)] transition-all hover:scale-105 active:scale-95">
-                        ANALISAR IMPACTO <ChevronRight className="ml-2 h-6 w-6" />
-                      </Button>
-                      <Button variant="ghost" className="text-muted-foreground hover:text-white font-bold h-16 px-10 rounded-2xl border border-transparent hover:border-white/10 hover:bg-white/5">
-                        IGNORAR GATILHO
-                      </Button>
+                      <div className="flex items-center gap-8 pt-8">
+                        <Button className="bg-primary hover:bg-primary/90 text-white rounded-2xl px-12 h-16 font-bold text-xl shadow-[0_0_40px_rgba(37,99,235,0.4)] transition-all hover:scale-105 active:scale-95">
+                          ANALISAR IMPACTO <ChevronRight className="ml-2 h-6 w-6" />
+                        </Button>
+                        <Badge variant="outline" className="h-16 px-8 rounded-2xl border-white/10 bg-white/5 flex flex-col justify-center items-start">
+                          <span className="text-[10px] uppercase font-bold text-muted-foreground">Sinal</span>
+                          <span className={`text-xl font-bold ${latestAlert.marketAction === 'BUY' ? 'text-emerald-400' : latestAlert.marketAction === 'SELL' ? 'text-rose-400' : 'text-accent'}`}>
+                            {latestAlert.marketAction}
+                          </span>
+                        </Badge>
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="text-center py-20 space-y-4">
+                      <Terminal className="h-12 w-12 text-muted-foreground mx-auto opacity-20" />
+                      <p className="text-muted-foreground font-medium italic">Aguardando gatilhos globais...</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Right Panel Monitoring */}
               <div className="lg:col-span-3 space-y-8">
                 <div className="bg-[#080D18]/90 border border-white/10 rounded-[2.5rem] p-10 space-y-10 h-full shadow-2xl relative overflow-hidden">
                   <div className="flex items-center justify-between relative z-10">
                     <h3 className="text-xs font-headline font-bold uppercase tracking-[0.4em] text-primary led-text-blue">
-                      SENTINEL MONITOR
+                      SENTINEL HUB
                     </h3>
                     <div className="flex items-center gap-2">
                       <div className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
-                      <span className="text-[10px] font-bold text-emerald-500 uppercase">Live</span>
+                      <span className="text-[10px] font-bold text-emerald-500 uppercase">FEED VIVO</span>
                     </div>
                   </div>
 
-                  <div className="space-y-8 relative z-10">
-                    {[
-                      { tag: 'Geopolítica', icon: Globe, color: 'text-accent', bg: 'bg-accent/10', border: 'border-accent/30', msg: 'Estímulo anunciado em Pequim. Alta no minério prevista em 48h.' },
-                      { tag: 'Tecnologia', icon: Zap, color: 'text-primary', bg: 'bg-primary/10', border: 'border-primary/30', msg: 'Semicondutores sob pressão logística na Malásia. Impacto em NVDA.' },
-                      { tag: 'Agronegócio', icon: MapIcon, color: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'border-emerald-400/30', msg: 'Geada no Paraná detectada por satélite. Risco em Fiagros.' }
-                    ].map((item, idx) => (
-                      <div key={idx} className={`p-8 rounded-[2.5rem] ${item.bg} border ${item.border} space-y-4 transition-all hover:scale-[1.03] cursor-pointer hover:shadow-2xl`}>
-                        <div className={`flex items-center gap-3 ${item.color} text-[11px] font-bold uppercase tracking-[0.2em]`}>
-                          <item.icon className="h-5 w-5" /> {item.tag}
+                  <div className="space-y-6 relative z-10">
+                    {globalAlerts?.slice(1).map((alert, idx) => (
+                      <div key={idx} className={`p-6 rounded-[2rem] bg-white/5 border border-white/10 space-y-3 transition-all hover:scale-[1.03] cursor-pointer hover:border-primary/30`}>
+                        <div className={`flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.2em] text-primary`}>
+                          <span>{alert.eventOrigin}</span>
+                          <span className="text-muted-foreground opacity-60">
+                            {formatDistanceToNow(new Date(alert.createdAt), { locale: ptBR })}
+                          </span>
                         </div>
-                        <p className="text-sm font-semibold leading-relaxed text-white/90 leading-relaxed">{item.msg}</p>
-                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-bold">
-                          <ShieldCheck className="h-3 w-3" /> VERIFICADO PELO NEXUS
+                        <p className="text-sm font-semibold leading-tight text-white/90">{alert.title}</p>
+                        <div className="flex items-center gap-2 text-[9px] text-muted-foreground font-bold">
+                          <ShieldCheck className="h-3 w-3 text-emerald-500" /> NEXUS VERIFIED
                         </div>
                       </div>
                     ))}

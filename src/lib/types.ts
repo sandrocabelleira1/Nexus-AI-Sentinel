@@ -12,11 +12,18 @@ export interface UserAsset {
 
 export type DisplayMode = 'Essencial' | 'Completo';
 
-export interface GlobalAlert {
+export interface GlobalIntelligenceAlert {
   id: string;
+  createdAt: string;
   title: string;
-  origin: 'Geopolítica' | 'Natureza' | 'Tech' | 'Mercado';
-  causality: string;
-  priority: 1 | 2 | 3 | 4 | 5;
-  timestamp: Date;
+  eventOrigin: 'Geopolítica' | 'Natureza' | 'Tech' | 'Mercado';
+  causalityExplanation: string;
+  priority: number;
+  marketAction: 'BUY' | 'SELL' | 'HOLD' | 'WATCH';
+  riskLevel: 'Conservador' | 'Moderado' | 'Agressivo' | 'Crítico';
+  affectedAssetTickerSymbols: string[];
+  essentialText: string;
+  essentialGlossaryTerms: string[];
+  fullTechnicalAnalysis: string;
+  fullLocationRiskAnalysis: string;
 }
