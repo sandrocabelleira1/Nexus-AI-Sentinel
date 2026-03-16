@@ -6,6 +6,8 @@ export interface UserAsset {
   type: AssetType;
   location: string;
   riskLevel?: 'Conservador' | 'Moderado' | 'Agressivo' | 'Crítico';
+  investedValue: number;
+  quantity: number;
 }
 
 export type DisplayMode = 'Essencial' | 'Completo';

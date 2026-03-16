@@ -12,26 +12,31 @@ import {
 
 interface PortfolioViewProps {
   assets: UserAsset[];
+  onUpdateAsset: (id: string, newQuantity: number, newValue: number) => void;
 }
 
-export function PortfolioView({ assets }: PortfolioViewProps) {
+export function PortfolioView({ assets, onUpdateAsset }: PortfolioViewProps) {
+  const totalValue = assets.reduce((acc, curr) => acc + curr.investedValue, 0);
+
   return (
     <div className="space-y-10">
       {/* Portfolio Summary Tiles */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="bg-[#080D18]/90 border border-white/10 rounded-[2rem] p-8 space-y-4 relative overflow-hidden group">
+        <div className="bg-[#080D18]/90 border border-white/10 rounded-[2rem] p-8 space-y-4 relative overflow-hidden group shadow-2xl">
           <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
           <div className="flex items-center justify-between">
             <span className="text-xs font-headline font-bold text-primary uppercase tracking-widest led-text-blue">Patrimônio Total</span>
             <PieChart className="h-5 w-5 text-primary" />
           </div>
           <div className="flex items-baseline gap-2">
-            <h4 className="text-4xl font-headline font-bold text-white tracking-tighter">R$ 2.450.800</h4>
+            <h4 className="text-4xl font-headline font-bold text-white tracking-tighter">
+              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValue)}
+            </h4>
             <span className="text-emerald-400 text-sm font-bold">+12.4%</span>
           </div>
         </div>
 
-        <div className="bg-[#080D18]/90 border border-white/10 rounded-[2rem] p-8 space-y-4 relative overflow-hidden group">
+        <div className="bg-[#080D18]/90 border border-white/10 rounded-[2rem] p-8 space-y-4 relative overflow-hidden group shadow-2xl">
           <div className="absolute -top-10 -right-10 w-32 h-32 bg-accent/10 rounded-full blur-3xl" />
           <div className="flex items-center justify-between">
             <span className="text-xs font-headline font-bold text-accent uppercase tracking-widest led-text-accent">Alocação de Risco</span>
@@ -45,7 +50,7 @@ export function PortfolioView({ assets }: PortfolioViewProps) {
           </div>
         </div>
 
-        <div className="bg-[#080D18]/95 border border-primary/20 rounded-[2rem] p-8 space-y-4 relative overflow-hidden group led-glow-blue">
+        <div className="bg-[#080D18]/95 border border-primary/20 rounded-[2rem] p-8 space-y-4 relative overflow-hidden group led-glow-blue shadow-2xl">
           <div className="flex items-center justify-between">
             <span className="text-xs font-headline font-bold text-primary uppercase tracking-widest">Predição Nexus</span>
             <Target className="h-5 w-5 text-primary animate-pulse" />
@@ -59,12 +64,16 @@ export function PortfolioView({ assets }: PortfolioViewProps) {
       {/* Assets Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {assets.map((asset) => (
-          <AssetCard key={asset.id} asset={asset} />
+          <AssetCard 
+            key={asset.id} 
+            asset={asset} 
+            onUpdate={onUpdateAsset}
+          />
         ))}
       </div>
 
-      {/* Risk Map / Chart Placeholder Style */}
-      <div className="bg-[#080D18]/90 border border-white/10 rounded-[3rem] p-10 relative overflow-hidden">
+      {/* Chart Section */}
+      <div className="bg-[#080D18]/90 border border-white/10 rounded-[3rem] p-10 relative overflow-hidden shadow-2xl">
         <div className="flex items-center justify-between mb-8">
           <h3 className="text-lg font-headline font-bold text-white flex items-center gap-3">
             <ArrowUpRight className="h-5 w-5 text-primary" />
@@ -77,7 +86,7 @@ export function PortfolioView({ assets }: PortfolioViewProps) {
           {[60, 45, 80, 55, 90, 70, 85].map((h, i) => (
             <div key={i} className="flex-1 flex flex-col items-center gap-4 group">
               <div 
-                className="w-full bg-primary/20 border-t-2 border-primary rounded-t-xl transition-all duration-500 group-hover:bg-primary/40 group-hover:scale-y-105" 
+                className="w-full bg-primary/20 border-t-2 border-primary rounded-t-xl transition-all duration-500 group-hover:bg-primary/40 group-hover:scale-y-105 shadow-[0_0_20px_rgba(37,99,235,0.2)]" 
                 style={{ height: `${h}%` }}
               />
               <span className="text-[10px] font-bold text-muted-foreground uppercase">Mês {i + 1}</span>

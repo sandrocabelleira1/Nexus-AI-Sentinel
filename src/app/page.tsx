@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState } from "react";
@@ -42,10 +41,10 @@ import {
 } from "@/components/ui/select";
 
 const initialMockAssets: UserAsset[] = [
-  { id: '1', name: 'VALE3', type: 'Ação', location: 'XP Investimentos', riskLevel: 'Moderado' },
-  { id: '2', name: 'BITCOIN', type: 'Criptomoeda', location: 'Ledger Nano X', riskLevel: 'Agressivo' },
-  { id: '3', name: 'HGLG11', type: 'Fundo Imobiliário', location: 'BTG Pactual', riskLevel: 'Conservador' },
-  { id: '4', name: 'OURO', type: 'Commodity', location: 'Reserva Física', riskLevel: 'Conservador' },
+  { id: '1', name: 'VALE3', type: 'Ação', location: 'XP Investimentos', riskLevel: 'Moderado', investedValue: 45000, quantity: 500 },
+  { id: '2', name: 'BITCOIN', type: 'Criptomoeda', location: 'Ledger Nano X', riskLevel: 'Agressivo', investedValue: 120000, quantity: 0.42 },
+  { id: '3', name: 'HGLG11', type: 'Fundo Imobiliário', location: 'BTG Pactual', riskLevel: 'Conservador', investedValue: 32000, quantity: 200 },
+  { id: '4', name: 'OURO', type: 'Commodity', location: 'Reserva Física', riskLevel: 'Conservador', investedValue: 85000, quantity: 15 },
 ];
 
 export default function NexusDashboard() {
@@ -59,7 +58,9 @@ export default function NexusDashboard() {
     name: '',
     type: 'Ação',
     location: '',
-    riskLevel: 'Moderado'
+    riskLevel: 'Moderado',
+    investedValue: 0,
+    quantity: 0
   });
 
   const metrics = [
@@ -74,15 +75,23 @@ export default function NexusDashboard() {
     
     const asset: UserAsset = {
       id: Math.random().toString(36).substr(2, 9),
-      name: newAsset.name,
+      name: newAsset.name.toUpperCase(),
       type: (newAsset.type as AssetType) || 'Ação',
       location: newAsset.location,
-      riskLevel: newAsset.riskLevel as any
+      riskLevel: newAsset.riskLevel as any,
+      investedValue: Number(newAsset.investedValue) || 0,
+      quantity: Number(newAsset.quantity) || 0
     };
 
     setAssets(prev => [asset, ...prev]);
     setIsDialogOpen(false);
-    setNewAsset({ name: '', type: 'Ação', location: '', riskLevel: 'Moderado' });
+    setNewAsset({ name: '', type: 'Ação', location: '', riskLevel: 'Moderado', investedValue: 0, quantity: 0 });
+  };
+
+  const handleUpdateAsset = (id: string, newQuantity: number, newValue: number) => {
+    setAssets(prev => prev.map(a => 
+      a.id === id ? { ...a, quantity: newQuantity, investedValue: newValue } : a
+    ));
   };
 
   return (
@@ -289,6 +298,30 @@ export default function NexusDashboard() {
                         </SelectContent>
                       </Select>
                     </div>
+                    <div className="grid gap-4 grid-cols-2">
+                      <div className="grid gap-2">
+                        <Label htmlFor="invested" className="text-white font-bold uppercase tracking-widest text-[10px]">Valor Investido (R$)</Label>
+                        <Input 
+                          id="invested" 
+                          type="number"
+                          placeholder="0.00" 
+                          className="bg-white/5 border-white/10 text-white"
+                          value={newAsset.investedValue}
+                          onChange={(e) => setNewAsset(prev => ({ ...prev, investedValue: Number(e.target.value) }))}
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="qty" className="text-white font-bold uppercase tracking-widest text-[10px]">Quantidade</Label>
+                        <Input 
+                          id="qty" 
+                          type="number"
+                          placeholder="0" 
+                          className="bg-white/5 border-white/10 text-white"
+                          value={newAsset.quantity}
+                          onChange={(e) => setNewAsset(prev => ({ ...prev, quantity: Number(e.target.value) }))}
+                        />
+                      </div>
+                    </div>
                     <div className="grid gap-2">
                       <Label htmlFor="location" className="text-white font-bold uppercase tracking-widest text-[10px]">Localização / Custódia</Label>
                       <Input 
@@ -329,7 +362,10 @@ export default function NexusDashboard() {
                 </DialogContent>
               </Dialog>
             </div>
-            <PortfolioView assets={assets} />
+            <PortfolioView 
+              assets={assets} 
+              onUpdateAsset={handleUpdateAsset}
+            />
           </div>
         )}
       </main>
