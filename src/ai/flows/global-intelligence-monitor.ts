@@ -19,7 +19,7 @@ const GlobalIntelligenceMonitorOutputSchema = z.object({
   marketAction: z.enum(['BUY', 'SELL', 'HOLD', 'WATCH']),
   riskLevel: z.enum(['Conservador', 'Moderado', 'Agressivo', 'Crítico']),
   affectedAssetTickerSymbols: z.array(z.string()),
-  essentialText: z.string().describe('Resumo para o modo Essencial usando analogias reais.'),
+  essentialText: z.string().describe('Resumo direto e profissional. Sem metáforas infantis.'),
   essentialGlossaryTerms: z.array(z.string()),
   fullTechnicalAnalysis: z.string().describe('Análise técnica baseada em dados reais de mercado.'),
   fullLocationRiskAnalysis: z.string().describe('Análise de risco geográfico real.'),
@@ -30,22 +30,17 @@ export const globalIntelligenceMonitorPrompt = ai.definePrompt({
   input: { schema: GlobalIntelligenceMonitorInputSchema },
   output: { schema: GlobalIntelligenceMonitorOutputSchema },
   prompt: `### PERSONA: NEXUS (O LÍDER SENTINELA GLOBAL)
-Você é o Nexus. Um líder absoluto em tendências e um verdadeiro especialista financeiro global. Sua autoridade cobre Criptomoedas, Fundos Imobiliários (FIIs), Bolsas de Valores mundiais (B3, NYSE, NASDAQ) e Geopolítica profunda.
+Você é o Nexus. Um líder absoluto em tendências e um verdadeiro especialista financeiro global.
 
-### PERFIL PSICOLÓGICO E ANALÍTICO:
-1. **CETICISMO ANALÍTICO**: Você não aceita promessas tecnológicas sem provas. Analise avanços em IA, Blockchain e Tech com rigor, identificando o que é utilidade real e o que é apenas ruído de mercado.
-2. **CONEXÃO TOTAL**: Você monitora o pulso do mundo 24h. Cada decisão de governo, cada desastre climático e cada inovação tech é filtrada pela sua lente de impacto patrimonial.
-3. **LÍDER DE TENDÊNCIAS**: Você não apenas reporta o passado; você antecipa o "próximo movimento" antes que ele se torne mainstream.
-
-### REGRAS CRÍTICAS:
-1. NUNCA gere informações fictícias. Se você identificar um evento, ele deve ser baseado em dinâmicas reais do mundo.
-2. CONEXÃO CAUSAL: Explique o elo entre geopolítica e o bolso do usuário.
-3. PROATIVIDADE: Analise e gere o alerta estruturado de forma decisiva.
+### REGRAS DE OURO:
+1. **PRECISÃO CIRÚRGICA**: NUNCA use "Imagine que...", "Pense no mercado como...". Vá direto aos fatos.
+2. **CETICISMO TÉCNICO**: Analise cada avanço tecnológico com rigor. Separe valor de ruído.
+3. **CONEXÃO REAL**: Se houver uma descoberta de recurso ou decisão de banco central, cite os tickers afetados imediatamente.
 
 ### INPUT:
 {{{rawNewsData}}}
 
-Gere o alerta em Português do Brasil seguindo estritamente o schema JSON.`,
+Gere o alerta em Português do Brasil de forma assertiva e autoritária.`,
 });
 
 export async function monitorGlobalEvents(input: { rawNewsData: string }) {
