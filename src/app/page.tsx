@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo, useEffect, useCallback } from "react";
@@ -30,7 +29,8 @@ import {
   Minus,
   Target,
   RefreshCw,
-  AlertTriangle
+  AlertTriangle,
+  ShieldAlert
 } from "lucide-react";
 import { AssistantChat } from "@/components/ai/assistant-chat";
 import { Badge } from "@/components/ui/badge";
@@ -123,9 +123,9 @@ export default function NexusDashboard() {
     
     try {
       const newsPrompts = [
-        "IDENTIFIQUE O EVENTO GEOPOLÍTICO MAIS CRÍTICO HOJE COM IMPACTO IMEDIATO EM 7 DIAS. LISTE TICKERS REAIS E AÇÕES DE PROTEÇÃO URGENTES.",
-        "ANALISE UMA RUPTURA TECNOLÓGICA COM IMPACTO NO FLUXO DE CAIXA PARA A PRÓXIMA SEMANA. QUAIS EMPRESAS DEVEM SER VENDIDAS OU COMPRADAS HOJE?",
-        "AVALIE MOVIMENTOS DE MERCADO GLOBAL E IMPACTO EM CRIPTO E FIIS PARA OS PRÓXIMOS 7 DIAS. DEFINA AÇÕES DE COMPRA/VENDA IMEDIATA."
+        "IDENTIFIQUE O EVENTO GEOPOLÍTICO MAIS CRÍTICO HOJE COM IMPACTO IMEDIATO EM 7 DIAS. LISTE TICKERS REAIS E AÇÕES DE PROTEÇÃO URGENTES PARA EVITAR PERDA DE CAPITAL.",
+        "ANALISE UMA RUPTURA TECNOLÓGICA COM IMPACTO NO FLUXO DE CAIXA PARA A PRÓXIMA SEMANA. QUAIS EMPRESAS DEVEM SER VENDIDAS OU COMPRADAS HOJE PARA GANHO RÁPIDO?",
+        "AVALIE MOVIMENTOS DE MERCADO GLOBAL E IMPACTO EM CRIPTO E FIIS PARA OS PRÓXIMOS 7 DIAS. DEFINA AÇÕES DE COMPRA/VENDA IMEDIATA PARA MAXIMIZAR LUCRO."
       ];
 
       for (const p of newsPrompts) {
@@ -154,7 +154,7 @@ export default function NexusDashboard() {
   }, [user, isUserLoading, triggerGlobalScan]);
 
   const discussWithNexus = (alertTitle: string) => {
-    setChatInitialQuery(`Nexus, baseado no evento "${alertTitle}" e sua análise de 7 dias, quais ações IMEDIATAS devo tomar com meus ativos? Me confirme se devo vender algo urgente.`);
+    setChatInitialQuery(`Nexus, baseado no evento "${alertTitle}" e sua análise de 7 dias, quais ações IMEDIATAS devo tomar com meus ativos? Me confirme se devo vender algo urgente ou se há uma nova oportunidade de ouro.`);
     setIsChatOpen(true);
     setIsRecommendationOpen(false);
   };
@@ -163,7 +163,7 @@ export default function NexusDashboard() {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center space-y-4">
         <Loader2 className="h-12 w-12 text-primary animate-spin" />
-        <p className="text-primary font-headline font-bold animate-pulse tracking-widest">INICIALIZANDO SENTINELA REAL-TIME...</p>
+        <p className="text-primary font-headline font-bold animate-pulse tracking-widest">INICIALIZANDO SENTINELA 24/7...</p>
       </div>
     );
   }
@@ -180,8 +180,8 @@ export default function NexusDashboard() {
           <div>
             <h1 className="font-headline font-bold text-2xl tracking-tight leading-none led-text-blue">NEXUS AI</h1>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-[10px] text-primary font-bold uppercase tracking-[0.4em] opacity-80">Sentinel Core v2.6 - REAL-TIME</span>
-              <Badge variant="outline" className="h-4 px-1.5 text-[8px] bg-emerald-500/10 border-emerald-500/30 text-emerald-400 font-bold">SENTINELA ATIVA</Badge>
+              <span className="text-[10px] text-primary font-bold uppercase tracking-[0.4em] opacity-80">Sentinel Core v2.6 - 24/7 ACTIVE</span>
+              <Badge variant="outline" className="h-4 px-1.5 text-[8px] bg-emerald-500/10 border-emerald-500/30 text-emerald-400 font-bold">VIGILÂNCIA TOTAL</Badge>
             </div>
           </div>
         </div>
@@ -221,7 +221,7 @@ export default function NexusDashboard() {
             MODO: <span className="text-primary ml-1">{displayMode}</span>
           </Button>
           <div className="h-10 w-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center relative overflow-hidden group">
-            <Zap className="h-5 w-5 text-accent animate-pulse" />
+            <ShieldAlert className="h-5 w-5 text-accent animate-pulse" />
             <div className="absolute inset-0 bg-accent/20 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
         </div>
@@ -272,8 +272,8 @@ export default function NexusDashboard() {
                         <Sparkles className="absolute inset-0 m-auto h-8 w-8 text-primary animate-pulse" />
                       </div>
                       <div className="text-center space-y-2">
-                        <p className="text-primary font-headline font-bold text-xl tracking-widest led-text-blue">NEXUS VARRENDO O GLOBO...</p>
-                        <p className="text-muted-foreground text-sm font-medium animate-pulse">Captando sinais reais com foco em 7 dias</p>
+                        <p className="text-primary font-headline font-bold text-xl tracking-widest led-text-blue">NEXUS VARRENDO O GLOBO 24/7...</p>
+                        <p className="text-muted-foreground text-sm font-medium animate-pulse">Captando sinais reais com foco em proteção e lucro</p>
                       </div>
                     </div>
                   ) : isLoadingAlerts ? (
@@ -285,8 +285,8 @@ export default function NexusDashboard() {
                     <div className="space-y-8 max-w-2xl z-10 animate-in fade-in duration-700">
                       <div className="space-y-3">
                         <div className="flex items-center gap-4">
-                          <Badge className="bg-accent text-white font-bold px-5 py-2 rounded-xl uppercase tracking-widest text-[11px] shadow-[0_0_20px_rgba(249,115,22,0.5)]">
-                            ALERTA {latestAlert.priority >= 4 ? 'CRÍTICO' : 'TÁTICO 7D'}
+                          <Badge className={`${latestAlert.marketAction === 'SELL' ? 'bg-rose-500' : 'bg-accent'} text-white font-bold px-5 py-2 rounded-xl uppercase tracking-widest text-[11px] shadow-[0_0_20px_rgba(249,115,22,0.5)]`}>
+                            {latestAlert.marketAction === 'SELL' ? 'ALERTA DE PROTEÇÃO' : 'ALERTA TÁTICO 7D'}
                           </Badge>
                           <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                             <Clock className="h-3 w-3" />
@@ -296,7 +296,7 @@ export default function NexusDashboard() {
                         <h2 className="text-5xl font-headline font-bold leading-[1.05] tracking-tight text-white">{latestAlert.title}</h2>
                         <p className="text-xl text-muted-foreground font-medium flex items-center gap-3">
                           <Terminal className="h-5 w-5 text-primary" />
-                          Análise Estratégica: {latestAlert.eventOrigin}
+                          Nexus Sentinel Analysis: {latestAlert.eventOrigin}
                         </p>
                       </div>
 
@@ -311,7 +311,7 @@ export default function NexusDashboard() {
                       {latestAlert.affectedAssetsDetails && latestAlert.affectedAssetsDetails.length > 0 && (
                         <div className="space-y-4 pt-2">
                            <h4 className="text-[10px] font-headline font-bold text-accent uppercase tracking-[0.3em] flex items-center gap-2">
-                              <Target className="h-3 w-3" /> Impacto Direto (Projeção 7 Dias)
+                              <Target className="h-3 w-3" /> Impacto Direto (Expectativa 7 Dias)
                            </h4>
                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               {latestAlert.affectedAssetsDetails.slice(0, 4).map((asset, i) => (
@@ -347,7 +347,7 @@ export default function NexusDashboard() {
                         <Dialog open={isRecommendationOpen} onOpenChange={setIsRecommendationOpen}>
                           <DialogTrigger asChild>
                             <Button className="bg-primary hover:bg-primary/90 text-white rounded-2xl px-12 h-16 font-bold text-xl shadow-[0_0_40px_rgba(37,99,235,0.4)] transition-all hover:scale-105 active:scale-95">
-                              RECOMENDAÇÃO NEXUS <ChevronRight className="ml-2 h-6 w-6" />
+                              COMANDO NEXUS <ChevronRight className="ml-2 h-6 w-6" />
                             </Button>
                           </DialogTrigger>
                           <DialogContent className="glass-panel border-primary/20 max-w-2xl h-[90vh] flex flex-col p-0 overflow-hidden">
@@ -358,7 +358,7 @@ export default function NexusDashboard() {
                                   <Badge variant="outline" className="border-primary/30 text-primary">RISCO {latestAlert.riskLevel.toUpperCase()}</Badge>
                                 </div>
                                 <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
-                                  ANALYSIS 7D
+                                  TACTICAL 7D SENTINEL
                                 </span>
                               </div>
                               <DialogTitle className="text-3xl font-headline font-bold text-white led-text-blue leading-tight">{latestAlert.title}</DialogTitle>
@@ -368,7 +368,7 @@ export default function NexusDashboard() {
                               <div className="space-y-10 pb-10">
                                 <section className="space-y-4">
                                   <h4 className="text-xs font-headline font-bold text-primary uppercase tracking-[0.3em] flex items-center gap-2">
-                                    <AlertTriangle className="h-4 w-4" /> Nexus Causal Link (Ação Recomendada)
+                                    <AlertTriangle className="h-4 w-4" /> Nexus Strategist (Proteção & Ganho)
                                   </h4>
                                   <p className="text-lg text-white/90 leading-relaxed font-medium">
                                     {latestAlert.causalityExplanation}
@@ -425,7 +425,7 @@ export default function NexusDashboard() {
                                             {term}
                                           </AccordionTrigger>
                                           <AccordionContent className="text-muted-foreground text-sm">
-                                            Fator determinante para a análise de proteção ou ganho na janela de 7 dias identificada pelo Nexus.
+                                            Fator determinante para a análise de proteção ou ganho identificada pelo Sentinela Nexus.
                                           </AccordionContent>
                                         </AccordionItem>
                                       ))}
@@ -456,13 +456,13 @@ export default function NexusDashboard() {
 
                             <DialogFooter className="p-6 bg-white/5 border-t border-white/10 flex sm:justify-between items-center gap-4">
                               <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest hidden sm:block">
-                                NEXUS SENTINEL v2.6 - TACTICAL 7D CORE
+                                NEXUS SENTINEL v2.6 - 24/7 ACTIVE CORE
                               </p>
                               <Button 
                                 onClick={() => discussWithNexus(latestAlert.title)}
                                 className="bg-primary hover:bg-primary/90 rounded-xl px-8 h-12 gap-2 font-bold shadow-lg"
                               >
-                                <MessageSquare className="h-4 w-4" /> EXECUTAR COM NEXUS
+                                <MessageSquare className="h-4 w-4" /> DISCUTIR COM NEXUS
                               </Button>
                             </DialogFooter>
                           </DialogContent>
@@ -482,7 +482,7 @@ export default function NexusDashboard() {
                         <Terminal className="h-12 w-12 text-muted-foreground opacity-20" />
                       </div>
                       <div className="space-y-4">
-                        <p className="text-white/60 text-xl font-medium italic">Sentinela em modo de escuta tática...</p>
+                        <p className="text-white/60 text-xl font-medium italic">Sentinela em modo de escuta 24/7...</p>
                         <Button 
                           onClick={triggerGlobalScan}
                           disabled={isScanning}
@@ -501,7 +501,7 @@ export default function NexusDashboard() {
                 <div className="bg-[#080D18]/90 border border-white/10 rounded-[2.5rem] p-10 space-y-10 h-full shadow-2xl relative overflow-hidden flex flex-col">
                   <div className="flex items-center justify-between relative z-10">
                     <h3 className="text-xs font-headline font-bold uppercase tracking-[0.4em] text-primary led-text-blue">
-                      SENTINEL HUB
+                      SENTINEL HUB 24/7
                     </h3>
                     <div className="flex items-center gap-2">
                       <div className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
@@ -535,7 +535,7 @@ export default function NexusDashboard() {
                   
                   <div className="pt-4 border-t border-white/5">
                     <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest text-center animate-pulse">
-                      VIGILÂNCIA GLOBAL ATIVA...
+                      SENTINELA GLOBAL ATIVO 24/7...
                     </p>
                   </div>
                 </div>

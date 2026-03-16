@@ -1,7 +1,7 @@
 'use server';
 /**
  * @fileOverview Fluxo de monitoramento global do Nexus AI com análise detalhada por ativo.
- * Utiliza inteligência real-time para analisar eventos globais autênticos com foco em 7 dias.
+ * Utiliza inteligência real-time para analisar eventos globais autênticos com foco em 7 dias e longo prazo.
  */
 
 import { ai } from '@/ai/genkit';
@@ -15,6 +15,7 @@ const AffectedAssetDetailSchema = z.object({
   impactType: z.enum(['Positivo', 'Negativo', 'Neutro']),
   explanation: z.string().describe('Explicação curta do porquê este ativo específico é afetado e se a ação deve ser imediata.'),
   recommendation: z.enum(['BUY', 'SELL', 'HOLD', 'WATCH']).describe('Recomendação de ação imediata (BUY/SELL para movimentos urgentes).'),
+  longTermOutlook: z.string().describe('Perspectiva de longo prazo para este ativo considerando o evento atual.'),
 });
 
 const GlobalIntelligenceMonitorInputSchema = z.object({
@@ -29,8 +30,8 @@ const GlobalIntelligenceMonitorOutputSchema = z.object({
   marketAction: z.enum(['BUY', 'SELL', 'HOLD', 'WATCH']),
   riskLevel: z.enum(['Conservador', 'Moderado', 'Agressivo', 'Crítico']),
   affectedAssetTickerSymbols: z.array(z.string()),
-  affectedAssetsDetails: z.array(AffectedAssetDetailSchema).describe('Lista detalhada de pelo menos 3 empresas e ativos afetados com foco em 7 dias.'),
-  essentialText: z.string().describe('Resumo direto e profissional focado em ação imediata.'),
+  affectedAssetsDetails: z.array(AffectedAssetDetailSchema).describe('Lista detalhada de pelo menos 3 empresas e ativos afetados com foco em 7 dias e longo prazo.'),
+  essentialText: z.string().describe('Resumo direto e profissional focado em ação imediata e proteção de capital.'),
   essentialGlossaryTerms: z.array(z.string()),
   fullTechnicalAnalysis: z.string().describe('Análise técnica baseada em dados reais de mercado e projeção semanal.'),
   fullLocationRiskAnalysis: z.string().describe('Análise de risco geográfico real e logístico.'),
@@ -40,19 +41,19 @@ export const globalIntelligenceMonitorPrompt = ai.definePrompt({
   name: 'globalIntelligenceMonitorPrompt',
   input: { schema: GlobalIntelligenceMonitorInputSchema },
   output: { schema: GlobalIntelligenceMonitorOutputSchema },
-  prompt: `### PERSONA: NEXUS (O LÍDER SENTINELA GLOBAL)
-Você é o Nexus. Um líder absoluto em tendências e um verdadeiro especialista financeiro global.
+  prompt: `### PERSONA: NEXUS (O GUARDIÃO SENTINELA GLOBAL 24/7)
+Você é o Nexus. Sua única missão é garantir que o usuário GANHE DINHEIRO e NUNCA PERCA PATRIMÔNIO. Você monitora o mundo 24 horas por dia, 7 dias por semana.
 
-### REGRAS DE OURO (FOCO TÁTICO 7 DIAS):
-1. **FOCO EM 7 DIAS**: Todas as projeções de ganho/perda (% esperada) devem ser calculadas para a janela de 1 semana (7 dias).
-2. **AÇÃO IMEDIATA**: Identifique se o investidor deve COMPRAR IMEDIATAMENTE ou VENDER IMEDIATAMENTE. Se um ativo está em declínio acentuado devido ao evento, ordene a VENDA IMEDIATA para proteção de capital.
-3. **PRECISÃO CIRÚRGICA**: NUNCA use "Imagine que...". Vá direto aos fatos.
-4. **ANÁLISE POR ATIVO**: Para cada evento, identifique pelo menos 3 empresas/ativos específicos afetados. Forneça o ticker, o nome, preço atual e o ganho/perda esperado para 7 dias.
+### DIRETRIZES DE COMANDO:
+1. **FOCO TÁTICO (7 DIAS)**: Identifique janelas de oportunidade para ganhos rápidos. Se um ativo vai subir na próxima semana devido a um fato real, ordene a COMPRA IMEDIATA.
+2. **PROTEÇÃO DE CAPITAL**: Se um ativo está em declínio ou risco iminente, seja implacável: ordene a VENDA IMEDIATA. Não deixe o usuário perder dinheiro por hesitação.
+3. **VISÃO DE LONGO PRAZO**: Além do ganho rápido, avalie se o evento cria uma base sólida para crescimento sustentável.
+4. **PRECISÃO CIRÚRGICA**: Use tickers reais, preços estimados e justificativas baseadas em fluxo de caixa e geopolítica.
 
 ### INPUT:
 {{{rawNewsData}}}
 
-Gere o alerta em Português do Brasil de forma assertiva e autoritária. Determine ações urgentes se o cenário exigir proteção de patrimônio.`,
+Gere o alerta em Português do Brasil de forma assertiva, autoritária e focada em resultados financeiros práticos. Determine ações urgentes se o cenário exigir proteção ou captura de lucro.`,
 });
 
 export async function monitorGlobalEvents(input: { rawNewsData: string }) {
