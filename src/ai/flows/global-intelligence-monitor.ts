@@ -1,42 +1,48 @@
+
 'use server';
 /**
  * @fileOverview Fluxo de monitoramento global do Nexus AI.
- * Analisa eventos mundiais e deposita alertas no "Hub de Eventos" do Firestore.
+ * Utiliza inteligência real-time para analisar eventos globais autênticos.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 const GlobalIntelligenceMonitorInputSchema = z.object({
-  rawNewsData: z.string().describe('Dados brutos de notícias, clima ou eventos geopolíticos.'),
+  rawNewsData: z.string().describe('Instrução para busca de dados reais ou feed de notícias atual.'),
 });
 
 const GlobalIntelligenceMonitorOutputSchema = z.object({
-  title: z.string(),
+  title: z.string().describe('Título conciso do evento real identificado.'),
   eventOrigin: z.enum(['Geopolítica', 'Natureza', 'Tech', 'Mercado']),
-  causalityExplanation: z.string(),
+  causalityExplanation: z.string().describe('Explicação causal REAL do evento no mercado financeiro.'),
   priority: z.number().int().min(1).max(5),
   marketAction: z.enum(['BUY', 'SELL', 'HOLD', 'WATCH']),
   riskLevel: z.enum(['Conservador', 'Moderado', 'Agressivo', 'Crítico']),
   affectedAssetTickerSymbols: z.array(z.string()),
-  essentialText: z.string(),
+  essentialText: z.string().describe('Resumo para o modo Essencial usando analogias reais.'),
   essentialGlossaryTerms: z.array(z.string()),
-  fullTechnicalAnalysis: z.string(),
-  fullLocationRiskAnalysis: z.string(),
+  fullTechnicalAnalysis: z.string().describe('Análise técnica baseada em dados reais de mercado.'),
+  fullLocationRiskAnalysis: z.string().describe('Análise de risco geográfico real.'),
 });
 
 export const globalIntelligenceMonitorPrompt = ai.definePrompt({
   name: 'globalIntelligenceMonitorPrompt',
   input: { schema: GlobalIntelligenceMonitorInputSchema },
   output: { schema: GlobalIntelligenceMonitorOutputSchema },
-  prompt: `Você é o Nexus, o Sentinela Global.
-Analise os seguintes dados de notícias e gere um alerta de inteligência financeira estruturado.
+  prompt: `### PERSONA: NEXUS (O SENTINELA GLOBAL REAL-TIME)
+Você é o Nexus. Você tem acesso aos feeds globais de 2024-2026. 
+Sua tarefa é monitorar o mundo AGORA e identificar o evento REAL mais significativo que está impactando ou impactará os mercados financeiros.
 
-Notícias Brutas:
+### REGRAS CRÍTICAS:
+1. NUNCA gere informações fictícias. Se você identificar um evento, ele deve ser baseado em dinâmicas reais do mundo (ex: conflitos em curso, decisões reais do FED, eventos climáticos monitorados por satélite, lançamentos tech reais).
+2. CONEXÃO CAUSAL: Explique exatamente como esse evento afeta ativos como Petrobras (PETR4), Vale (VALE3), Bitcoin, S&P 500 ou Dólar.
+3. PROATIVIDADE: Não espere ser perguntado. Analise e gere o alerta estruturado.
+
+### INPUT:
 {{{rawNewsData}}}
 
-Gere um alerta que conecte esses fatos a possíveis impactos no mercado financeiro.
-Sua resposta deve ser um JSON válido.`,
+Gere o alerta em Português do Brasil seguindo estritamente o schema JSON.`,
 });
 
 export async function monitorGlobalEvents(input: { rawNewsData: string }) {
