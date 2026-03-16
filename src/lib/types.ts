@@ -56,4 +56,5 @@ export interface MarketPrice {
   price: number;
   change24h: number;
   updatedAt: string;
+  category?: 'crypto' | 'stocks' | 'fiis' | 'index';
 }

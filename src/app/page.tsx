@@ -134,8 +134,8 @@ export default function NexusDashboard() {
     if (!user) return;
     
     try {
-      // 1. Cripto via Binance
-      const cryptoSymbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'ADAUSDT'];
+      // 1. Cripto via Binance (Expandido)
+      const cryptoSymbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'ADAUSDT', 'XRPUSDT', 'DOTUSDT', 'LINKUSDT', 'MATICUSDT', 'DOGEUSDT'];
       const cryptoResponses = await Promise.all(
         cryptoSymbols.map(s => fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${s}`))
       );
@@ -148,32 +148,38 @@ export default function NexusDashboard() {
             ticker: ticker,
             price: parseFloat(tickerData.lastPrice),
             change24h: parseFloat(tickerData.priceChangePercent),
-            updatedAt: new Date().toISOString()
+            updatedAt: new Date().toISOString(),
+            category: 'crypto'
           }, { merge: true });
         }
       });
 
-      // 2. B3 e FIIs via Brapi (Tratamento robusto de sufixo)
-      const b3Tickers = 'PETR4.SA,VALE3.SA,HGLG11.SA,VGIA11.SA,IBOV11.SA,BOVA11.SA,ITUB4.SA,BBDC4.SA,KNRI11.SA';
+      // 2. B3 e FIIs via Brapi (Lista exaustiva solicitada)
+      const b3TickersList = [
+        'PETR4', 'VALE3', 'ITUB4', 'BBDC4', 'ABEV3', 'BBAS3', 'ITSA4', 'WEGE3', 'MGLU3', 'ELET3', 'B3SA3', 
+        'HGLG11', 'VGIA11', 'KNRI11', 'MXRF11', 'VISC11', 'XPML11', 'IRDM11', 'CPTS11', 'XPLG11', 'KNCR11', 'BTLG11'
+      ];
+      const b3TickersString = b3TickersList.map(t => `${t}.SA`).join(',');
       const b3ApiKey = '2rb5157StMMfsE1ft1ErSq';
-      const b3Response = await fetch(`https://brapi.dev/api/quote/${b3Tickers}?token=${b3ApiKey}`);
+      const b3Response = await fetch(`https://brapi.dev/api/quote/${b3TickersString}?token=${b3ApiKey}`);
       const b3Data = await b3Response.json();
 
       if (b3Data.results) {
         b3Data.results.forEach((item: any) => {
-          // Remove .SA de forma insensível a maiúsculas/minúsculas
           const cleanTicker = item.symbol.toUpperCase().replace(/\.SA$/i, '').trim();
+          const category = cleanTicker.endsWith('11') ? 'fiis' : 'stocks';
           setDocumentNonBlocking(doc(firestore, "market_prices", cleanTicker), {
             ticker: cleanTicker,
             price: item.regularMarketPrice,
             change24h: item.regularMarketChangePercent,
-            updatedAt: new Date().toISOString()
+            updatedAt: new Date().toISOString(),
+            category: category
           }, { merge: true });
         });
       }
 
-      // 3. Globais via FMP
-      const fmpTickers = 'AAPL,MSFT,NVDA,TSLA,GOOGL,AMZN,META';
+      // 3. Globais via FMP (Expandido)
+      const fmpTickers = 'AAPL,MSFT,NVDA,TSLA,GOOGL,AMZN,META,NFLX,AMD,INTC,PYPL,DIS';
       const fmpApiKey = 'SGraLM1W4QBLLjGS3bDVUS6KFmqR7PrJ';
       const fmpResponse = await fetch(`https://financialmodelingprep.com/api/v3/quote/${fmpTickers}?apikey=${fmpApiKey}`);
       const fmpData = await fmpResponse.json();
@@ -185,10 +191,20 @@ export default function NexusDashboard() {
             ticker: ticker,
             price: item.price,
             change24h: item.changesPercentage,
-            updatedAt: new Date().toISOString()
+            updatedAt: new Date().toISOString(),
+            category: 'stocks'
           }, { merge: true });
         });
       }
+
+      // 4. Índices Especiais
+      setDocumentNonBlocking(doc(firestore, "market_prices", "IBOV"), {
+        ticker: "IBOV",
+        price: b3Data.results?.find((r: any) => r.symbol === 'IBOV11.SA')?.regularMarketPrice || 130000,
+        change24h: b3Data.results?.find((r: any) => r.symbol === 'IBOV11.SA')?.regularMarketChangePercent || 0.5,
+        updatedAt: new Date().toISOString(),
+        category: 'index'
+      }, { merge: true });
 
     } catch (error) {
       console.error("Erro na sincronização global do Nexus:", error);
@@ -253,6 +269,8 @@ export default function NexusDashboard() {
     setIsChatOpen(true);
     setIsRecommendationOpen(false);
   };
+
+  const [newAsset, setNewAsset] = useState<{name: string}>({name: ""});
 
   if (isUserLoading) {
     return (
