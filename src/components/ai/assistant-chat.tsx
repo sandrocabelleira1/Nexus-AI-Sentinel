@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MessageSquare, X, Send, Bot, Sparkles } from "lucide-react";
+import { X, Send, Bot, Sparkles } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { interactivePortfolioAssistant } from "@/ai/flows/interactive-portfolio-assistant";
 import { UserAsset, DisplayMode } from "@/lib/types";
@@ -45,11 +45,11 @@ export function AssistantChat({ assets, displayMode }: AssistantChatProps) {
       const result = await interactivePortfolioAssistant({
         message: userMessage,
         userAssets: assets.map(a => ({ name: a.name, type: a.type, location: a.location })),
-        globalEvents: "Recent geopolitical shifts in Asian trade lanes; high humidity alerts in Mato Grosso.",
+        globalEvents: "Mudanças geopolíticas recentes nas rotas comerciais asiáticas; alertas de alta umidade no Mato Grosso.",
         displayMode: displayMode
       });
 
-      const responseText = displayMode === 'Essential' 
+      const responseText = displayMode === 'Essencial' 
         ? result.display_modes.essential.text 
         : result.display_modes.full.technical_analysis;
 
@@ -72,7 +72,7 @@ export function AssistantChat({ assets, displayMode }: AssistantChatProps) {
               </div>
               <div>
                 <h3 className="text-sm font-headline font-bold">Nexus AI</h3>
-                <span className="text-[10px] text-emerald-400 font-medium uppercase tracking-widest">Active Sentinel</span>
+                <span className="text-[10px] text-emerald-400 font-medium uppercase tracking-widest">Sentinela Ativa</span>
               </div>
             </div>
             <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="hover:bg-primary/20">
@@ -111,7 +111,7 @@ export function AssistantChat({ assets, displayMode }: AssistantChatProps) {
               <Input 
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask Nexus anything..."
+                placeholder="Pergunte qualquer coisa ao Nexus..."
                 className="bg-white/5 border-white/10 focus-visible:ring-primary"
               />
               <Button type="submit" size="icon" disabled={isLoading} className="bg-primary hover:bg-primary/80 text-background">

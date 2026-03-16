@@ -8,7 +8,6 @@ export function WorldMood() {
   const [mood, setMood] = useState({ score: 72, trend: 'stable' });
 
   useEffect(() => {
-    // Simulate real-time monitoring updates
     const interval = setInterval(() => {
       setMood(prev => ({
         score: Math.min(100, Math.max(0, prev.score + (Math.random() * 4 - 2))),
@@ -26,7 +25,7 @@ export function WorldMood() {
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-headline flex items-center gap-2 tracking-wide uppercase text-muted-foreground">
           <Activity className="h-4 w-4 text-primary" />
-          World Sentiment Index
+          Índice de Sentimento Global
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -47,7 +46,7 @@ export function WorldMood() {
           </div>
         </div>
         <p className="mt-4 text-sm text-muted-foreground leading-relaxed">
-          Nexus monitors 10,000+ nodes including satellite weather, diplomatic wires, and chain-data to determine global stability.
+          Nexus monitora mais de 10.000 nós, incluindo clima via satélite, canais diplomáticos e dados on-chain para determinar a estabilidade global.
         </p>
       </CardContent>
     </Card>

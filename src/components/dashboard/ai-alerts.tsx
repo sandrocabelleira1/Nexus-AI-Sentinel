@@ -1,10 +1,11 @@
 "use client"
 
 import { GlobalAlert } from "@/lib/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, Zap, Cloud, Globe, BarChart3 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 const originIcons = {
   'Geopolítica': Globe,
@@ -23,10 +24,10 @@ export function AIAlerts({ alerts }: AIAlertsProps) {
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-headline font-bold flex items-center gap-2">
           <AlertCircle className="h-5 w-5 text-accent" />
-          Nexus Sentinel Alerts
+          Alertas Sentinela Nexus
         </h2>
         <Badge variant="secondary" className="bg-accent/10 text-accent border-accent/20">
-          LIVE FEED
+          AO VIVO
         </Badge>
       </div>
 
@@ -46,7 +47,7 @@ export function AIAlerts({ alerts }: AIAlertsProps) {
                         {alert.origin}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(alert.timestamp)} ago
+                        há {formatDistanceToNow(alert.timestamp, { locale: ptBR })}
                       </span>
                     </div>
                     <h4 className="font-bold text-lg mb-2">{alert.title}</h4>
@@ -60,7 +61,7 @@ export function AIAlerts({ alerts }: AIAlertsProps) {
                           style={{ width: `${(alert.priority / 5) * 100}%` }} 
                         />
                       </div>
-                      <span className="text-[10px] font-headline text-muted-foreground">PRIORITY {alert.priority}/5</span>
+                      <span className="text-[10px] font-headline text-muted-foreground uppercase tracking-widest">Prioridade {alert.priority}/5</span>
                     </div>
                   </div>
                 </div>

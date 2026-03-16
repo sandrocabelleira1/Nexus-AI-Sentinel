@@ -3,7 +3,7 @@
 import { UserAsset } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Wallet, Shield, AlertTriangle, Zap, TrendingUp } from "lucide-react";
+import { Wallet, Shield, Zap, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface AssetCardProps {
@@ -20,7 +20,7 @@ export function AssetCard({ asset }: AssetCardProps) {
     }
   };
 
-  const Icon = asset.type === 'Cryptocurrency' ? Zap : asset.type === 'Stock' ? TrendingUp : Wallet;
+  const Icon = asset.type === 'Criptomoeda' ? Zap : asset.type === 'Ação' ? TrendingUp : Wallet;
 
   return (
     <Card className={cn(
@@ -51,7 +51,7 @@ export function AssetCard({ asset }: AssetCardProps) {
               "h-1.5 w-1.5 rounded-full animate-pulse",
               asset.riskLevel === 'Crítico' ? "bg-rose-500" : "bg-emerald-500"
             )} />
-            <span className="text-xs font-medium">Monitoring</span>
+            <span className="text-xs font-medium">Monitorando</span>
           </div>
         </div>
       </CardContent>

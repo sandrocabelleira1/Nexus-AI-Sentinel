@@ -1,4 +1,4 @@
-export type AssetType = 'Stock' | 'Cryptocurrency' | 'Real Estate Fund' | 'Commodity' | 'Currency';
+export type AssetType = 'Ação' | 'Criptomoeda' | 'Fundo Imobiliário' | 'Commodity' | 'Moeda';
 
 export interface UserAsset {
   id: string;
@@ -8,7 +8,7 @@ export interface UserAsset {
   riskLevel?: 'Conservador' | 'Moderado' | 'Agressivo' | 'Crítico';
 }
 
-export type DisplayMode = 'Essential' | 'Full';
+export type DisplayMode = 'Essencial' | 'Completo';
 
 export interface GlobalAlert {
   id: string;
