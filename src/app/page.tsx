@@ -21,7 +21,11 @@ import {
   Clock,
   Loader2,
   Scan,
-  Sparkles
+  Sparkles,
+  Info,
+  BarChart4,
+  MapPin,
+  MessageSquare
 } from "lucide-react";
 import { AssistantChat } from "@/components/ai/assistant-chat";
 import { Badge } from "@/components/ui/badge";
@@ -49,6 +53,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const initialMockAssets: UserAsset[] = [
   { id: '1', name: 'VALE3', type: 'Ação', location: 'XP Investimentos', riskLevel: 'Moderado', investedValue: 45000, quantity: 500 },
@@ -62,6 +73,7 @@ export default function NexusDashboard() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'portfolio'>('dashboard');
   const [assets, setAssets] = useState<UserAsset[]>(initialMockAssets);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isRecommendationOpen, setIsRecommendationOpen] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const firestore = useFirestore();
   const auth = useAuth();
@@ -101,7 +113,6 @@ export default function NexusDashboard() {
     setIsScanning(true);
     
     try {
-      // O Nexus agora busca o evento global MAIS RELEVANTE E REAL no momento
       const result = await monitorGlobalEvents({ 
         rawNewsData: "IDENTIFIQUE O EVENTO GLOBAL REAL MAIS CRÍTICO NAS ÚLTIMAS 24H (GEOPOLÍTICA, CLIMA OU FINANÇAS) E ANALISE O IMPACTO." 
       });
@@ -113,13 +124,12 @@ export default function NexusDashboard() {
         });
       }
     } catch (error) {
-      // Erros são tratados pelo FirebaseErrorListener
+      // Erros tratados pelo FirebaseErrorListener
     } finally {
       setIsScanning(false);
     }
   }, [user, isScanning, firestore]);
 
-  // CICLO PROATIVO: O Nexus varre o mundo automaticamente a cada 10 minutos
   useEffect(() => {
     if (user && !isUserLoading) {
       const interval = setInterval(() => {
@@ -268,9 +278,98 @@ export default function NexusDashboard() {
                       </div>
 
                       <div className="flex items-center gap-8 pt-8">
-                        <Button className="bg-primary hover:bg-primary/90 text-white rounded-2xl px-12 h-16 font-bold text-xl shadow-[0_0_40px_rgba(37,99,235,0.4)] transition-all hover:scale-105 active:scale-95">
-                          RECOMENDAÇÃO NEXUS <ChevronRight className="ml-2 h-6 w-6" />
-                        </Button>
+                        <Dialog open={isRecommendationOpen} onOpenChange={setIsRecommendationOpen}>
+                          <DialogTrigger asChild>
+                            <Button className="bg-primary hover:bg-primary/90 text-white rounded-2xl px-12 h-16 font-bold text-xl shadow-[0_0_40px_rgba(37,99,235,0.4)] transition-all hover:scale-105 active:scale-95">
+                              RECOMENDAÇÃO NEXUS <ChevronRight className="ml-2 h-6 w-6" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="glass-panel border-primary/20 max-w-2xl h-[80vh] flex flex-col p-0 overflow-hidden">
+                            <DialogHeader className="p-8 border-b border-white/10 bg-primary/5">
+                              <div className="flex items-center gap-4 mb-4">
+                                <Badge className="bg-primary text-white font-bold">{latestAlert.marketAction} SIGNAL</Badge>
+                                <Badge variant="outline" className="border-primary/30 text-primary">RISCO {latestAlert.riskLevel.toUpperCase()}</Badge>
+                              </div>
+                              <DialogTitle className="text-3xl font-headline font-bold text-white led-text-blue">{latestAlert.title}</DialogTitle>
+                              <DialogDescription className="text-muted-foreground flex items-center gap-2 mt-2">
+                                <Clock className="h-4 w-4" /> Gerado pelo Nexus Sentinel em {new Date(latestAlert.createdAt).toLocaleString('pt-BR')}
+                              </DialogDescription>
+                            </DialogHeader>
+                            
+                            <ScrollArea className="flex-1 p-8">
+                              <div className="space-y-8 pb-8">
+                                <section className="space-y-4">
+                                  <h4 className="text-xs font-headline font-bold text-primary uppercase tracking-[0.3em] flex items-center gap-2">
+                                    <Info className="h-4 w-4" /> Nexus Causal Link
+                                  </h4>
+                                  <p className="text-lg text-white/90 leading-relaxed font-medium">
+                                    {latestAlert.causalityExplanation}
+                                  </p>
+                                </section>
+
+                                {displayMode === 'Essencial' ? (
+                                  <section className="space-y-4">
+                                    <h4 className="text-xs font-headline font-bold text-accent uppercase tracking-[0.3em] flex items-center gap-2">
+                                      <Terminal className="h-4 w-4" /> Glossário de Apoio
+                                    </h4>
+                                    <Accordion type="single" collapsible className="w-full">
+                                      {latestAlert.essentialGlossaryTerms.map((term, i) => (
+                                        <AccordionItem key={i} value={`term-${i}`} className="border-white/5">
+                                          <AccordionTrigger className="text-white hover:text-primary transition-colors text-sm font-bold">
+                                            {term}
+                                          </AccordionTrigger>
+                                          <AccordionContent className="text-muted-foreground text-sm">
+                                            O Nexus identificou este termo como fundamental para entender a dinâmica atual do mercado relacionada ao evento {latestAlert.eventOrigin}.
+                                          </AccordionContent>
+                                        </AccordionItem>
+                                      ))}
+                                    </Accordion>
+                                  </section>
+                                ) : (
+                                  <>
+                                    <section className="space-y-4">
+                                      <h4 className="text-xs font-headline font-bold text-primary uppercase tracking-[0.3em] flex items-center gap-2">
+                                        <BarChart4 className="h-4 w-4" /> Análise Técnica Profunda
+                                      </h4>
+                                      <div className="p-6 rounded-2xl bg-white/5 border border-white/10 font-mono text-sm text-primary/90 leading-relaxed">
+                                        {latestAlert.fullTechnicalAnalysis}
+                                      </div>
+                                    </section>
+                                    <section className="space-y-4">
+                                      <h4 className="text-xs font-headline font-bold text-accent uppercase tracking-[0.3em] flex items-center gap-2">
+                                        <MapPin className="h-4 w-4" /> Matriz de Risco Geográfica
+                                      </h4>
+                                      <p className="text-muted-foreground text-sm leading-relaxed">
+                                        {latestAlert.fullLocationRiskAnalysis}
+                                      </p>
+                                    </section>
+                                  </>
+                                )}
+
+                                <section className="space-y-4">
+                                  <h4 className="text-xs font-headline font-bold text-white uppercase tracking-[0.3em]">Ativos Impactados</h4>
+                                  <div className="flex flex-wrap gap-3">
+                                    {latestAlert.affectedAssetTickerSymbols.map((ticker, i) => (
+                                      <Badge key={i} variant="secondary" className="bg-white/5 border border-white/10 hover:border-primary/50 transition-colors px-4 py-2 text-sm font-bold text-white">
+                                        {ticker}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </section>
+                              </div>
+                            </ScrollArea>
+
+                            <DialogFooter className="p-6 bg-white/5 border-t border-white/10 flex sm:justify-between items-center gap-4">
+                              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest hidden sm:block">
+                                SENTINEL ID: {latestAlert.id.slice(0, 8).toUpperCase()}
+                              </p>
+                              <Button className="bg-primary hover:bg-primary/90 rounded-xl px-8 gap-2 font-bold shadow-lg">
+                                <MessageSquare className="h-4 w-4" /> DISCUTIR COM NEXUS
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                        
                         <Badge variant="outline" className="h-16 px-8 rounded-2xl border-white/10 bg-white/5 flex flex-col justify-center items-start">
                           <span className="text-[10px] uppercase font-bold text-muted-foreground">Sinal de Mercado</span>
                           <span className={`text-xl font-bold ${latestAlert.marketAction === 'BUY' ? 'text-emerald-400' : latestAlert.marketAction === 'SELL' ? 'text-rose-400' : 'text-accent'}`}>
