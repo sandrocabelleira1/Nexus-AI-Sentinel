@@ -32,13 +32,15 @@ export function MarketExplorer({ prices }: MarketExplorerProps) {
 
   const filteredPrices = useMemo(() => {
     return prices.filter(p => {
-      const matchesSearch = p.ticker.toLowerCase().includes(search.toLowerCase());
+      const ticker = p.ticker.toUpperCase().trim();
+      const matchesSearch = ticker.includes(search.toUpperCase());
+      
       if (filter === 'all') return matchesSearch;
-      if (filter === 'crypto') return matchesSearch && (p.ticker.length <= 4 || p.ticker === 'BITCOIN');
-      if (filter === 'stocks') return matchesSearch && p.ticker.length > 4 && !p.ticker.endsWith('11');
-      if (filter === 'fiis') return matchesSearch && p.ticker.endsWith('11');
+      if (filter === 'crypto') return matchesSearch && (ticker.length <= 4 || ticker === 'BITCOIN' || ticker === 'ETHEREUM' || ticker === 'SOLANA');
+      if (filter === 'stocks') return matchesSearch && ticker.length > 4 && !ticker.endsWith('11');
+      if (filter === 'fiis') return matchesSearch && ticker.endsWith('11');
       return matchesSearch;
-    }).sort((a, b) => b.ticker.localeCompare(a.ticker));
+    }).sort((a, b) => a.ticker.localeCompare(b.ticker));
   }, [prices, search, filter]);
 
   const stats = useMemo(() => {
@@ -133,7 +135,10 @@ export function MarketExplorer({ prices }: MarketExplorerProps) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {filteredPrices.map((price) => {
             const isUp = price.change24h > 0;
-            const isIndex = price.ticker === 'IBOV' || price.ticker === 'DOLAR';
+            const ticker = price.ticker.toUpperCase();
+            const isIndex = ticker === 'IBOV' || ticker === 'DOLAR';
+            const isFII = ticker.endsWith('11');
+            const isCrypto = ticker.length <= 4 && !isIndex;
             
             return (
               <Card key={price.ticker} className="bg-[#080D18]/95 border-white/10 hover:border-primary/40 transition-all group cursor-pointer relative overflow-hidden rounded-[2rem] shadow-2xl">
@@ -142,9 +147,9 @@ export function MarketExplorer({ prices }: MarketExplorerProps) {
                   <div className="flex justify-between items-start">
                     <div className="space-y-1">
                       <Badge variant="outline" className="text-[10px] border-primary/30 text-primary font-bold tracking-widest mb-2 uppercase">
-                        {price.ticker.length <= 4 && !isIndex ? 'Cripto (Binance)' : price.ticker.endsWith('11') ? 'FII (B3)' : isIndex ? 'Índice/Moeda' : 'Ação'}
+                        {isCrypto ? 'Cripto' : isFII ? 'FII' : isIndex ? 'Índice' : 'Ação'}
                       </Badge>
-                      <h3 className="text-3xl font-headline font-bold text-white led-text-blue">{price.ticker}</h3>
+                      <h3 className="text-3xl font-headline font-bold text-white led-text-blue">{ticker}</h3>
                     </div>
                     <div className={cn(
                       "p-3 rounded-xl border font-bold flex items-center gap-1 text-xs",
@@ -158,15 +163,15 @@ export function MarketExplorer({ prices }: MarketExplorerProps) {
                   <div className="space-y-1">
                     <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em]">Cotação Atual</span>
                     <div className="text-3xl font-bold text-white">
-                      {price.ticker === 'IBOV' ? price.price.toLocaleString() : 
-                       (price.ticker.length <= 4 && price.ticker !== 'IBOV' ? 'US$ ' : 'R$ ') + 
+                      {ticker === 'IBOV' ? price.price.toLocaleString() : 
+                       (isCrypto ? 'US$ ' : 'R$ ') + 
                        price.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
                     </div>
                   </div>
 
                   <div className="pt-6 border-t border-white/5 flex items-center justify-between">
                     <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest flex items-center gap-1">
-                      <RefreshCw className="h-3 w-3" /> Atualizado há 1 min
+                      <RefreshCw className="h-3 w-3" /> Atualizado em tempo real
                     </span>
                     <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse led-glow-blue" />
                   </div>
@@ -185,25 +190,27 @@ export function MarketExplorer({ prices }: MarketExplorerProps) {
           </div>
           <div className="divide-y divide-white/5">
             {filteredPrices.map((price) => {
+              const ticker = price.ticker.toUpperCase();
               const isUp = price.change24h > 0;
-              const isIndex = price.ticker === 'IBOV' || price.ticker === 'DOLAR';
-              const typeLabel = price.ticker.length <= 4 && !isIndex ? 'Cripto' : price.ticker.endsWith('11') ? 'FII' : isIndex ? 'Índice' : 'Ação';
+              const isIndex = ticker === 'IBOV' || ticker === 'DOLAR';
+              const isFII = ticker.endsWith('11');
+              const typeLabel = isCrypto ? 'Cripto' : isFII ? 'FII' : isIndex ? 'Índice' : 'Ação';
 
               return (
                 <div key={price.ticker} className="grid grid-cols-12 gap-4 px-8 py-6 items-center hover:bg-white/5 transition-colors cursor-pointer group">
                   <div className="col-span-4 flex items-center gap-4">
                     <div className="p-3 rounded-xl bg-primary/10 text-primary border border-primary/20 group-hover:led-glow-blue transition-all">
-                      {price.ticker.length <= 4 && !isIndex ? <Zap className="h-4 w-4" /> : price.ticker.endsWith('11') ? <Landmark className="h-4 w-4" /> : <TrendingUp className="h-4 w-4" />}
+                      {isCrypto ? <Zap className="h-4 w-4" /> : isFII ? <Landmark className="h-4 w-4" /> : <TrendingUp className="h-4 w-4" />}
                     </div>
                     <div>
-                      <h4 className="font-bold text-white text-lg group-hover:text-primary transition-colors">{price.ticker}</h4>
+                      <h4 className="font-bold text-white text-lg group-hover:text-primary transition-colors">{ticker}</h4>
                       <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest">{typeLabel}</span>
                     </div>
                   </div>
                   <div className="col-span-3">
                     <div className="text-xl font-bold text-white">
-                      {price.ticker === 'IBOV' ? price.price.toLocaleString() : 
-                       (price.ticker.length <= 4 && price.ticker !== 'IBOV' ? 'US$ ' : 'R$ ') + 
+                      {ticker === 'IBOV' ? price.price.toLocaleString() : 
+                       (isCrypto ? 'US$ ' : 'R$ ') + 
                        price.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
                     </div>
                   </div>

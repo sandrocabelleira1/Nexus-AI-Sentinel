@@ -123,7 +123,9 @@ export default function NexusDashboard() {
 
   const priceMap = useMemo(() => {
     const map: Record<string, MarketPrice> = {};
-    livePrices?.forEach(p => { map[p.ticker] = p; });
+    livePrices?.forEach(p => { 
+      map[p.ticker.toUpperCase()] = p; 
+    });
     return map;
   }, [livePrices]);
 
@@ -140,6 +142,7 @@ export default function NexusDashboard() {
     if (!user) return;
     
     try {
+      // 1. Cripto via Binance
       const cryptoSymbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'ADAUSDT'];
       const cryptoResponses = await Promise.all(
         cryptoSymbols.map(s => fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${s}`))
@@ -147,24 +150,28 @@ export default function NexusDashboard() {
       const cryptoData = await Promise.all(cryptoResponses.map(r => r.json()));
 
       cryptoData.forEach((tickerData) => {
-        const ticker = tickerData.symbol.replace('USDT', '');
-        setDocumentNonBlocking(doc(firestore, "market_prices", ticker), {
-          ticker: ticker,
-          price: parseFloat(tickerData.lastPrice),
-          change24h: parseFloat(tickerData.priceChangePercent),
-          updatedAt: new Date().toISOString()
-        }, { merge: true });
+        if (tickerData.symbol) {
+          const ticker = tickerData.symbol.replace('USDT', '');
+          setDocumentNonBlocking(doc(firestore, "market_prices", ticker), {
+            ticker: ticker,
+            price: parseFloat(tickerData.lastPrice),
+            change24h: parseFloat(tickerData.priceChangePercent),
+            updatedAt: new Date().toISOString()
+          }, { merge: true });
+        }
       });
 
-      const b3Tickers = 'PETR4,VALE3,HGLG11,VGIA11,IBOV11,BOVA11,ITUB4,BBDC4,KNRI11';
+      // 2. B3 e FIIs via Brapi (adicionando .SA para melhor compatibilidade)
+      const b3Tickers = 'PETR4.SA,VALE3.SA,HGLG11.SA,VGIA11.SA,IBOV11.SA,BOVA11.SA,ITUB4.SA,BBDC4.SA,KNRI11.SA';
       const b3ApiKey = '2rb5157StMMfsE1ft1ErSq';
       const b3Response = await fetch(`https://brapi.dev/api/quote/${b3Tickers}?token=${b3ApiKey}`);
       const b3Data = await b3Response.json();
 
       if (b3Data.results) {
         b3Data.results.forEach((item: any) => {
-          setDocumentNonBlocking(doc(firestore, "market_prices", item.symbol), {
-            ticker: item.symbol,
+          const cleanTicker = item.symbol.replace('.SA', '');
+          setDocumentNonBlocking(doc(firestore, "market_prices", cleanTicker), {
+            ticker: cleanTicker,
             price: item.regularMarketPrice,
             change24h: item.regularMarketChangePercent,
             updatedAt: new Date().toISOString()
@@ -172,6 +179,7 @@ export default function NexusDashboard() {
         });
       }
 
+      // 3. Globais via FMP
       const fmpTickers = 'AAPL,MSFT,NVDA,TSLA,GOOGL,AMZN,META';
       const fmpApiKey = 'SGraLM1W4QBLLjGS3bDVUS6KFmqR7PrJ';
       const fmpResponse = await fetch(`https://financialmodelingprep.com/api/v3/quote/${fmpTickers}?apikey=${fmpApiKey}`);
@@ -307,7 +315,7 @@ export default function NexusDashboard() {
                 { ticker: 'BTC', label: 'BITCOIN' },
                 { ticker: 'NVDA', label: 'NVIDIA' },
               ].map((m, i) => {
-                const liveData = priceMap[m.ticker];
+                const liveData = priceMap[m.ticker.toUpperCase()];
                 const value = liveData ? (m.ticker === 'BTC' || m.ticker === 'NVDA' ? `US$ ${liveData.price.toLocaleString()}` : `R$ ${liveData.price.toLocaleString()}`) : '---';
                 const change = liveData ? `${liveData.change24h > 0 ? '+' : ''}${liveData.change24h.toFixed(2)}%` : '---';
                 const isUp = liveData ? liveData.change24h > 0 : true;
