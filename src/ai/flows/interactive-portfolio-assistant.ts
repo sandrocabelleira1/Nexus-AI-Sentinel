@@ -1,7 +1,7 @@
-
 'use server';
 /**
  * @fileOverview Assistente de Portfólio Interativo com Google Search Grounding.
+ * Corrigido para evitar conflito entre ferramentas e modo JSON.
  */
 
 import { ai } from '@/ai/genkit';
@@ -49,12 +49,11 @@ const InteractivePortfolioAssistantOutputSchema = z.object({
 });
 export type InteractivePortfolioAssistantOutput = z.infer<typeof InteractivePortfolioAssistantOutputSchema>;
 
-const interactivePortfolioAssistantPrompt = ai.definePrompt({
-  name: 'interactivePortfolioAssistantPrompt',
+// Prompt 1: Grounded Chat Analysis
+const groundedChatPrompt = ai.definePrompt({
+  name: 'interactivePortfolioGroundedPrompt',
   input: { schema: InteractivePortfolioAssistantInputSchema },
-  output: { schema: InteractivePortfolioAssistantOutputSchema },
   config: {
-    // Ativa o Google Search Grounding para pesquisa em tempo real no chat
     googleSearchRetrieval: {},
   },
   prompt: `### PERSONA: NEXUS (O GUARDIÃO GLOBAL CONECTADO 24/7)
@@ -63,7 +62,6 @@ Você é o Nexus. Você tem acesso total à internet em tempo real. Sua missão 
 ### DIRETRIZES DE PESQUISA EM TEMPO REAL:
 1. **GROUNDING**: Sempre que o usuário perguntar sobre algo que aconteceu hoje ou sentimentos de mercado, use sua ferramenta de busca para validar notícias e preços.
 2. **SINAIS FRACOS**: Identifique tendências antes que se tornem notícias de massa.
-3. **CLIMA E GOVERNO**: Se um decreto foi assinado há minutos ou uma tempestade ameaça uma colheita, você deve saber.
 
 ### CONTEXTO
 Modo: {{{displayMode}}}
@@ -74,18 +72,27 @@ Mensagem do Usuário: {{{message}}}
 Responda com autoridade máxima em Português do Brasil.`,
 });
 
-const interactivePortfolioAssistantFlow = ai.defineFlow(
-  {
-    name: 'interactivePortfolioAssistantFlow',
-    inputSchema: InteractivePortfolioAssistantInputSchema,
-    outputSchema: InteractivePortfolioAssistantOutputSchema,
-  },
-  async (input) => {
-    const { output } = await interactivePortfolioAssistantPrompt(input);
-    return output!;
-  }
-);
+// Prompt 2: Structured Chat Output
+const structuredChatPrompt = ai.definePrompt({
+  name: 'interactivePortfolioStructuredPrompt',
+  input: { schema: z.object({ rawResponse: z.string(), displayMode: z.string() }) },
+  output: { schema: InteractivePortfolioAssistantOutputSchema },
+  prompt: `Formate a seguinte resposta do Nexus AI em um objeto JSON estruturado.
+Resposta:
+{{{rawResponse}}}
+Modo: {{{displayMode}}}`,
+});
 
 export async function interactivePortfolioAssistant(input: InteractivePortfolioAssistantInput): Promise<InteractivePortfolioAssistantOutput> {
-  return interactivePortfolioAssistantFlow(input);
+  // Passo 1: Pesquisa e análise fundamentada
+  const { text: rawResponse } = await groundedChatPrompt(input);
+  
+  // Passo 2: Estruturação JSON
+  const { output } = await structuredChatPrompt({ rawResponse, displayMode: input.displayMode });
+  
+  if (!output) {
+    throw new Error('Erro ao estruturar resposta do Nexus.');
+  }
+  
+  return output;
 }

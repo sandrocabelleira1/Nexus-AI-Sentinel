@@ -1,7 +1,7 @@
-
 'use server';
 /**
  * @fileOverview Motor de Inteligência Estratégica Nexus AI com Google Search Grounding.
+ * Corrigido para evitar conflito entre ferramentas e modo JSON.
  */
 
 import { ai } from '@/ai/genkit';
@@ -46,12 +46,13 @@ const GlobalIntelligenceMonitorOutputSchema = z.object({
   fullLocationRiskAnalysis: z.string(),
 });
 
-export const globalIntelligenceMonitorPrompt = ai.definePrompt({
-  name: 'globalIntelligenceMonitorPrompt',
+export type GlobalIntelligenceMonitorOutput = z.infer<typeof GlobalIntelligenceMonitorOutputSchema>;
+
+// Prompt 1: Grounding (Pesquisa em Tempo Real)
+const groundingPrompt = ai.definePrompt({
+  name: 'globalIntelligenceGroundingPrompt',
   input: { schema: GlobalIntelligenceMonitorInputSchema },
-  output: { schema: GlobalIntelligenceMonitorOutputSchema },
   config: {
-    // Ativa o Google Search Grounding para pesquisa em tempo real
     googleSearchRetrieval: {},
   },
   prompt: `### PERSONA: NEXUS (SENTINELA ESTRATÉGICO GLOBAL)
@@ -65,10 +66,30 @@ Você é o Nexus. Sua tarefa é vasculhar a internet AGORA em busca de decisões
 ### DADOS DE ENTRADA:
 {{{rawNewsData}}}
 
-Gere um alerta tático detalhado em Português do Brasil focado em PROTEÇÃO ou LUCRO IMEDIATO.`,
+Gere um relatório tático detalhado em Português do Brasil focado em PROTEÇÃO ou LUCRO IMEDIATO.`,
 });
 
-export async function monitorGlobalEvents(input: { rawNewsData: string }) {
-  const { output } = await globalIntelligenceMonitorPrompt(input);
+// Prompt 2: Structuring (Formatação JSON)
+const structuringPrompt = ai.definePrompt({
+  name: 'globalIntelligenceStructuringPrompt',
+  input: { schema: z.object({ rawAnalysis: z.string() }) },
+  output: { schema: GlobalIntelligenceMonitorOutputSchema },
+  prompt: `Transforme a seguinte análise tática em um objeto JSON estruturado seguindo o esquema definido.
+  
+Análise:
+{{{rawAnalysis}}}`,
+});
+
+export async function monitorGlobalEvents(input: { rawNewsData: string }): Promise<GlobalIntelligenceMonitorOutput> {
+  // Passo 1: Obter análise fundamentada com pesquisa Google (Texto)
+  const { text: groundedAnalysis } = await groundingPrompt(input);
+  
+  // Passo 2: Estruturar o resultado em JSON
+  const { output } = await structuringPrompt({ rawAnalysis: groundedAnalysis });
+  
+  if (!output) {
+    throw new Error('Falha ao estruturar inteligência geopolítica.');
+  }
+  
   return output;
 }
