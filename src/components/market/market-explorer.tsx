@@ -23,6 +23,7 @@ import {
   AlertTriangle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { FinancialTerm } from "@/components/ui/financial-term";
 
 interface MarketExplorerProps {
   prices: MarketPrice[];
@@ -47,7 +48,6 @@ export function MarketExplorer({ prices, latestAlert }: MarketExplorerProps) {
   }, [prices, search, filter]);
 
   const getAIInsight = (ticker: string, change24h: number) => {
-    // 1. Check if asset is explicitly mentioned in the latest geopolitical alert
     const alertDetail = latestAlert?.affectedAssetsDetails?.find(
       d => d.ticker.toUpperCase() === ticker.toUpperCase()
     );
@@ -60,7 +60,6 @@ export function MarketExplorer({ prices, latestAlert }: MarketExplorerProps) {
       };
     }
 
-    // 2. Fallback to automated technical nexus insight
     if (change24h > 3) return { recommendation: 'BUY' as const, reason: "Momento de alta forte detectado via Twelve Data. Fluxo comprador institucional sugere continuação.", isAlert: false };
     if (change24h < -3) return { recommendation: 'SELL' as const, reason: "Ajuste técnico severo. Nexus sugere proteção de capital até estabilização do suporte.", isAlert: false };
     if (change24h > 0) return { recommendation: 'HOLD' as const, reason: "Tendência lateral com viés de alta. Manter posição para captura de dividendos/valorização.", isAlert: false };
@@ -174,9 +173,11 @@ export function MarketExplorer({ prices, latestAlert }: MarketExplorerProps) {
                     <div className="flex justify-between items-start">
                       <div className="space-y-1">
                         <Badge variant="outline" className="text-[10px] border-primary/30 text-primary font-bold tracking-widest mb-2 uppercase">
-                          {categoryLabel}
+                          <FinancialTerm term={categoryLabel === 'FII' ? 'FII' : categoryLabel} />
                         </Badge>
-                        <h3 className="text-3xl font-headline font-bold text-white led-text-blue">{ticker}</h3>
+                        <h3 className="text-3xl font-headline font-bold text-white led-text-blue">
+                          <FinancialTerm term="TICKER">{ticker}</FinancialTerm>
+                        </h3>
                       </div>
                       <div className={cn(
                         "p-3 rounded-xl border font-bold flex items-center gap-1 text-xs",
@@ -202,21 +203,23 @@ export function MarketExplorer({ prices, latestAlert }: MarketExplorerProps) {
                           <BrainCircuit className="h-4 w-4 text-primary" />
                           <span className="text-[9px] font-bold text-primary uppercase tracking-widest">Nexus AI Rating</span>
                         </div>
-                        <Badge className={cn(
-                          "text-[9px] font-bold px-2 py-0.5 rounded-md",
-                          ai.recommendation === 'BUY' ? "bg-emerald-500" : 
-                          ai.recommendation === 'SELL' ? "bg-rose-500" : 
-                          "bg-white/10 text-white"
-                        )}>
-                          {ai.recommendation}
-                        </Badge>
+                        <FinancialTerm term={ai.recommendation}>
+                          <Badge className={cn(
+                            "text-[9px] font-bold px-2 py-0.5 rounded-md",
+                            ai.recommendation === 'BUY' ? "bg-emerald-500" : 
+                            ai.recommendation === 'SELL' ? "bg-rose-500" : 
+                            "bg-white/10 text-white"
+                          )}>
+                            {ai.recommendation}
+                          </Badge>
+                        </FinancialTerm>
                       </div>
                       <p className="text-[11px] text-white/80 leading-relaxed font-medium">
                         {ai.reason}
                       </p>
                       {ai.isAlert && (
                         <div className="flex items-center gap-1.5 text-accent text-[9px] font-bold uppercase tracking-widest mt-2">
-                          <AlertTriangle className="h-3 w-3" /> Alerta Geopolítico Ativo
+                          <AlertTriangle className="h-3 w-3" /> <FinancialTerm term="CISNE NEGRO">Alerta Geopolítico Ativo</FinancialTerm>
                         </div>
                       )}
                     </div>
@@ -256,7 +259,9 @@ export function MarketExplorer({ prices, latestAlert }: MarketExplorerProps) {
                       </div>
                       <div>
                         <h4 className="font-bold text-white text-lg group-hover:text-primary transition-colors">{ticker}</h4>
-                        <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest">{typeLabel}</span>
+                        <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest">
+                          <FinancialTerm term={typeLabel === 'FII' ? 'FII' : typeLabel} />
+                        </span>
                       </div>
                     </div>
                     <div className="col-span-2">
@@ -276,14 +281,16 @@ export function MarketExplorer({ prices, latestAlert }: MarketExplorerProps) {
                       </div>
                     </div>
                     <div className="col-span-1">
-                      <Badge className={cn(
-                        "font-bold text-[10px]",
-                        ai.recommendation === 'BUY' ? "bg-emerald-500" : 
-                        ai.recommendation === 'SELL' ? "bg-rose-500" : 
-                        "bg-white/10"
-                      )}>
-                        {ai.recommendation}
-                      </Badge>
+                      <FinancialTerm term={ai.recommendation}>
+                        <Badge className={cn(
+                          "font-bold text-[10px]",
+                          ai.recommendation === 'BUY' ? "bg-emerald-500" : 
+                          ai.recommendation === 'SELL' ? "bg-rose-500" : 
+                          "bg-white/10"
+                        )}>
+                          {ai.recommendation}
+                        </Badge>
+                      </FinancialTerm>
                     </div>
                     <div className="col-span-4">
                       <div className="flex items-start gap-3">
