@@ -80,7 +80,7 @@ export default function NexusDashboard() {
     return query(
       collection(firestore, "global_intelligence_alerts"),
       orderBy("createdAt", "desc"),
-      limit(5)
+      limit(10)
     );
   }, [firestore, user]);
 
@@ -132,22 +132,30 @@ export default function NexusDashboard() {
     setIsScanning(true);
     
     try {
-      const mockNews = [
+      const mockNewsPool = [
         "Tensões aumentam no Estreito de Taiwan com novos exercícios militares.",
         "Quebra de safra histórica no Mato Grosso devido a seca prolongada afeta FIIs de agro.",
         "Banco Central Europeu sinaliza manutenção de taxas de juros, impactando o Euro.",
         "Nova regulamentação de criptoativos nos EUA traz otimismo ao mercado de BTC.",
-        "Ataque hacker massivo atinge infraestrutura de semicondutores na Coreia do Sul."
+        "Ataque hacker massivo atinge infraestrutura de semicondutores na Coreia do Sul.",
+        "Descoberta de reserva maciça de lítio em Minas Gerais impulsiona setor tech nacional.",
+        "Fed indica corte surpresa na taxa de juros americana para o próximo trimestre.",
+        "Crise energética na Europa intensifica busca por alternativas renováveis e gás natural."
       ];
       
-      const randomNews = mockNews[Math.floor(Math.random() * mockNews.length)];
-      const result = await monitorGlobalEvents({ rawNewsData: randomNews });
-      
-      if (result) {
-        addDocumentNonBlocking(collection(firestore, "global_intelligence_alerts"), {
-          ...result,
-          createdAt: new Date().toISOString()
-        });
+      // Vamos gerar 3 alertas para popular bem a interface
+      for (let i = 0; i < 3; i++) {
+        const randomNews = mockNewsPool[Math.floor(Math.random() * mockNewsPool.length)];
+        const result = await monitorGlobalEvents({ rawNewsData: randomNews });
+        
+        if (result) {
+          addDocumentNonBlocking(collection(firestore, "global_intelligence_alerts"), {
+            ...result,
+            createdAt: new Date(Date.now() - i * 600000).toISOString() // Espaçando os alertas no tempo
+          });
+        }
+        // Pequeno delay entre gerações para simular processamento
+        await new Promise(r => setTimeout(r, 500));
       }
     } catch (error) {
       console.error("Erro na varredura:", error);
@@ -334,27 +342,39 @@ export default function NexusDashboard() {
                   </div>
 
                   <div className="space-y-6 relative z-10 flex-1 overflow-y-auto pr-2 custom-scrollbar">
-                    {globalAlerts?.slice(1).map((alert, idx) => (
-                      <div key={idx} className={`p-6 rounded-[2rem] bg-white/5 border border-white/10 space-y-3 transition-all hover:scale-[1.03] cursor-pointer hover:border-primary/30 animate-in slide-in-from-right-5 duration-300`}>
-                        <div className={`flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.2em] text-primary`}>
-                          <span>{alert.eventOrigin}</span>
-                          <span className="text-muted-foreground opacity-60">
-                            {formatDistanceToNow(new Date(alert.createdAt), { locale: ptBR })}
-                          </span>
+                    {globalAlerts && globalAlerts.length > 1 ? (
+                      globalAlerts.slice(1).map((alert, idx) => (
+                        <div key={idx} className={`p-6 rounded-[2rem] bg-white/5 border border-white/10 space-y-3 transition-all hover:scale-[1.03] cursor-pointer hover:border-primary/30 animate-in slide-in-from-right-5 duration-300`}>
+                          <div className={`flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.2em] text-primary`}>
+                            <span>{alert.eventOrigin}</span>
+                            <span className="text-muted-foreground opacity-60">
+                              {formatDistanceToNow(new Date(alert.createdAt), { locale: ptBR })}
+                            </span>
+                          </div>
+                          <p className="text-sm font-semibold leading-tight text-white/90">{alert.title}</p>
+                          <div className="flex items-center gap-2 text-[9px] text-muted-foreground font-bold">
+                            <ShieldCheck className="h-3 w-3 text-emerald-500" /> NEXUS VERIFIED
+                          </div>
                         </div>
-                        <p className="text-sm font-semibold leading-tight text-white/90">{alert.title}</p>
-                        <div className="flex items-center gap-2 text-[9px] text-muted-foreground font-bold">
-                          <ShieldCheck className="h-3 w-3 text-emerald-500" /> NEXUS VERIFIED
-                        </div>
-                      </div>
-                    ))}
-                    {!isLoadingAlerts && (!globalAlerts || globalAlerts.length <= 1) && (
+                      ))
+                    ) : (
                       <div className="h-full flex flex-col items-center justify-center opacity-20 space-y-4">
                         <Globe className="h-12 w-12" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-center">Nenhum evento secundário detectado</span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-center px-4">Aguardando eventos secundários para popular o Hub</span>
                       </div>
                     )}
                   </div>
+                  
+                  {globalAlerts && globalAlerts.length > 0 && (
+                    <Button 
+                      onClick={triggerGlobalScan}
+                      disabled={isScanning}
+                      variant="ghost"
+                      className="text-[10px] font-bold text-primary hover:text-white mt-4 uppercase tracking-widest"
+                    >
+                      {isScanning ? "Varrendo..." : "Forçar Nova Varredura"}
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
