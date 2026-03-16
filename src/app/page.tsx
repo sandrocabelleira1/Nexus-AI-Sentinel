@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo, useEffect, useCallback } from "react";
@@ -269,7 +270,7 @@ export default function NexusDashboard() {
                       <p className="text-primary font-bold animate-pulse">Sincronizando com Nexus Hub...</p>
                     </div>
                   ) : latestAlert ? (
-                    <div className="space-y-10 max-w-2xl z-10 animate-in fade-in duration-700">
+                    <div className="space-y-8 max-w-2xl z-10 animate-in fade-in duration-700">
                       <div className="space-y-3">
                         <div className="flex items-center gap-4">
                           <Badge className="bg-accent text-white font-bold px-5 py-2 rounded-xl uppercase tracking-widest text-[11px] shadow-[0_0_20px_rgba(249,115,22,0.5)]">
@@ -289,28 +290,39 @@ export default function NexusDashboard() {
 
                       <div className="relative">
                         <div className="absolute -left-6 top-0 bottom-0 w-1 bg-accent/50 rounded-full" />
-                        <blockquote className="text-2xl font-medium leading-relaxed italic text-white/95 pl-4">
+                        <blockquote className="text-xl font-medium leading-relaxed italic text-white/95 pl-4 opacity-90">
                           "{displayMode === 'Essencial' ? latestAlert.essentialText : latestAlert.fullTechnicalAnalysis}"
                         </blockquote>
                       </div>
 
-                      {/* Imediato Ativos Card Summary */}
+                      {/* Imediato Ativos Card Summary - MAIS COMPLETO */}
                       {latestAlert.affectedAssetsDetails && latestAlert.affectedAssetsDetails.length > 0 && (
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
-                           {latestAlert.affectedAssetsDetails.slice(0, 3).map((asset, i) => (
-                             <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-2 group/asset transition-all hover:border-primary/40">
-                               <div className="flex items-center justify-between">
-                                  <span className="text-[10px] font-headline font-bold text-primary tracking-widest">{asset.ticker}</span>
-                                  <Badge className={`h-4 px-1.5 text-[8px] font-bold ${asset.impactType === 'Positivo' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
-                                    {asset.expectedGainPercentage}
-                                  </Badge>
-                               </div>
-                               <div className="flex flex-col">
-                                 <span className="text-xs font-bold text-white truncate">{asset.name}</span>
-                                 <span className="text-[10px] text-muted-foreground font-medium">{asset.currentPrice}</span>
-                               </div>
-                             </div>
-                           ))}
+                        <div className="space-y-4 pt-2">
+                           <h4 className="text-[10px] font-headline font-bold text-accent uppercase tracking-[0.3em] flex items-center gap-2">
+                              <Target className="h-3 w-3" /> Impacto Direto em Ativos
+                           </h4>
+                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              {latestAlert.affectedAssetsDetails.slice(0, 4).map((asset, i) => (
+                                <div key={i} className="glass-panel border-white/5 rounded-2xl p-4 flex items-center justify-between group/asset transition-all hover:bg-white/5 hover:border-primary/40">
+                                   <div className="flex items-center gap-4">
+                                      <div className="p-2 rounded-xl bg-primary/10 text-primary font-bold text-xs">
+                                         {asset.ticker}
+                                      </div>
+                                      <div className="flex flex-col">
+                                         <span className="text-xs font-bold text-white">{asset.name}</span>
+                                         <span className="text-[10px] text-muted-foreground font-bold">{asset.currentPrice}</span>
+                                      </div>
+                                   </div>
+                                   <div className="text-right">
+                                      <div className={`text-sm font-bold flex items-center gap-1 justify-end ${asset.impactType === 'Positivo' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                         {asset.impactType === 'Positivo' ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                                         {asset.expectedGainPercentage}
+                                      </div>
+                                      <span className="text-[8px] text-muted-foreground font-bold uppercase tracking-widest">Expectativa Mensal</span>
+                                   </div>
+                                </div>
+                              ))}
+                           </div>
                         </div>
                       )}
 
