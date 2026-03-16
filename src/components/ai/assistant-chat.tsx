@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { X, Send, Bot, Sparkles } from "lucide-react";
+import { X, Send, Bot, Sparkles, Terminal, ShieldCheck } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { interactivePortfolioAssistant } from "@/ai/flows/interactive-portfolio-assistant";
 import { UserAsset, DisplayMode, GlobalIntelligenceAlert } from "@/lib/types";
@@ -25,7 +25,7 @@ interface AssistantChatProps {
 export function AssistantChat({ assets, displayMode, externalOpen, onOpenChange, initialQuery, latestAlert }: AssistantChatProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: "Olá, eu sou o Nexus. Como posso ajudar com seu patrimônio hoje? Analisei os ativos na sua Wallet e os últimos sinais globais." }
+    { role: 'assistant', content: "Sou o Nexus. Monitoramento global ativo. Analisei seu portfólio e as tendências geopolíticas atuais. Qual sua prioridade estratégica?" }
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -50,8 +50,8 @@ export function AssistantChat({ assets, displayMode, externalOpen, onOpenChange,
     setIsLoading(true);
 
     const alertContext = latestAlert 
-      ? `ALERTA ATUAL: ${latestAlert.title}. DESCRIÇÃO: ${latestAlert.causalityExplanation}. AÇÃO SUGERIDA NO HUB: ${latestAlert.marketAction}.`
-      : "O Sentinel Hub está monitorando o globo. Nenhuma anomalia crítica imediata fora do radar.";
+      ? `ALERTA CRÍTICO ATUAL: ${latestAlert.title}. ANÁLISE NEXUS: ${latestAlert.causalityExplanation}. MARKET SIGNAL: ${latestAlert.marketAction}.`
+      : "Monitoramento global em curso. Sem anomalias críticas imediatas no radar.";
 
     try {
       const result = await interactivePortfolioAssistant({
@@ -67,7 +67,7 @@ export function AssistantChat({ assets, displayMode, externalOpen, onOpenChange,
 
       setMessages(prev => [...prev, { role: 'assistant', content: responseText }]);
     } catch (error) {
-      setMessages(prev => [...prev, { role: 'assistant', content: "Desculpe, tive um problema ao processar sua análise estratégica. Tente novamente." }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: "Erro na conexão com o Core do Nexus. Tente novamente, estrategista." }]);
     } finally {
       setIsLoading(false);
     }
@@ -89,38 +89,47 @@ export function AssistantChat({ assets, displayMode, externalOpen, onOpenChange,
   return (
     <div className="fixed bottom-6 right-6 z-50">
       {isOpen ? (
-        <div className="w-80 sm:w-96 glass-panel rounded-2xl shadow-2xl border-primary/20 flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 duration-300">
-          <div className="p-4 bg-primary/10 border-b border-primary/10 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-primary rounded-lg">
-                <Bot className="h-5 w-5 text-background" />
+        <div className="w-80 sm:w-[450px] glass-panel rounded-[2.5rem] shadow-2xl border-primary/30 flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 duration-300">
+          <div className="p-6 bg-primary/10 border-b border-primary/20 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="p-2.5 bg-primary rounded-2xl led-glow-blue animate-pulse">
+                <Terminal className="h-5 w-5 text-background" />
               </div>
               <div>
-                <h3 className="text-sm font-headline font-bold">Nexus AI</h3>
-                <span className="text-[10px] text-emerald-400 font-medium uppercase tracking-widest">Análise Preditiva</span>
+                <h3 className="text-sm font-headline font-bold text-white led-text-blue uppercase tracking-widest">Nexus Strategist</h3>
+                <div className="flex items-center gap-1.5">
+                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
+                  <span className="text-[9px] text-emerald-400 font-bold uppercase tracking-[0.2em]">Live Global Analysis</span>
+                </div>
               </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={() => handleOpenChange(false)} className="hover:bg-primary/20">
+            <Button variant="ghost" size="icon" onClick={() => handleOpenChange(false)} className="hover:bg-primary/20 rounded-xl">
               <X className="h-4 w-4" />
             </Button>
           </div>
 
-          <ScrollArea className="flex-1 h-[450px] p-4">
-            <div className="space-y-4">
+          <ScrollArea className="flex-1 h-[500px] p-6">
+            <div className="space-y-6">
               {messages.map((msg, idx) => (
                 <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed ${
+                  <div className={`max-w-[90%] p-4 rounded-3xl text-sm leading-relaxed ${
                     msg.role === 'user' 
-                      ? 'bg-primary text-background font-medium' 
-                      : 'bg-white/5 border border-white/5 text-foreground'
+                      ? 'bg-primary text-background font-bold shadow-[0_0_20px_rgba(37,99,235,0.3)]' 
+                      : 'bg-white/5 border border-white/10 text-foreground font-medium'
                   }`}>
+                    {msg.role === 'assistant' && (
+                      <div className="flex items-center gap-2 mb-2 opacity-50">
+                        <ShieldCheck className="h-3 w-3 text-primary" />
+                        <span className="text-[9px] font-bold uppercase tracking-widest">Nexus Verified Response</span>
+                      </div>
+                    )}
                     {msg.content}
                   </div>
                 </div>
               ))}
               {isLoading && (
                 <div className="flex justify-start">
-                  <div className="bg-white/5 border border-white/5 p-3 rounded-2xl flex gap-1">
+                  <div className="bg-white/5 border border-white/10 p-4 rounded-3xl flex gap-1.5">
                     <div className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
                     <div className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
                     <div className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" />
@@ -131,26 +140,30 @@ export function AssistantChat({ assets, displayMode, externalOpen, onOpenChange,
             </div>
           </ScrollArea>
 
-          <div className="p-4 border-t border-white/5 bg-black/20">
-            <form onSubmit={(e) => { e.preventDefault(); handleSend(input); setInput(""); }} className="flex gap-2">
+          <div className="p-6 border-t border-white/10 bg-black/40">
+            <form onSubmit={(e) => { e.preventDefault(); handleSend(input); setInput(""); }} className="flex gap-3">
               <Input 
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="O que devo fazer com meu ouro hoje?"
-                className="bg-white/5 border-white/10 focus-visible:ring-primary h-12 rounded-xl"
+                placeholder="Qual o impacto real da geopolítica hoje?"
+                className="bg-white/5 border-white/10 focus-visible:ring-primary h-14 rounded-2xl text-sm px-6"
               />
-              <Button type="submit" size="icon" disabled={isLoading} className="h-12 w-12 bg-primary hover:bg-primary/80 text-background rounded-xl">
+              <Button type="submit" size="icon" disabled={isLoading} className="h-14 w-14 bg-primary hover:bg-primary/80 text-background rounded-2xl shadow-lg transition-all hover:scale-105">
                 <Send className="h-5 w-5" />
               </Button>
             </form>
+            <p className="text-[8px] text-muted-foreground font-bold uppercase tracking-[0.3em] text-center mt-4 opacity-40">
+              Nexus AI Sentinel - Autonomous Intelligence Core v2.6
+            </p>
           </div>
         </div>
       ) : (
         <Button 
           onClick={() => handleOpenChange(true)}
-          className="h-16 w-16 rounded-full bg-primary text-background shadow-lg hover:scale-110 transition-transform led-glow-blue p-0"
+          className="h-20 w-20 rounded-[2rem] bg-primary text-background shadow-[0_0_50px_rgba(37,99,235,0.5)] hover:scale-110 transition-all duration-500 led-glow-blue p-0"
         >
-          <Sparkles className="h-7 w-7" />
+          <Sparkles className="h-9 w-9" />
+          <div className="absolute -top-1 -right-1 h-4 w-4 bg-accent rounded-full animate-ping" />
         </Button>
       )}
     </div>

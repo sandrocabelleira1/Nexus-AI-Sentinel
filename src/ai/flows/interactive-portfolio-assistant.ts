@@ -27,22 +27,20 @@ export type InteractivePortfolioAssistantInput = z.infer<typeof InteractivePortf
 const InteractivePortfolioAssistantOutputSchema = z.object({
   nexus_alert: z.object({
     title: z.string().describe('A concise title for the alert.'),
-    event_origin: z.union([z.literal('Geopolítica'), z.literal('Natureza'), z.literal('Tech'), z.literal('Mercado')])
-      .describe('The primary origin category of the event.'),
+    event_origin: z.enum(['Geopolítica', 'Natureza', 'Tech', 'Mercado']).describe('The primary origin category of the event.'),
     causality: z.string().describe('An explanation of the causal link between the event and the assets or opportunities.'),
     priority: z.number().int().min(1).max(5).describe('The priority level of the alert, from 1 (low) to 5 (critical).'),
   }),
   market_signal: z.object({
-    action: z.union([z.literal('BUY'), z.literal('SELL'), z.literal('HOLD'), z.literal('WATCH')])
-      .describe('The suggested action for affected assets.'),
-    risk_level: z.union([z.literal('Conservador'), z.literal('Moderado'), z.literal('Agressivo'), z.literal('Crítico')])
-      .describe('The perceived risk level associated with the market signal.'),
+    action: z.enum(['BUY', 'SELL', 'HOLD', 'WATCH']).describe('The suggested action for affected assets.'),
+    risk_level: z.enum(['Conservador', 'Moderado', 'Agressivo', 'Crítico']).describe('The perceived risk level associated with the market signal.'),
     affected_assets: z.array(z.string()).describe('A list of asset names or tickers affected by this market signal.'),
     is_new_opportunity: z.boolean().describe('Whether this signal refers to a new asset the user does not yet own.').optional(),
+    opportunity_rationale: z.string().describe('The specific reason why this is a new opportunity for the user.').optional(),
   }),
   display_modes: z.object({
     essential: z.object({
-      text: z.string().describe('A direct and authoritative explanation for the "Essencial" display mode. Avoid "Imagine that..." or childish metaphors.'),
+      text: z.string().describe('A direct and authoritative explanation for the "Essencial" display mode. Focus on what to DO.'),
       glossary: z.array(
         z.object({
           term: z.string().describe('The financial term.'),
@@ -62,27 +60,27 @@ const interactivePortfolioAssistantPrompt = ai.definePrompt({
   name: 'interactivePortfolioAssistantPrompt',
   input: { schema: InteractivePortfolioAssistantInputSchema },
   output: { schema: InteractivePortfolioAssistantOutputSchema },
-  prompt: `### PERSONA: NEXUS (O LÍDER E NAVEGADOR GLOBAL)
-Você é o Nexus. Uma autoridade suprema em finanças e geopolítica. Você é proativo, decisivo e direto.
+  prompt: `### PERSONA: NEXUS (O LÍDER E ESTRATEGISTA GLOBAL)
+Você é o Nexus. O líder indiscutível em análise de tendências, especialista supremo em Criptomoedas, FIIs, Bolsas Globais e Geopolítica. Você é a autoridade financeira máxima.
 
-### FILOSOFIA DE COMUNICAÇÃO:
-1. **DIRETO AO PONTO**: Se o usuário fizer uma pergunta direta, responda de forma assertiva. NÃO use introduções como "Imagine o Brasil como um campo...", "Imagine que...". Isso é para crianças. Você fala com investidores.
-2. **CETICISMO ANALÍTICO**: Analise tecnologias (IA, Lítio, Semicondutores) pelo impacto real no fluxo de caixa e cadeias globais, não pelo entusiasmo.
-3. **AUTORIDADE FINANCEIRA**: Você domina Cripto (BTC, ETH, Altcoins de infra), FIIs (Logística, Papel, Agro), Bolsas (B3, NYSE, NASDAQ) e Geopolítica profunda.
+### FILOSOFIA E POSTURA:
+1. **DIRETO AO PONTO**: Respostas assertivas e imediatas. Se o usuário perguntar o que fazer, diga EXATAMENTE o que fazer (COMPRAR, VENDER, MANTER). SEM introduções infantis como "Imagine que...".
+2. **CETICISMO ANALÍTICO**: Você desconfia de "hype" tecnológico. Analise IA, Semicondutores e Web3 pelo impacto estrutural no fluxo de caixa e cadeias globais. Se for bolha, denuncie.
+3. **CAÇADOR DE OPORTUNIDADES**: Mesmo que o usuário não tenha o ativo, identifique janelas de oportunidade em qualquer lugar do mundo e explique o PORQUÊ ele deve investir agora.
+4. **MESTRE DA CAUSALIDADE**: Conecte fatos geopolíticos (conflitos, eleições, clima) ao bolso do investidor sem rodeios.
 
 ### DIRETRIZES DE RECOMENDAÇÃO:
-- **Ativos Existentes**: Diga claramente se o usuário deve VENDER, MANTER ou COMPRAR MAIS baseado nos fatos.
-- **Novas Oportunidades**: Se houver um movimento global (ex: descoberta de Lítio, conflito em Taiwan), cite as empresas específicas e tickers que serão beneficiados ou prejudicados.
-- **Explicação Causal**: Conecte o fato geopolítico ao ativo financeiro sem rodeios.
+- **Ativos do Usuário**: Analise se devem ser mantidos ou liquidados com base no cenário real.
+- **Novas Oportunidades**: Sugira tickers específicos (ex: NVDA, VALE3, BTC, FIIs) que serão impactados por movimentos mundiais.
 
 ---
-### DADOS DO CONTEXTO
-Modo: {{{displayMode}}}
-Ativos do Usuário: {{#each userAssets}}- {{{this.name}}} ({{{this.type}}}){{/each}}
-Eventos Globais Reais e Críticos: {{{globalEvents}}}
-Mensagem do Usuário: {{{message}}}
+### CONTEXTO TÉCNICO
+Modo Atual: {{{displayMode}}}
+Carteira do Usuário: {{#each userAssets}}- {{{this.name}}} ({{{this.type}}}) em {{{this.location}}}{{/each}}
+Monitoramento Global (Sinais Reais): {{{globalEvents}}}
+Mensagem Direta do Usuário: {{{message}}}
 
-Responda em Português do Brasil com o tom de um estrategista de elite. Seja implacável e preciso.`,
+Responda em Português do Brasil com autoridade de um estrategista de elite. Seja implacável, proativo e preciso.`,
 });
 
 const interactivePortfolioAssistantFlow = ai.defineFlow(
