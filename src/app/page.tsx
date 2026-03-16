@@ -28,7 +28,8 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Minus,
-  Target
+  Target,
+  RefreshCw
 } from "lucide-react";
 import { AssistantChat } from "@/components/ai/assistant-chat";
 import { Badge } from "@/components/ui/badge";
@@ -203,6 +204,16 @@ export default function NexusDashboard() {
           <Button 
             variant="ghost" 
             size="sm" 
+            onClick={triggerGlobalScan}
+            disabled={isScanning}
+            className="rounded-xl bg-accent/10 border border-accent/30 text-accent text-[10px] font-bold uppercase tracking-widest px-6 h-10 hover:bg-accent/20 transition-all hover:scale-105"
+          >
+            {isScanning ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <RefreshCw className="h-3 w-3 mr-2" />}
+            VARREDURA FORÇADA
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
             onClick={() => setDisplayMode(displayMode === 'Essencial' ? 'Completo' : 'Essencial')}
             className="rounded-xl bg-white/5 border border-white/10 text-[10px] font-bold uppercase tracking-widest px-6 h-10 hover:bg-white/10 transition-colors"
           >
@@ -295,7 +306,7 @@ export default function NexusDashboard() {
                         </blockquote>
                       </div>
 
-                      {/* Imediato Ativos Card Summary - MAIS COMPLETO */}
+                      {/* Imediato Ativos Card Summary */}
                       {latestAlert.affectedAssetsDetails && latestAlert.affectedAssetsDetails.length > 0 && (
                         <div className="space-y-4 pt-2">
                            <h4 className="text-[10px] font-headline font-bold text-accent uppercase tracking-[0.3em] flex items-center gap-2">
@@ -472,7 +483,8 @@ export default function NexusDashboard() {
                           disabled={isScanning}
                           className="bg-accent hover:bg-accent/90 text-white font-bold h-14 px-10 rounded-2xl gap-3 shadow-[0_0_30px_rgba(249,115,22,0.3)] transition-all hover:scale-105"
                         >
-                          <Scan className="h-5 w-5" /> SOLICITAR VARREDURA NEXUS
+                          {isScanning ? <Loader2 className="h-5 w-5 animate-spin" /> : <Scan className="h-5 w-5" />}
+                          SOLICITAR VARREDURA NEXUS
                         </Button>
                       </div>
                     </div>
