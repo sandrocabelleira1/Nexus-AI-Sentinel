@@ -4,9 +4,20 @@ import { UserAsset } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Wallet, Zap, TrendingUp, Landmark, Boxes, Plus, Minus, History } from "lucide-react";
+import { Wallet, Zap, TrendingUp, Landmark, Boxes, Plus, Minus, Calculator } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface AssetCardProps {
   asset: UserAsset;
@@ -14,7 +25,11 @@ interface AssetCardProps {
 }
 
 export function AssetCard({ asset, onUpdate }: AssetCardProps) {
-  const [isManaging, setIsManaging] = useState(false);
+  const [isBuyOpen, setIsBuyOpen] = useState(false);
+  const [isSellOpen, setIsSellOpen] = useState(false);
+  
+  const [transValue, setTransValue] = useState<number>(0);
+  const [transQty, setTransQty] = useState<number>(0);
 
   const getRiskStyles = (risk?: string) => {
     switch (risk) {
@@ -34,7 +49,7 @@ export function AssetCard({ asset, onUpdate }: AssetCardProps) {
     }
   };
 
-  const getIcon = () => {
+  const Icon = (() => {
     switch (asset.type) {
       case 'Criptomoeda': return Zap;
       case 'Ação': return TrendingUp;
@@ -42,16 +57,18 @@ export function AssetCard({ asset, onUpdate }: AssetCardProps) {
       case 'Commodity': return Boxes;
       default: return Wallet;
     }
-  };
+  })();
 
-  const Icon = getIcon();
-
-  const handleQuickAction = (delta: number) => {
-    const newQty = Math.max(0, asset.quantity + delta);
-    // Simulação de preço médio/valor proporcional
-    const pricePerUnit = asset.investedValue / (asset.quantity || 1);
-    const newVal = newQty * pricePerUnit;
+  const handleTransaction = (type: 'buy' | 'sell') => {
+    const multiplier = type === 'buy' ? 1 : -1;
+    const newQty = Math.max(0, asset.quantity + (transQty * multiplier));
+    const newVal = Math.max(0, asset.investedValue + (transValue * multiplier));
+    
     onUpdate(asset.id, newQty, newVal);
+    setIsBuyOpen(false);
+    setIsSellOpen(false);
+    setTransValue(0);
+    setTransQty(0);
   };
 
   return (
@@ -90,23 +107,113 @@ export function AssetCard({ asset, onUpdate }: AssetCardProps) {
         </div>
 
         <div className="grid grid-cols-2 gap-3 pt-2">
-          <Button 
-            size="sm" 
-            variant="outline" 
-            onClick={() => handleQuickAction(1)}
-            className="rounded-xl bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 h-10 font-bold"
-          >
-            <Plus className="h-4 w-4 mr-2" /> COMPRAR
-          </Button>
-          <Button 
-            size="sm" 
-            variant="outline" 
-            onClick={() => handleQuickAction(-1)}
-            disabled={asset.quantity <= 0}
-            className="rounded-xl bg-rose-500/10 border-rose-500/20 text-rose-400 hover:bg-rose-500/20 hover:text-rose-300 h-10 font-bold"
-          >
-            <Minus className="h-4 w-4 mr-2" /> VENDER
-          </Button>
+          {/* Botão Comprar com Modal */}
+          <Dialog open={isBuyOpen} onOpenChange={setIsBuyOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="rounded-xl bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 h-10 font-bold"
+              >
+                <Plus className="h-4 w-4 mr-2" /> COMPRAR
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="glass-panel border-emerald-500/20 sm:max-w-[400px]">
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-headline font-bold text-emerald-400 flex items-center gap-3">
+                  <Calculator className="h-6 w-6" /> Nova Compra
+                </DialogTitle>
+                <DialogDescription className="text-muted-foreground">
+                  Aporte de capital em {asset.name}.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-6 py-6">
+                <div className="grid gap-2">
+                  <Label className="text-white font-bold uppercase tracking-widest text-[10px]">Valor do Aporte (R$)</Label>
+                  <Input 
+                    type="number" 
+                    placeholder="0.00" 
+                    className="bg-white/5 border-white/10 text-white"
+                    value={transValue || ""}
+                    onChange={(e) => setTransValue(Number(e.target.value))}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label className="text-white font-bold uppercase tracking-widest text-[10px]">Quantidade Comprada</Label>
+                  <Input 
+                    type="number" 
+                    placeholder="0" 
+                    className="bg-white/5 border-white/10 text-white"
+                    value={transQty || ""}
+                    onChange={(e) => setTransQty(Number(e.target.value))}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button 
+                  onClick={() => handleTransaction('buy')}
+                  className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold h-12 rounded-xl"
+                >
+                  CONFIRMAR APORTE
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Botão Vender com Modal */}
+          <Dialog open={isSellOpen} onOpenChange={setIsSellOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                disabled={asset.quantity <= 0}
+                className="rounded-xl bg-rose-500/10 border-rose-500/20 text-rose-400 hover:bg-rose-500/20 hover:text-rose-300 h-10 font-bold"
+              >
+                <Minus className="h-4 w-4 mr-2" /> VENDER
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="glass-panel border-rose-500/20 sm:max-w-[400px]">
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-headline font-bold text-rose-400 flex items-center gap-3">
+                  <Calculator className="h-6 w-6" /> Liquidar Ativo
+                </DialogTitle>
+                <DialogDescription className="text-muted-foreground">
+                  Venda de posição de {asset.name}.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-6 py-6">
+                <div className="grid gap-2">
+                  <Label className="text-white font-bold uppercase tracking-widest text-[10px]">Valor da Venda (R$)</Label>
+                  <Input 
+                    type="number" 
+                    placeholder="0.00" 
+                    className="bg-white/5 border-white/10 text-white"
+                    value={transValue || ""}
+                    onChange={(e) => setTransValue(Number(e.target.value))}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label className="text-white font-bold uppercase tracking-widest text-[10px]">Quantidade Vendida</Label>
+                  <Input 
+                    type="number" 
+                    placeholder="0" 
+                    max={asset.quantity}
+                    className="bg-white/5 border-white/10 text-white"
+                    value={transQty || ""}
+                    onChange={(e) => setTransQty(Number(e.target.value))}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button 
+                  onClick={() => handleTransaction('sell')}
+                  className="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold h-12 rounded-xl"
+                >
+                  CONFIRMAR VENDA
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
 
         <div className="pt-6 border-t border-white/5 flex items-center justify-between">
