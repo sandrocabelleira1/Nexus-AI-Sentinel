@@ -38,19 +38,30 @@ service cloud.firestore {
     }
 
     match /global_intelligence_alerts/{alertId} {
-      allow get, list: if isSignedIn();
-      allow create: if isSignedIn(); 
+      /**
+       * @description Alertas globais de inteligência.
+       * Acesso recursivo para garantir listagem (list) e leitura (get).
+       */
+      allow read, create: if isSignedIn();
       allow update, delete: if false;
     }
 
     match /market_prices/{ticker} {
       /**
        * @description Feed de preços em tempo real.
-       * Leitura pública para usuários logados. Escrita permitida para simulação do protótipo.
+       * Acesso recursivo para garantir que o onSnapshot funcione na coleção inteira.
        */
-      allow get, list: if isSignedIn();
-      allow create, update: if isSignedIn();
+      allow read, write: if isSignedIn();
       allow delete: if false;
+    }
+    
+    // Fallback para garantir que caminhos recursivos de listagem funcionem
+    match /global_intelligence_alerts {
+       allow list: if isSignedIn();
+    }
+    
+    match /market_prices {
+       allow list: if isSignedIn();
     }
   }
 }
