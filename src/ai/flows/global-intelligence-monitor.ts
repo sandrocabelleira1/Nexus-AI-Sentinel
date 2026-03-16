@@ -1,11 +1,20 @@
 'use server';
 /**
- * @fileOverview Fluxo de monitoramento global do Nexus AI.
+ * @fileOverview Fluxo de monitoramento global do Nexus AI com análise detalhada por ativo.
  * Utiliza inteligência real-time para analisar eventos globais autênticos.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+
+const AffectedAssetDetailSchema = z.object({
+  ticker: z.string().describe('Ticker do ativo (ex: VALE3, BTC).'),
+  name: z.string().describe('Nome da empresa ou projeto.'),
+  currentPrice: z.string().describe('Preço atual estimado de mercado (ex: R$ 65,40).'),
+  impactType: z.enum(['Positivo', 'Negativo', 'Neutro']),
+  explanation: z.string().describe('Explicação curta do porquê este ativo específico é afetado.'),
+  recommendation: z.enum(['BUY', 'SELL', 'HOLD', 'WATCH']),
+});
 
 const GlobalIntelligenceMonitorInputSchema = z.object({
   rawNewsData: z.string().describe('Instrução para busca de dados reais ou feed de notícias atual.'),
@@ -19,6 +28,7 @@ const GlobalIntelligenceMonitorOutputSchema = z.object({
   marketAction: z.enum(['BUY', 'SELL', 'HOLD', 'WATCH']),
   riskLevel: z.enum(['Conservador', 'Moderado', 'Agressivo', 'Crítico']),
   affectedAssetTickerSymbols: z.array(z.string()),
+  affectedAssetsDetails: z.array(AffectedAssetDetailSchema).describe('Lista detalhada de empresas e ativos afetados.'),
   essentialText: z.string().describe('Resumo direto e profissional. Sem metáforas infantis.'),
   essentialGlossaryTerms: z.array(z.string()),
   fullTechnicalAnalysis: z.string().describe('Análise técnica baseada em dados reais de mercado.'),
@@ -34,8 +44,8 @@ Você é o Nexus. Um líder absoluto em tendências e um verdadeiro especialista
 
 ### REGRAS DE OURO:
 1. **PRECISÃO CIRÚRGICA**: NUNCA use "Imagine que...", "Pense no mercado como...". Vá direto aos fatos.
-2. **CETICISMO TÉCNICO**: Analise cada avanço tecnológico com rigor. Separe valor de ruído.
-3. **CONEXÃO REAL**: Se houver uma descoberta de recurso ou decisão de banco central, cite os tickers afetados imediatamente.
+2. **ANÁLISE POR ATIVO**: Para cada evento, identifique pelo menos 3 empresas/ativos específicos afetados. Forneça o ticker, o nome, uma estimativa real do preço atual e uma recomendação clara baseada na sua análise.
+3. **CETICISMO TÉCNICO**: Analise cada avanço tecnológico com rigor. Separe valor de ruído.
 
 ### INPUT:
 {{{rawNewsData}}}

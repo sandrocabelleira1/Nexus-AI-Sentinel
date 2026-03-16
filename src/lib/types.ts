@@ -12,6 +12,15 @@ export interface UserAsset {
 
 export type DisplayMode = 'Essencial' | 'Completo';
 
+export interface AffectedAssetDetail {
+  ticker: string;
+  name: string;
+  currentPrice: string;
+  impactType: 'Positivo' | 'Negativo' | 'Neutro';
+  explanation: string;
+  recommendation: 'BUY' | 'SELL' | 'HOLD' | 'WATCH';
+}
+
 export interface GlobalIntelligenceAlert {
   id: string;
   createdAt: string;
@@ -22,6 +31,7 @@ export interface GlobalIntelligenceAlert {
   marketAction: 'BUY' | 'SELL' | 'HOLD' | 'WATCH';
   riskLevel: 'Conservador' | 'Moderado' | 'Agressivo' | 'Crítico';
   affectedAssetTickerSymbols: string[];
+  affectedAssetsDetails: AffectedAssetDetail[];
   essentialText: string;
   essentialGlossaryTerms: string[];
   fullTechnicalAnalysis: string;
