@@ -9,12 +9,12 @@ import {
   TrendingDown, 
   Cpu, 
   Globe, 
-  LayoutDashboard, 
   Wallet, 
   MessageSquare,
   ShieldCheck,
   Zap,
-  Map as MapIcon
+  Map as MapIcon,
+  ChevronRight
 } from "lucide-react";
 import { AssistantChat } from "@/components/ai/assistant-chat";
 import { Badge } from "@/components/ui/badge";
@@ -30,40 +30,32 @@ export default function NexusDashboard() {
     { label: 'DÓLAR', value: 'R$ 5,08', change: '-0.45%', trend: 'down' },
   ];
 
-  const sectorRadar = [
-    { title: 'Estímulo na China', status: 'Alta Correlação', color: 'blue' },
-    { title: 'Juros nos EUA', status: 'Aguardando FED', color: 'orange' },
-    { title: 'Safra Brasileira', status: 'Risco Climático', color: 'green' },
-  ];
-
   return (
-    <div className="min-h-screen bg-background text-foreground pb-12">
-      {/* Header Estilo Design */}
-      <header className="h-20 border-b border-white/5 px-8 flex items-center justify-between sticky top-0 bg-background/80 backdrop-blur-md z-50">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-primary/20 border border-primary/30">
+    <div className="min-h-screen bg-background text-foreground pb-12 selection:bg-primary selection:text-white">
+      {/* Header Command Center Style */}
+      <header className="h-20 border-b border-white/10 px-8 flex items-center justify-between sticky top-0 bg-background/90 backdrop-blur-xl z-50">
+        <div className="flex items-center gap-4">
+          <div className="p-2.5 rounded-2xl bg-primary/20 border border-primary/30 led-glow-blue">
             <Cpu className="h-6 w-6 text-primary" />
           </div>
-          <h1 className="font-headline font-bold text-2xl tracking-tight">NEXUS AI</h1>
+          <div>
+            <h1 className="font-headline font-bold text-2xl tracking-tight leading-none">NEXUS AI</h1>
+            <span className="text-[9px] text-primary font-bold uppercase tracking-[0.4em] opacity-70">Sentinel Core v2.6</span>
+          </div>
         </div>
 
-        <nav className="hidden md:flex items-center bg-[#0B1221] rounded-full p-1 border border-white/10">
+        <nav className="hidden lg:flex items-center bg-[#080D18] rounded-2xl p-1 border border-white/10 shadow-inner">
           <button 
             onClick={() => setActiveTab('dashboard')}
-            className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-medium transition-all ${activeTab === 'dashboard' ? 'nav-item-active' : 'text-muted-foreground hover:text-white'}`}
+            className={`flex items-center gap-2 px-8 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'dashboard' ? 'nav-item-active' : 'text-muted-foreground hover:text-white'}`}
           >
-            <Globe className="h-4 w-4" /> Visão Geral
+            <Globe className="h-4 w-4" /> DASHBOARD
           </button>
           <button 
             onClick={() => setActiveTab('portfolio')}
-            className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-medium transition-all ${activeTab === 'portfolio' ? 'nav-item-active' : 'text-muted-foreground hover:text-white'}`}
+            className={`flex items-center gap-2 px-8 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'portfolio' ? 'nav-item-active' : 'text-muted-foreground hover:text-white'}`}
           >
-            <Wallet className="h-4 w-4" /> Meus Ativos
-          </button>
-          <button 
-            className="flex items-center gap-2 px-6 py-2 rounded-full text-sm font-medium text-muted-foreground hover:text-white transition-all"
-          >
-            <MessageSquare className="h-4 w-4" /> Nexus Chat
+            <Wallet className="h-4 w-4" /> PATRIMÔNIO
           </button>
         </nav>
 
@@ -72,23 +64,27 @@ export default function NexusDashboard() {
             variant="ghost" 
             size="sm" 
             onClick={() => setDisplayMode(displayMode === 'Essencial' ? 'Completo' : 'Essencial')}
-            className="rounded-full bg-white/5 border border-white/10 text-[10px] uppercase tracking-widest px-4"
+            className="rounded-xl bg-white/5 border border-white/10 text-[10px] font-bold uppercase tracking-widest px-6 h-10 hover:bg-white/10"
           >
-            MODO {displayMode.toUpperCase()}
+            MODO: <span className="text-primary ml-1">{displayMode}</span>
           </Button>
+          <div className="h-10 w-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center relative">
+            <Zap className="h-5 w-5 text-accent animate-pulse-glow" />
+            <span className="absolute -top-1 -right-1 h-3 w-3 bg-emerald-500 rounded-full border-2 border-background" />
+          </div>
         </div>
       </header>
 
-      <main className="max-w-[1600px] mx-auto px-8 py-8 space-y-8">
-        {/* Barra de Métricas Superiores */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <main className="max-w-[1700px] mx-auto px-8 py-10 space-y-10">
+        {/* Metric Grid with LED Borders */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {metrics.map((m, i) => (
-            <div key={i} className="metric-card">
-              <p className="text-[10px] font-headline font-bold text-muted-foreground uppercase tracking-widest mb-2">{m.label}</p>
+            <div key={i} className="bg-[#080D18] border border-white/5 rounded-3xl p-7 transition-all hover:border-primary/20 group cursor-pointer shadow-lg">
+              <p className="text-[10px] font-headline font-bold text-muted-foreground uppercase tracking-[0.2em] mb-3 group-hover:text-primary transition-colors">{m.label}</p>
               <div className="flex items-end justify-between">
-                <h3 className="text-2xl font-headline font-bold">{m.value}</h3>
-                <div className={`flex items-center gap-1 text-[11px] font-bold ${m.trend === 'up' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                  {m.trend === 'up' ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                <h3 className="text-3xl font-headline font-bold tracking-tighter">{m.value}</h3>
+                <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-bold ${m.trend === 'up' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
+                  {m.trend === 'up' ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
                   {m.change}
                 </div>
               </div>
@@ -96,102 +92,71 @@ export default function NexusDashboard() {
           ))}
         </div>
 
-        {/* Grade Principal de 3 Colunas */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Esquerda: Nexus Mood */}
+        {/* Central Dashboard Area */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* World Mood Gauge */}
           <div className="lg:col-span-3">
             <WorldMood />
           </div>
 
-          {/* Centro: Oportunidade Geopolítica */}
+          {/* Main Intelligence Card */}
           <div className="lg:col-span-6">
-            <div className="bg-[#0B1221] border border-white/5 rounded-[2rem] p-10 h-full relative overflow-hidden flex flex-col justify-center">
-              <div className="absolute top-10 right-10 p-4 rounded-2xl bg-accent/10 border border-accent/20">
-                <Zap className="h-8 w-8 text-accent" />
+            <div className="bg-[#080D18] border border-white/10 rounded-[3rem] p-12 h-full relative overflow-hidden flex flex-col justify-center shadow-2xl group transition-all hover:border-accent/30">
+              <div className="absolute -top-24 -left-24 w-64 h-64 bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
+              <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-accent/5 rounded-full blur-[100px] pointer-events-none" />
+              
+              <div className="absolute top-12 right-12 p-5 rounded-3xl bg-accent/10 border border-accent/20 shadow-[0_0_30px_rgba(249,115,22,0.1)]">
+                <Zap className="h-10 w-10 text-accent animate-pulse" />
               </div>
               
-              <div className="space-y-6 max-w-xl">
-                <div>
-                  <h2 className="text-4xl font-headline font-bold mb-2">Oportunidade Geopolítica</h2>
-                  <p className="text-muted-foreground">Nexus detectou correlação atípica na China.</p>
+              <div className="space-y-8 max-w-2xl z-10">
+                <div className="space-y-2">
+                  <Badge variant="outline" className="bg-accent/10 border-accent/30 text-accent font-bold px-4 py-1.5 rounded-xl uppercase tracking-widest text-[10px]">Alerta Crítico</Badge>
+                  <h2 className="text-5xl font-headline font-bold leading-[1.1] tracking-tight">Oportunidade Geopolítica</h2>
+                  <p className="text-lg text-muted-foreground font-medium">Nexus detectou correlação atípica no mercado asiático.</p>
                 </div>
 
-                <blockquote className="text-xl font-medium leading-relaxed italic text-white/90">
-                  "O novo pacote de estímulo de Pequim está gerando um influxo de R$ 4.2B em commodities. Sua Vale (VALE3) está 15% abaixo do preço-justo preditivo."
+                <blockquote className="text-2xl font-medium leading-relaxed italic text-white/90 border-l-4 border-accent pl-8 py-2">
+                  "O novo pacote de estímulo de Pequim está gerando um influxo de <span className="text-accent led-text-accent">R$ 4.2B</span> em commodities. Sua posição em <span className="text-primary underline underline-offset-8">Vale (VALE3)</span> está 15% abaixo do preço-justo preditivo."
                 </blockquote>
 
-                <div className="flex items-center gap-4 pt-4">
-                  <Button className="bg-primary hover:bg-primary/90 text-white rounded-xl px-8 h-12 font-bold shadow-lg shadow-primary/20">
-                    Ver Relatório Completo
+                <div className="flex items-center gap-6 pt-6">
+                  <Button className="bg-primary hover:bg-primary/90 text-white rounded-2xl px-10 h-16 font-bold text-lg shadow-xl shadow-primary/30 transition-all hover:scale-105 active:scale-95">
+                    ANALISAR IMPACTO <ChevronRight className="ml-2 h-5 w-5" />
                   </Button>
-                  <Button variant="ghost" className="text-muted-foreground hover:text-white">
-                    Ignorar
+                  <Button variant="ghost" className="text-muted-foreground hover:text-white font-bold h-16 px-8 rounded-2xl">
+                    IGNORAR GATILHO
                   </Button>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Direita: Monitor Geopolítico */}
-          <div className="lg:col-span-3 space-y-6">
-            <div className="bg-[#0B1221] border border-white/5 rounded-[2rem] p-8 space-y-6 h-full">
+          {/* Right Panel Monitoring */}
+          <div className="lg:col-span-3 space-y-8">
+            <div className="bg-[#080D18] border border-white/10 rounded-[2.5rem] p-10 space-y-8 h-full shadow-xl">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-headline font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                  Monitor Geopolítico
+                <h3 className="text-xs font-headline font-bold uppercase tracking-[0.3em] text-primary led-text-blue">
+                  SENTINEL MONITOR
                 </h3>
-                <ShieldCheck className="h-5 w-5 text-muted-foreground/30" />
+                <div className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
               </div>
 
-              <div className="space-y-4">
-                <div className="p-5 rounded-2xl bg-accent/5 border border-accent/20 space-y-2">
-                  <div className="flex items-center gap-2 text-accent text-[10px] font-bold uppercase tracking-wider">
-                    <Globe className="h-3 w-3" /> Alerta China
+              <div className="space-y-6">
+                {[
+                  { tag: 'China', icon: Globe, color: 'text-accent', bg: 'bg-accent/10', border: 'border-accent/20', msg: 'Estímulo anunciado. Alta no minério prevista em 48h.' },
+                  { tag: 'Tech', icon: Zap, color: 'text-primary', bg: 'bg-primary/10', border: 'border-primary/20', msg: 'Semicondutores sob pressão logística na Malásia.' },
+                  { tag: 'Agro', icon: MapIcon, color: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'border-emerald-400/20', msg: 'Geada no Paraná pode afetar contratos de café.' }
+                ].map((item, idx) => (
+                  <div key={idx} className={`p-6 rounded-[2rem] ${item.bg} border ${item.border} space-y-3 transition-transform hover:scale-[1.02] cursor-pointer`}>
+                    <div className={`flex items-center gap-2 ${item.color} text-[10px] font-bold uppercase tracking-widest`}>
+                      <item.icon className="h-4 w-4" /> Alerta {item.tag}
+                    </div>
+                    <p className="text-sm font-semibold leading-relaxed text-white/80">{item.msg}</p>
                   </div>
-                  <p className="text-sm font-medium leading-snug">Novo estímulo anunciado em Pequim. Expectativa de alta no minério de ferro nas próximas 48h.</p>
-                </div>
-
-                <div className="p-5 rounded-2xl bg-primary/5 border border-primary/20 space-y-2">
-                  <div className="flex items-center gap-2 text-primary text-[10px] font-bold uppercase tracking-wider">
-                    <Zap className="h-3 w-3" /> Tech Insight
-                  </div>
-                  <p className="text-sm font-medium leading-snug">Semicondutores sob pressão logística. Monitorando Nvidia e Intel.</p>
-                </div>
+                ))}
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Rodapé do Dashboard: Radar e Mapa */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-9">
-            <h3 className="text-sm font-headline font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2 mb-6">
-              <TrendingUp className="h-4 w-4" /> Radar de Setores
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {sectorRadar.map((s, i) => (
-                <div key={i} className="bg-[#0B1221] border border-white/5 rounded-2xl p-6 flex flex-col gap-4">
-                  <h4 className="font-bold text-lg">{s.title}</h4>
-                  <Badge variant="outline" className={`w-fit bg-white/5 border-white/10 ${i === 1 ? 'text-orange-400' : 'text-emerald-400'}`}>
-                    {s.status}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="lg:col-span-3">
-             <div className="bg-[#0B1221] border border-white/5 rounded-[2rem] p-8 h-full flex flex-col items-center justify-center text-center space-y-4">
-               <div className="p-4 rounded-2xl bg-white/5">
-                 <MapIcon className="h-8 w-8 text-primary" />
-               </div>
-               <div>
-                 <h4 className="font-bold text-lg mb-1">Nexus World Map</h4>
-                 <p className="text-xs text-muted-foreground px-4">Explore o fluxo de capital global através do mapa de calor do Nexus.</p>
-               </div>
-               <Button variant="outline" className="w-full rounded-xl border-white/10 hover:bg-white/5 font-bold uppercase text-[10px] tracking-widest py-6">
-                 Abrir Mapa Mundial
-               </Button>
-             </div>
           </div>
         </div>
       </main>
