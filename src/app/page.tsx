@@ -71,7 +71,7 @@ export default function NexusDashboard() {
             onClick={() => setActiveTab('portfolio')}
             className={`flex items-center gap-2 px-10 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${activeTab === 'portfolio' ? 'nav-item-active' : 'text-muted-foreground hover:text-white'}`}
           >
-            <Wallet className="h-4 w-4" /> PATRIMÔNIO
+            <Wallet className="h-4 w-4" /> WALLET
           </button>
         </nav>
 
@@ -198,7 +198,7 @@ export default function NexusDashboard() {
           <div className="animate-in fade-in slide-in-from-bottom-5 duration-500">
             <div className="flex items-center justify-between mb-10">
               <div className="space-y-2">
-                <h2 className="text-5xl font-headline font-bold text-white tracking-tight">Seu Patrimônio</h2>
+                <h2 className="text-5xl font-headline font-bold text-white tracking-tight">Sua Wallet</h2>
                 <p className="text-muted-foreground font-medium text-lg">Monitoramento em tempo real de ativos globais.</p>
               </div>
               <Button className="bg-primary hover:bg-primary/90 rounded-2xl h-14 px-8 font-bold gap-3 shadow-[0_0_30px_rgba(37,99,235,0.3)]">
