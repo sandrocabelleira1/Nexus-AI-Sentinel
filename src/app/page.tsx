@@ -1,6 +1,7 @@
+
 "use client"
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { WorldMood } from "@/components/dashboard/world-mood";
 import { AssetType, DisplayMode, UserAsset, GlobalIntelligenceAlert } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -17,12 +18,13 @@ import {
   ShieldCheck,
   Terminal,
   Plus,
-  Clock
+  Clock,
+  Loader2
 } from "lucide-react";
 import { AssistantChat } from "@/components/ai/assistant-chat";
 import { Badge } from "@/components/ui/badge";
 import { PortfolioView } from "@/components/portfolio/portfolio-view";
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { useCollection, useFirestore, useMemoFirebase, useUser, useAuth, initiateAnonymousSignIn } from "@/firebase";
 import { collection, query, orderBy, limit } from "firebase/firestore";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -58,15 +60,26 @@ export default function NexusDashboard() {
   const [assets, setAssets] = useState<UserAsset[]>(initialMockAssets);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const firestore = useFirestore();
+  const auth = useAuth();
+  const { user, isUserLoading } = useUser();
+
+  // Autenticação anônima automática se não houver usuário
+  useEffect(() => {
+    if (!user && !isUserLoading) {
+      initiateAnonymousSignIn(auth);
+    }
+  }, [user, isUserLoading, auth]);
 
   // Escutando Alertas Globais do Firestore (Hub de Eventos)
+  // Só executa a query se o usuário estiver autenticado para evitar erro de permissão
   const alertsQuery = useMemoFirebase(() => {
+    if (!user) return null;
     return query(
       collection(firestore, "global_intelligence_alerts"),
       orderBy("createdAt", "desc"),
       limit(5)
     );
-  }, [firestore]);
+  }, [firestore, user]);
 
   const { data: globalAlerts, isLoading: isLoadingAlerts } = useCollection<GlobalIntelligenceAlert>(alertsQuery);
   const latestAlert = globalAlerts?.[0];
@@ -110,6 +123,15 @@ export default function NexusDashboard() {
       a.id === id ? { ...a, quantity: newQuantity, investedValue: newValue } : a
     ));
   };
+
+  if (isUserLoading) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center space-y-4">
+        <Loader2 className="h-12 w-12 text-primary animate-spin" />
+        <p className="text-primary font-headline font-bold animate-pulse tracking-widest">INICIALIZANDO SENTINELA...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen relative selection:bg-primary selection:text-white">
@@ -300,10 +322,10 @@ export default function NexusDashboard() {
                   <div className="grid gap-6 py-4">
                     <div className="grid gap-2">
                       <Label htmlFor="name" className="text-white font-bold uppercase tracking-widest text-[10px]">Nome do Ativo (Ticker)</Label>
-                      <Input 
+                      <input 
                         id="name" 
                         placeholder="Ex: PETR4, ETH" 
-                        className="bg-white/5 border-white/10 text-white"
+                        className="flex h-10 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-white ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                         value={newAsset.name}
                         onChange={(e) => setNewAsset(prev => ({ ...prev, name: e.target.value }))}
                       />
@@ -329,22 +351,22 @@ export default function NexusDashboard() {
                     <div className="grid gap-4 grid-cols-2">
                       <div className="grid gap-2">
                         <Label htmlFor="invested" className="text-white font-bold uppercase tracking-widest text-[10px]">Valor Investido (R$)</Label>
-                        <Input 
+                        <input 
                           id="invested" 
                           type="number"
                           placeholder="0.00" 
-                          className="bg-white/5 border-white/10 text-white"
+                          className="flex h-10 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-white ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                           value={newAsset.investedValue}
                           onChange={(e) => setNewAsset(prev => ({ ...prev, investedValue: Number(e.target.value) }))}
                         />
                       </div>
                       <div className="grid gap-2">
                         <Label htmlFor="qty" className="text-white font-bold uppercase tracking-widest text-[10px]">Quantidade</Label>
-                        <Input 
+                        <input 
                           id="qty" 
                           type="number"
                           placeholder="0" 
-                          className="bg-white/5 border-white/10 text-white"
+                          className="flex h-10 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-white ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                           value={newAsset.quantity}
                           onChange={(e) => setNewAsset(prev => ({ ...prev, quantity: Number(e.target.value) }))}
                         />
@@ -352,10 +374,10 @@ export default function NexusDashboard() {
                     </div>
                     <div className="grid gap-2">
                       <Label htmlFor="location" className="text-white font-bold uppercase tracking-widest text-[10px]">Localização / Custódia</Label>
-                      <Input 
+                      <input 
                         id="location" 
                         placeholder="Ex: XP, Binance, Ledger" 
-                        className="bg-white/5 border-white/10 text-white"
+                        className="flex h-10 w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-white ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                         value={newAsset.location}
                         onChange={(e) => setNewAsset(prev => ({ ...prev, location: e.target.value }))}
                       />
