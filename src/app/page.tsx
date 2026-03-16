@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { WorldMood } from "@/components/dashboard/world-mood";
-import { UserAsset, DisplayMode } from "@/lib/types";
+import { DisplayMode } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { 
   TrendingUp, 
@@ -10,11 +10,12 @@ import {
   Cpu, 
   Globe, 
   Wallet, 
-  MessageSquare,
+  Zap, 
+  Map as MapIcon, 
+  ChevronRight,
+  Activity,
   ShieldCheck,
-  Zap,
-  Map as MapIcon,
-  ChevronRight
+  Terminal
 } from "lucide-react";
 import { AssistantChat } from "@/components/ai/assistant-chat";
 import { Badge } from "@/components/ui/badge";
@@ -31,29 +32,35 @@ export default function NexusDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-12 selection:bg-primary selection:text-white">
-      {/* Header Command Center Style */}
-      <header className="h-20 border-b border-white/10 px-8 flex items-center justify-between sticky top-0 bg-background/90 backdrop-blur-xl z-50">
-        <div className="flex items-center gap-4">
-          <div className="p-2.5 rounded-2xl bg-primary/20 border border-primary/30 led-glow-blue">
+    <div className="min-h-screen relative selection:bg-primary selection:text-white">
+      {/* Grade Cibernética de Fundo */}
+      <div className="fixed inset-0 cyber-grid pointer-events-none opacity-20" />
+
+      {/* Header Estilo Centro de Comando */}
+      <header className="h-20 border-b border-white/10 px-8 flex items-center justify-between sticky top-0 bg-background/80 backdrop-blur-2xl z-50">
+        <div className="flex items-center gap-5">
+          <div className="p-3 rounded-2xl bg-primary/20 border border-primary/40 led-glow-blue animate-pulse">
             <Cpu className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h1 className="font-headline font-bold text-2xl tracking-tight leading-none">NEXUS AI</h1>
-            <span className="text-[9px] text-primary font-bold uppercase tracking-[0.4em] opacity-70">Sentinel Core v2.6</span>
+            <h1 className="font-headline font-bold text-2xl tracking-tight leading-none led-text-blue">NEXUS AI</h1>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-[10px] text-primary font-bold uppercase tracking-[0.4em] opacity-80">Sentinel Core v2.6</span>
+              <Badge variant="outline" className="h-4 px-1.5 text-[8px] bg-emerald-500/10 border-emerald-500/30 text-emerald-400 font-bold">ONLINE</Badge>
+            </div>
           </div>
         </div>
 
-        <nav className="hidden lg:flex items-center bg-[#080D18] rounded-2xl p-1 border border-white/10 shadow-inner">
+        <nav className="hidden lg:flex items-center bg-[#080D18] rounded-2xl p-1 border border-white/10 shadow-2xl">
           <button 
             onClick={() => setActiveTab('dashboard')}
-            className={`flex items-center gap-2 px-8 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'dashboard' ? 'nav-item-active' : 'text-muted-foreground hover:text-white'}`}
+            className={`flex items-center gap-2 px-10 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${activeTab === 'dashboard' ? 'nav-item-active' : 'text-muted-foreground hover:text-white'}`}
           >
             <Globe className="h-4 w-4" /> DASHBOARD
           </button>
           <button 
             onClick={() => setActiveTab('portfolio')}
-            className={`flex items-center gap-2 px-8 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'portfolio' ? 'nav-item-active' : 'text-muted-foreground hover:text-white'}`}
+            className={`flex items-center gap-2 px-10 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${activeTab === 'portfolio' ? 'nav-item-active' : 'text-muted-foreground hover:text-white'}`}
           >
             <Wallet className="h-4 w-4" /> PATRIMÔNIO
           </button>
@@ -64,27 +71,30 @@ export default function NexusDashboard() {
             variant="ghost" 
             size="sm" 
             onClick={() => setDisplayMode(displayMode === 'Essencial' ? 'Completo' : 'Essencial')}
-            className="rounded-xl bg-white/5 border border-white/10 text-[10px] font-bold uppercase tracking-widest px-6 h-10 hover:bg-white/10"
+            className="rounded-xl bg-white/5 border border-white/10 text-[10px] font-bold uppercase tracking-widest px-6 h-10 hover:bg-white/10 transition-colors"
           >
             MODO: <span className="text-primary ml-1">{displayMode}</span>
           </Button>
-          <div className="h-10 w-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center relative">
-            <Zap className="h-5 w-5 text-accent animate-pulse-glow" />
-            <span className="absolute -top-1 -right-1 h-3 w-3 bg-emerald-500 rounded-full border-2 border-background" />
+          <div className="h-10 w-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center relative overflow-hidden group">
+            <Zap className="h-5 w-5 text-accent animate-pulse" />
+            <div className="absolute inset-0 bg-accent/20 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
         </div>
       </header>
 
-      <main className="max-w-[1700px] mx-auto px-8 py-10 space-y-10">
-        {/* Metric Grid with LED Borders */}
+      <main className="max-w-[1700px] mx-auto px-8 py-10 space-y-10 relative z-10">
+        {/* Metric Grid - LED Accents */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {metrics.map((m, i) => (
-            <div key={i} className="bg-[#080D18] border border-white/5 rounded-3xl p-7 transition-all hover:border-primary/20 group cursor-pointer shadow-lg">
-              <p className="text-[10px] font-headline font-bold text-muted-foreground uppercase tracking-[0.2em] mb-3 group-hover:text-primary transition-colors">{m.label}</p>
+            <div key={i} className="bg-[#080D18]/90 border border-white/10 rounded-3xl p-7 transition-all hover:border-primary/40 group cursor-pointer shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-3 opacity-20 group-hover:opacity-100 transition-opacity">
+                <Activity className="h-4 w-4 text-primary" />
+              </div>
+              <p className="text-[10px] font-headline font-bold text-muted-foreground uppercase tracking-[0.3em] mb-4 group-hover:text-primary transition-colors">{m.label}</p>
               <div className="flex items-end justify-between">
-                <h3 className="text-3xl font-headline font-bold tracking-tighter">{m.value}</h3>
-                <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-bold ${m.trend === 'up' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
-                  {m.trend === 'up' ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
+                <h3 className="text-4xl font-headline font-bold tracking-tighter text-white group-hover:scale-105 transition-transform origin-left">{m.value}</h3>
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[12px] font-bold ${m.trend === 'up' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.2)]' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20 shadow-[0_0_15px_rgba(244,63,94,0.2)]'}`}>
+                  {m.trend === 'up' ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
                   {m.change}
                 </div>
               </div>
@@ -101,30 +111,37 @@ export default function NexusDashboard() {
 
           {/* Main Intelligence Card */}
           <div className="lg:col-span-6">
-            <div className="bg-[#080D18] border border-white/10 rounded-[3rem] p-12 h-full relative overflow-hidden flex flex-col justify-center shadow-2xl group transition-all hover:border-accent/30">
-              <div className="absolute -top-24 -left-24 w-64 h-64 bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
-              <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-accent/5 rounded-full blur-[100px] pointer-events-none" />
+            <div className="bg-[#080D18]/95 border border-white/10 rounded-[3rem] p-12 h-full relative overflow-hidden flex flex-col justify-center shadow-[0_0_60px_-15px_rgba(0,0,0,0.8)] group transition-all hover:border-accent/40">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-accent/40 to-transparent" />
+              <div className="absolute -top-32 -left-32 w-80 h-80 bg-primary/20 rounded-full blur-[120px] pointer-events-none group-hover:bg-primary/30 transition-colors" />
+              <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-accent/10 rounded-full blur-[120px] pointer-events-none" />
               
-              <div className="absolute top-12 right-12 p-5 rounded-3xl bg-accent/10 border border-accent/20 shadow-[0_0_30px_rgba(249,115,22,0.1)]">
+              <div className="absolute top-12 right-12 p-6 rounded-3xl bg-accent/10 border border-accent/20 shadow-[0_0_40px_rgba(249,115,22,0.2)]">
                 <Zap className="h-10 w-10 text-accent animate-pulse" />
               </div>
               
-              <div className="space-y-8 max-w-2xl z-10">
-                <div className="space-y-2">
-                  <Badge variant="outline" className="bg-accent/10 border-accent/30 text-accent font-bold px-4 py-1.5 rounded-xl uppercase tracking-widest text-[10px]">Alerta Crítico</Badge>
-                  <h2 className="text-5xl font-headline font-bold leading-[1.1] tracking-tight">Oportunidade Geopolítica</h2>
-                  <p className="text-lg text-muted-foreground font-medium">Nexus detectou correlação atípica no mercado asiático.</p>
+              <div className="space-y-10 max-w-2xl z-10">
+                <div className="space-y-3">
+                  <Badge className="bg-accent text-white font-bold px-5 py-2 rounded-xl uppercase tracking-widest text-[11px] shadow-[0_0_20px_rgba(249,115,22,0.5)]">ALERTA CRÍTICO</Badge>
+                  <h2 className="text-6xl font-headline font-bold leading-[1.05] tracking-tight text-white">Impacto Geopolítico</h2>
+                  <p className="text-xl text-muted-foreground font-medium flex items-center gap-3">
+                    <Terminal className="h-5 w-5 text-primary" />
+                    Nexus detectou anomalias nas rotas do minério.
+                  </p>
                 </div>
 
-                <blockquote className="text-2xl font-medium leading-relaxed italic text-white/90 border-l-4 border-accent pl-8 py-2">
-                  "O novo pacote de estímulo de Pequim está gerando um influxo de <span className="text-accent led-text-accent">R$ 4.2B</span> em commodities. Sua posição em <span className="text-primary underline underline-offset-8">Vale (VALE3)</span> está 15% abaixo do preço-justo preditivo."
-                </blockquote>
+                <div className="relative">
+                  <div className="absolute -left-6 top-0 bottom-0 w-1 bg-accent/50 rounded-full" />
+                  <blockquote className="text-2xl font-medium leading-relaxed italic text-white/95 pl-4">
+                    "O novo pacote de estímulo de Pequim está gerando um influxo de <span className="text-accent led-text-accent font-bold">R$ 4.2B</span> em commodities. Sua posição em <span className="text-primary underline underline-offset-[12px] decoration-primary/40 led-text-blue">Vale (VALE3)</span> está 15% abaixo do preço-justo preditivo."
+                  </blockquote>
+                </div>
 
-                <div className="flex items-center gap-6 pt-6">
-                  <Button className="bg-primary hover:bg-primary/90 text-white rounded-2xl px-10 h-16 font-bold text-lg shadow-xl shadow-primary/30 transition-all hover:scale-105 active:scale-95">
-                    ANALISAR IMPACTO <ChevronRight className="ml-2 h-5 w-5" />
+                <div className="flex items-center gap-8 pt-8">
+                  <Button className="bg-primary hover:bg-primary/90 text-white rounded-2xl px-12 h-16 font-bold text-xl shadow-[0_0_40px_rgba(37,99,235,0.4)] transition-all hover:scale-105 active:scale-95">
+                    ANALISAR IMPACTO <ChevronRight className="ml-2 h-6 w-6" />
                   </Button>
-                  <Button variant="ghost" className="text-muted-foreground hover:text-white font-bold h-16 px-8 rounded-2xl">
+                  <Button variant="ghost" className="text-muted-foreground hover:text-white font-bold h-16 px-10 rounded-2xl border border-transparent hover:border-white/10 hover:bg-white/5">
                     IGNORAR GATILHO
                   </Button>
                 </div>
@@ -134,25 +151,31 @@ export default function NexusDashboard() {
 
           {/* Right Panel Monitoring */}
           <div className="lg:col-span-3 space-y-8">
-            <div className="bg-[#080D18] border border-white/10 rounded-[2.5rem] p-10 space-y-8 h-full shadow-xl">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs font-headline font-bold uppercase tracking-[0.3em] text-primary led-text-blue">
+            <div className="bg-[#080D18]/90 border border-white/10 rounded-[2.5rem] p-10 space-y-10 h-full shadow-2xl relative overflow-hidden">
+              <div className="flex items-center justify-between relative z-10">
+                <h3 className="text-xs font-headline font-bold uppercase tracking-[0.4em] text-primary led-text-blue">
                   SENTINEL MONITOR
                 </h3>
-                <div className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
+                  <span className="text-[10px] font-bold text-emerald-500 uppercase">Live</span>
+                </div>
               </div>
 
-              <div className="space-y-6">
+              <div className="space-y-8 relative z-10">
                 {[
-                  { tag: 'China', icon: Globe, color: 'text-accent', bg: 'bg-accent/10', border: 'border-accent/20', msg: 'Estímulo anunciado. Alta no minério prevista em 48h.' },
-                  { tag: 'Tech', icon: Zap, color: 'text-primary', bg: 'bg-primary/10', border: 'border-primary/20', msg: 'Semicondutores sob pressão logística na Malásia.' },
-                  { tag: 'Agro', icon: MapIcon, color: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'border-emerald-400/20', msg: 'Geada no Paraná pode afetar contratos de café.' }
+                  { tag: 'Geopolítica', icon: Globe, color: 'text-accent', bg: 'bg-accent/10', border: 'border-accent/30', msg: 'Estímulo anunciado em Pequim. Alta no minério prevista em 48h.' },
+                  { tag: 'Tecnologia', icon: Zap, color: 'text-primary', bg: 'bg-primary/10', border: 'border-primary/30', msg: 'Semicondutores sob pressão logística na Malásia. Impacto em NVDA.' },
+                  { tag: 'Agronegócio', icon: MapIcon, color: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'border-emerald-400/30', msg: 'Geada no Paraná detectada por satélite. Risco em Fiagros.' }
                 ].map((item, idx) => (
-                  <div key={idx} className={`p-6 rounded-[2rem] ${item.bg} border ${item.border} space-y-3 transition-transform hover:scale-[1.02] cursor-pointer`}>
-                    <div className={`flex items-center gap-2 ${item.color} text-[10px] font-bold uppercase tracking-widest`}>
-                      <item.icon className="h-4 w-4" /> Alerta {item.tag}
+                  <div key={idx} className={`p-8 rounded-[2.5rem] ${item.bg} border ${item.border} space-y-4 transition-all hover:scale-[1.03] cursor-pointer hover:shadow-2xl`}>
+                    <div className={`flex items-center gap-3 ${item.color} text-[11px] font-bold uppercase tracking-[0.2em]`}>
+                      <item.icon className="h-5 w-5" /> {item.tag}
                     </div>
-                    <p className="text-sm font-semibold leading-relaxed text-white/80">{item.msg}</p>
+                    <p className="text-sm font-semibold leading-relaxed text-white/90 leading-relaxed">{item.msg}</p>
+                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-bold">
+                      <ShieldCheck className="h-3 w-3" /> VERIFICADO PELO NEXUS
+                    </div>
                   </div>
                 ))}
               </div>

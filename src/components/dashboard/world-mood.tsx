@@ -1,11 +1,11 @@
 "use client"
 
-import { Globe, Activity, ShieldCheck } from "lucide-react";
+import { Globe, Activity, ShieldCheck, Target } from "lucide-react";
 import { useEffect, useState } from "react";
 
 /**
- * @fileOverview Componente WorldMood refinado com efeitos LED e animações de varredura.
- * Representa o sentimento do mercado global com alta fidelidade visual.
+ * @fileOverview Componente WorldMood com fidelidade visual extrema.
+ * Simula um medidor de hardware de alta tecnologia com efeitos de varredura laser e brilho LED.
  */
 
 export function WorldMood() {
@@ -16,7 +16,7 @@ export function WorldMood() {
     setMounted(true);
     const interval = setInterval(() => {
       setMood(prev => {
-        const delta = (Math.random() * 6 - 3);
+        const delta = (Math.random() * 4 - 2);
         const newScore = Math.min(100, Math.max(0, prev.score + delta));
         let label = 'ESTÁVEL';
         if (newScore > 80) label = 'EUFÓRICO';
@@ -24,63 +24,65 @@ export function WorldMood() {
         else if (newScore < 35) label = 'MEDO';
         return { score: newScore, label };
       });
-    }, 4000);
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
 
-  const radius = 90;
-  const stroke = 6;
+  const radius = 100;
+  const stroke = 8;
   const normalizedRadius = radius - stroke * 2;
   const circumference = normalizedRadius * 2 * Math.PI;
   const strokeDashoffset = circumference - (mood.score / 100) * circumference;
 
-  if (!mounted) return <div className="bg-[#080D18] border border-white/5 rounded-[2.5rem] p-10 h-full min-h-[450px] animate-pulse" />;
+  if (!mounted) return <div className="bg-[#080D18] border border-white/10 rounded-[2.5rem] p-10 h-full min-h-[500px] animate-pulse" />;
 
   return (
-    <div className="bg-[#080D18] border border-white/10 rounded-[2.5rem] p-10 h-full flex flex-col items-center justify-between relative overflow-hidden group shadow-2xl transition-all duration-500 hover:border-primary/30">
-      {/* Background Decorative Elements */}
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-50" />
+    <div className="bg-[#080D18]/95 border border-white/10 rounded-[2.5rem] p-12 h-full flex flex-col items-center justify-between relative overflow-hidden group shadow-[0_0_50px_rgba(0,0,0,0.5)] transition-all duration-700 hover:border-primary/40">
+      {/* Laser Scan Line Effect */}
+      <div className="absolute top-0 left-0 w-full h-[2px] bg-primary/30 shadow-[0_0_15px_hsl(var(--primary))] animate-[bounce_4s_infinite] opacity-30 pointer-events-none" />
       
       {/* Header do Card */}
-      <div className="flex items-center justify-between w-full mb-8 z-10">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl border border-primary/40 bg-primary/20 shadow-[0_0_15px_rgba(37,99,235,0.3)]">
-            <Activity className="h-4 w-4 text-primary animate-pulse" />
+      <div className="flex items-center justify-between w-full mb-10 z-10">
+        <div className="flex items-center gap-4">
+          <div className="p-2.5 rounded-xl border border-primary/50 bg-primary/20 led-glow-blue">
+            <Activity className="h-5 w-5 text-primary animate-pulse" />
           </div>
-          <span className="text-[11px] font-headline font-bold uppercase tracking-[0.3em] text-primary/90 led-text-blue">
-            NEXUS SENTIMENT
-          </span>
+          <div>
+            <span className="text-[12px] font-headline font-bold uppercase tracking-[0.4em] text-primary/90 led-text-blue block">
+              SENTIMENT INDEX
+            </span>
+            <span className="text-[9px] text-muted-foreground font-bold tracking-[0.2em] uppercase">Global Risk Matrix</span>
+          </div>
         </div>
-        <ShieldCheck className="h-4 w-4 text-emerald-500/50" />
+        <Target className="h-5 w-5 text-emerald-500/40 animate-spin-slow" />
       </div>
       
-      {/* Medidor Radial Central com Efeitos LED */}
-      <div className="relative flex items-center justify-center py-4 group-hover:scale-105 transition-transform duration-700">
-        {/* Outer Rotating Scan Ring */}
-        <div className="absolute inset-0 border border-primary/5 rounded-full animate-scan" style={{ borderStyle: 'dashed', borderWidth: '1px', margin: '-10px' }} />
+      {/* Medidor Radial Central */}
+      <div className="relative flex items-center justify-center py-8 group-hover:scale-110 transition-transform duration-1000">
+        {/* Outer Rotating Scan Ring (O anel que gira) */}
+        <div className="absolute inset-0 border border-primary/10 rounded-full animate-scan" style={{ borderStyle: 'dashed', borderWidth: '2px', margin: '-15px' }} />
+        <div className="absolute inset-0 border border-accent/5 rounded-full animate-scan" style={{ borderStyle: 'dotted', borderWidth: '1px', margin: '-30px', animationDirection: 'reverse', animationDuration: '25s' }} />
         
         <svg
           height={radius * 2}
           width={radius * 2}
-          className="transform -rotate-90 drop-shadow-[0_0_20px_rgba(37,99,235,0.4)]"
+          className="transform -rotate-90 drop-shadow-[0_0_35px_rgba(37,99,235,0.6)]"
         >
           <defs>
-            <linearGradient id="glowGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <linearGradient id="nexusGradient" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="hsl(var(--primary))" />
+              <stop offset="60%" stopColor="hsl(var(--primary))" />
               <stop offset="100%" stopColor="hsl(var(--accent))" />
             </linearGradient>
-            <filter id="ledGlow">
-              <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
-              <feMerge>
-                <feMergeNode in="coloredBlur"/>
-                <feMergeNode in="SourceGraphic"/>
-              </feMerge>
+            <filter id="ledNeonGlow">
+              <feGaussianBlur stdDeviation="3.5" result="blur"/>
+              <feComposite in="SourceGraphic" in2="blur" operator="over"/>
             </filter>
           </defs>
 
-          {/* Círculo de Fundo (Track) */}
+          {/* Círculo de Fundo (Pista) */}
           <circle
-            stroke="rgba(255,255,255,0.03)"
+            stroke="rgba(255,255,255,0.05)"
             fill="transparent"
             strokeWidth={stroke}
             r={normalizedRadius}
@@ -90,7 +92,7 @@ export function WorldMood() {
           
           {/* Círculo de Progresso LED */}
           <circle
-            stroke="url(#glowGradient)"
+            stroke="url(#nexusGradient)"
             fill="transparent"
             strokeWidth={stroke}
             strokeDasharray={circumference + ' ' + circumference}
@@ -99,46 +101,57 @@ export function WorldMood() {
             r={normalizedRadius}
             cx={radius}
             cy={radius}
-            filter="url(#ledGlow)"
-            className="text-primary transition-all duration-1000 ease-in-out"
+            filter="url(#ledNeonGlow)"
+            className="transition-all duration-1000 ease-in-out"
           />
         </svg>
         
         {/* Texto Central LED */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center transform rotate-0">
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
           <div className="flex items-start">
-            <span className="text-7xl font-headline font-bold text-white leading-none tracking-tighter led-text-blue">
+            <span className="text-7xl font-headline font-bold text-white leading-none tracking-tighter led-text-blue animate-flicker">
               {mood.score.toFixed(0)}
             </span>
-            <span className="text-primary font-bold text-xs mt-2 ml-1">%</span>
+            <span className="text-primary font-bold text-sm mt-3 ml-1">%</span>
           </div>
-          <div className="mt-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-md">
-            <span className="text-[10px] font-bold text-primary tracking-[0.2em] uppercase">
+          <div className="mt-4 px-5 py-1.5 rounded-full bg-primary/10 border border-primary/30 backdrop-blur-xl shadow-inner">
+            <span className="text-[11px] font-bold text-primary tracking-[0.3em] uppercase led-text-blue">
               {mood.label}
             </span>
           </div>
         </div>
       </div>
 
-      {/* Footer Text */}
-      <div className="mt-10 text-center z-10">
-        <div className="flex items-center justify-center gap-2 mb-3">
-          <div className="h-1 w-1 rounded-full bg-primary animate-ping" />
-          <span className="text-[10px] text-muted-foreground font-bold tracking-widest uppercase">Análise em Tempo Real</span>
+      {/* Footer Info */}
+      <div className="mt-12 text-center z-10 space-y-4">
+        <div className="flex items-center justify-center gap-3">
+          <div className="h-1.5 w-1.5 rounded-full bg-primary animate-ping" />
+          <span className="text-[11px] text-muted-foreground font-bold tracking-[0.2em] uppercase">Análise Preditiva Ativa</span>
         </div>
-        <p className="text-[13px] text-white/70 leading-relaxed px-2 font-medium">
-          Fluxo de capital migrando para <span className="text-primary font-bold">Ativos de Risco</span> e <span className="text-accent font-bold">IA</span>.
+        <p className="text-[14px] text-white/80 leading-relaxed px-4 font-medium max-w-xs">
+          O Nexus identificou migração de capital para <span className="text-primary font-bold led-text-blue underline underline-offset-4 decoration-primary/30">Mercados Emergentes</span>.
         </p>
+        <div className="pt-6 border-t border-white/5 w-full flex items-center justify-center gap-6">
+          <div className="flex flex-col items-center">
+            <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-widest">Confiança</span>
+            <span className="text-emerald-400 font-bold text-sm">94.2%</span>
+          </div>
+          <div className="h-6 w-px bg-white/10" />
+          <div className="flex flex-col items-center">
+            <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-widest">Latência</span>
+            <span className="text-primary font-bold text-sm">12ms</span>
+          </div>
+        </div>
       </div>
 
-      {/* Efeito Visual de Fundo (Globo Girando) */}
-      <div className="absolute -bottom-24 -right-24 opacity-[0.04] animate-scan pointer-events-none transition-opacity duration-1000 group-hover:opacity-[0.08]">
-        <Globe size={320} className="text-white" />
+      {/* Efeito Visual de Fundo (Globo Neon) */}
+      <div className="absolute -bottom-32 -right-32 opacity-[0.06] animate-scan pointer-events-none group-hover:opacity-[0.12] transition-opacity duration-1000">
+        <Globe size={380} className="text-white" />
       </div>
       
-      {/* Corner LED Accents */}
-      <div className="absolute top-4 right-4 h-1.5 w-1.5 rounded-full bg-primary/40 animate-pulse" />
-      <div className="absolute bottom-4 left-4 h-1.5 w-1.5 rounded-full bg-accent/30 animate-pulse" />
+      {/* Corner Status LEDs */}
+      <div className="absolute top-6 right-6 h-2 w-2 rounded-full bg-primary/50 shadow-[0_0_10px_rgba(37,99,235,0.8)] animate-pulse" />
+      <div className="absolute bottom-6 left-6 h-2 w-2 rounded-full bg-accent/40 shadow-[0_0_10px_rgba(249,115,22,0.8)] animate-pulse" />
     </div>
   );
 }
