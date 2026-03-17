@@ -39,7 +39,8 @@ import {
   Gavel,
   Landmark,
   Eye,
-  Radar
+  Radar,
+  Heart
 } from "lucide-react";
 import { AssistantChat } from "@/components/ai/assistant-chat";
 import { Badge } from "@/components/ui/badge";
@@ -51,52 +52,28 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { monitorGlobalEvents } from "@/ai/flows/global-intelligence-monitor";
 import { runAutonomousWhisperScan } from "@/ai/flows/autonomous-whisper-engine";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card, CardContent } from "@/components/ui/card";
 
 export default function NexusDashboard() {
   const [displayMode, setDisplayMode] = useState<DisplayMode>('Essencial');
   const [activeTab, setActiveTab] = useState<'dashboard' | 'portfolio' | 'market'>('dashboard');
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isRecommendationOpen, setIsRecommendationOpen] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatInitialQuery, setChatInitialQuery] = useState<string | null>(null);
+  const [lastAutoScan, setLastAutoScan] = useState<Date>(new Date());
 
   const firestore = useFirestore();
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
 
+  // Initialize Auth
   useEffect(() => {
     if (!user && !isUserLoading) {
       initiateAnonymousSignIn(auth);
     }
   }, [user, isUserLoading, auth]);
 
+  // Real-time Listeners
   const alertsQuery = useMemoFirebase(() => {
     if (!user) return null;
     return query(
@@ -120,7 +97,7 @@ export default function NexusDashboard() {
     return query(collection(firestore, "market_prices"));
   }, [firestore, user]);
 
-  const { data: globalAlerts, isLoading: isLoadingAlerts } = useCollection<GlobalIntelligenceAlert>(alertsQuery);
+  const { data: globalAlerts } = useCollection<GlobalIntelligenceAlert>(alertsQuery);
   const { data: whispers } = useCollection<AutonomousInsight>(whispersQuery);
   const { data: livePrices } = useCollection<MarketPrice>(pricesQuery);
   
@@ -135,6 +112,7 @@ export default function NexusDashboard() {
     return map;
   }, [livePrices]);
 
+  // Sync Logic
   const syncLivePrices = useCallback(async () => {
     if (!user) return;
     
@@ -195,9 +173,8 @@ export default function NexusDashboard() {
     try {
       await syncLivePrices();
 
-      // Parallel Scan: Geopolitical Events + Autonomous Whispers
       const [geopoliticalResult, whispersResult] = await Promise.all([
-        monitorGlobalEvents({ rawNewsData: "Varredura estratégica global de 24h." }),
+        monitorGlobalEvents({ rawNewsData: "Varredura estratégica global autônoma." }),
         runAutonomousWhisperScan()
       ]);
 
@@ -216,7 +193,7 @@ export default function NexusDashboard() {
           });
         });
       }
-
+      setLastAutoScan(new Date());
     } catch (error) {
       console.error("Erro na varredura global:", error);
     } finally {
@@ -224,13 +201,24 @@ export default function NexusDashboard() {
     }
   }, [user, isScanning, firestore, syncLivePrices]);
 
+  // AUTONOMOUS CYCLE: The Pulse of Nexus
   useEffect(() => {
     if (user && !isUserLoading) {
-      syncLivePrices();
-      const interval = setInterval(syncLivePrices, 60000); 
-      return () => clearInterval(interval);
+      // First scan on mount
+      triggerGlobalScan();
+      
+      // Price Sync every 60 seconds
+      const priceInterval = setInterval(syncLivePrices, 60000); 
+      
+      // Full AI Global Scan every 15 minutes (Simulating the 24h Autonomous Engine)
+      const aiScanInterval = setInterval(triggerGlobalScan, 900000); 
+      
+      return () => {
+        clearInterval(priceInterval);
+        clearInterval(aiScanInterval);
+      };
     }
-  }, [user, isUserLoading, syncLivePrices]);
+  }, [user, isUserLoading, triggerGlobalScan, syncLivePrices]);
 
   const discussWithNexus = (alertTitle: string) => {
     setChatInitialQuery(`Nexus, baseado em "${alertTitle}", qual a melhor estratégia de proteção agora?`);
@@ -257,7 +245,13 @@ export default function NexusDashboard() {
           </div>
           <div>
             <h1 className="font-headline font-bold text-2xl led-text-blue">NEXUS AI</h1>
-            <span className="text-[9px] text-primary font-bold uppercase tracking-[0.4em] opacity-80">Autonomous Sentinel v3.0</span>
+            <div className="flex items-center gap-2">
+              <span className="text-[9px] text-primary font-bold uppercase tracking-[0.4em] opacity-80">Autonomous Sentinel v3.0</span>
+              <div className="flex items-center gap-1">
+                <Heart className="h-2 w-2 text-rose-500 fill-rose-500 animate-pulse" />
+                <span className="text-[8px] text-emerald-400 font-bold uppercase tracking-widest">PULSE ACTIVE</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -268,6 +262,10 @@ export default function NexusDashboard() {
         </nav>
 
         <div className="flex items-center gap-4">
+          <div className="hidden xl:flex flex-col items-end mr-4">
+            <span className="text-[8px] text-muted-foreground font-bold uppercase tracking-widest">Última Varredura</span>
+            <span className="text-[10px] text-white font-bold">{formatDistanceToNow(lastAutoScan, { addSuffix: true, locale: ptBR })}</span>
+          </div>
           <Button variant="ghost" size="sm" onClick={triggerGlobalScan} disabled={isScanning} className="rounded-xl bg-accent/10 border border-accent/30 text-accent text-[10px] font-bold uppercase px-6 h-10 hover:bg-accent/20">
             {isScanning ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Radar className="h-3 w-3 mr-2" />} VARREDURA 360°
           </Button>
