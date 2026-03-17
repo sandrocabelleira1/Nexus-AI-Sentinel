@@ -66,7 +66,7 @@ export default function NexusDashboard() {
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
 
-  // Initialize Auth
+  // Initial Auth
   useEffect(() => {
     if (!user && !isUserLoading) {
       initiateAnonymousSignIn(auth);
@@ -88,7 +88,7 @@ export default function NexusDashboard() {
     return query(
       collection(firestore, "autonomous_insights"),
       orderBy("timestamp", "desc"),
-      limit(5)
+      limit(10)
     );
   }, [firestore, user]);
 
@@ -112,6 +112,37 @@ export default function NexusDashboard() {
     });
     return map;
   }, [livePrices]);
+
+  // Unified Live Feed Logic
+  const unifiedRadarFeed = useMemo(() => {
+    const alerts = (globalAlerts || []).map(a => ({
+      id: a.id,
+      type: 'ALERT' as const,
+      title: a.title,
+      timestamp: a.createdAt,
+      priority: a.priority,
+      origin: a.eventOrigin,
+      summary: a.essentialText,
+      fullText: a.causalityExplanation,
+      action: a.marketAction
+    }));
+
+    const rumors = (whispers || []).map(w => ({
+      id: w.id,
+      type: 'WHISPER' as const,
+      title: w.topic,
+      timestamp: w.timestamp,
+      priority: w.nexus_priority,
+      score: w.foundation_score,
+      summary: w.market_impact,
+      scenarios: w.scenarios,
+      credibility: w.source_credibility
+    }));
+
+    return [...alerts, ...rumors].sort((a, b) => 
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+  }, [globalAlerts, whispers]);
 
   // Sync Logic
   const syncLivePrices = useCallback(async () => {
@@ -147,7 +178,7 @@ export default function NexusDashboard() {
         }).catch(() => {});
 
       const b3Token = '2rb5157StMMfsE1ft1ErSq';
-      const b3Tickers = ['PETR4', 'VALE3', 'ITUB4', 'HGLG11', 'VGIA11', 'MXRF11'];
+      const b3Tickers = ['PETR4', 'VALE3', 'ITUB4', 'HGLG11', 'VGIA11', 'MXRF11', 'AGRO3', 'SLCE3'];
       b3Tickers.forEach(t => {
         fetch(`https://brapi.dev/api/quote/${t}?token=${b3Token}`)
           .then(r => r.json())
@@ -175,7 +206,7 @@ export default function NexusDashboard() {
       await syncLivePrices();
 
       const [geopoliticalResult, whispersResult] = await Promise.all([
-        monitorGlobalEvents({ rawNewsData: "Varredura estratégica global autônoma." }),
+        monitorGlobalEvents({ rawNewsData: "Varredura estratégica global autônoma focada em ativos brasileiros e tecnologia." }),
         runAutonomousWhisperScan()
       ]);
 
@@ -202,18 +233,11 @@ export default function NexusDashboard() {
     }
   }, [user, isScanning, firestore, syncLivePrices]);
 
-  // AUTONOMOUS CYCLE: The Pulse of Nexus
   useEffect(() => {
     if (user && !isUserLoading) {
-      // First scan on mount
       triggerGlobalScan();
-      
-      // Price Sync every 60 seconds
       const priceInterval = setInterval(syncLivePrices, 60000); 
-      
-      // Full AI Global Scan every 15 minutes (Simulating the 24h Autonomous Engine)
       const aiScanInterval = setInterval(triggerGlobalScan, 900000); 
-      
       return () => {
         clearInterval(priceInterval);
         clearInterval(aiScanInterval);
@@ -386,41 +410,50 @@ export default function NexusDashboard() {
               <div className="lg:col-span-3">
                 <div className="bg-[#080D18]/90 border border-white/10 rounded-[3rem] p-10 space-y-8 h-full shadow-2xl flex flex-col">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-headline font-bold uppercase tracking-[0.4em] text-primary">WHISPER RADAR</h3>
+                    <h3 className="text-xs font-headline font-bold uppercase tracking-[0.4em] text-primary">NEXUS LIVE RADAR</h3>
                     <div className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
                   </div>
                   
                   <ScrollArea className="flex-1 pr-2">
                     <div className="space-y-6">
-                      {whispers && whispers.length > 0 ? (
-                        whispers.map((whisper, idx) => (
-                          <div key={idx} className="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-4 hover:border-primary/40 transition-all">
-                            <div className="flex items-center justify-between">
-                              <Badge variant="outline" className="text-[8px] border-primary/30 text-primary font-bold uppercase">
-                                Rumor: {whisper.foundation_score}% Found.
+                      {unifiedRadarFeed.length > 0 ? (
+                        unifiedRadarFeed.map((item, idx) => (
+                          <div key={idx} className={`p-6 rounded-3xl border transition-all hover:bg-white/5 ${item.type === 'ALERT' ? 'bg-primary/5 border-primary/20' : 'bg-white/5 border-white/10'}`}>
+                            <div className="flex items-center justify-between mb-3">
+                              <Badge variant="outline" className={`text-[8px] font-bold uppercase ${item.type === 'ALERT' ? 'border-accent text-accent' : 'border-primary/30 text-primary'}`}>
+                                {item.type === 'ALERT' ? `${item.origin} ALERT` : `RUMOR: ${item.score}% FUND.`}
                               </Badge>
-                              <span className="text-[9px] text-muted-foreground font-bold">{formatDistanceToNow(new Date(whisper.timestamp), { locale: ptBR })}</span>
+                              <span className="text-[9px] text-muted-foreground font-bold">{formatDistanceToNow(new Date(item.timestamp), { locale: ptBR })}</span>
                             </div>
-                            <h4 className="text-sm font-bold text-white/90 leading-tight">{whisper.topic}</h4>
                             
-                            <div className="grid grid-cols-3 gap-2">
-                               <div className="flex flex-col items-center p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                                  <span className="text-[7px] text-emerald-400 font-bold uppercase">Otimista</span>
-                                  <span className="text-[9px] text-white font-bold">{whisper.scenarios.optimistic.prob}</span>
-                               </div>
-                               <div className="flex flex-col items-center p-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                                  <span className="text-[7px] text-blue-400 font-bold uppercase">Base</span>
-                                  <span className="text-[9px] text-white font-bold">{whisper.scenarios.baseline.prob}</span>
-                               </div>
-                               <div className="flex flex-col items-center p-2 rounded-lg bg-rose-500/10 border border-rose-500/20">
-                                  <span className="text-[7px] text-rose-400 font-bold uppercase">Risco</span>
-                                  <span className="text-[9px] text-white font-bold">{whisper.scenarios.risk.prob}</span>
-                               </div>
-                            </div>
+                            <h4 className="text-sm font-bold text-white/90 leading-tight mb-3">{item.title}</h4>
+                            
+                            {item.type === 'WHISPER' && item.scenarios && (
+                              <div className="grid grid-cols-3 gap-2 mb-3">
+                                 <div className="flex flex-col items-center p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                                    <span className="text-[7px] text-emerald-400 font-bold uppercase">Otimista</span>
+                                    <span className="text-[9px] text-white font-bold">{item.scenarios.optimistic.prob}</span>
+                                 </div>
+                                 <div className="flex flex-col items-center p-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                                    <span className="text-[7px] text-blue-400 font-bold uppercase">Base</span>
+                                    <span className="text-[9px] text-white font-bold">{item.scenarios.baseline.prob}</span>
+                                 </div>
+                                 <div className="flex flex-col items-center p-2 rounded-lg bg-rose-500/10 border border-rose-500/20">
+                                    <span className="text-[7px] text-rose-400 font-bold uppercase">Risco</span>
+                                    <span className="text-[9px] text-white font-bold">{item.scenarios.risk.prob}</span>
+                                 </div>
+                              </div>
+                            )}
 
-                            <p className="text-[10px] text-muted-foreground leading-relaxed">
-                               Impacto: <span className="text-white font-medium">{whisper.market_impact}</span>
+                            <p className="text-[10px] text-white/70 leading-relaxed line-clamp-3">
+                               {item.summary}
                             </p>
+
+                            {item.type === 'ALERT' && (
+                              <Button variant="ghost" size="sm" onClick={() => discussWithNexus(item.title)} className="w-full mt-4 h-8 bg-primary/10 hover:bg-primary/20 text-primary text-[8px] font-bold uppercase tracking-widest rounded-xl">
+                                Detalhar Impacto <ChevronRight className="ml-1 h-3 w-3" />
+                              </Button>
+                            )}
                           </div>
                         ))
                       ) : (
