@@ -102,6 +102,7 @@ export default function NexusDashboard() {
   const { data: livePrices } = useCollection<MarketPrice>(pricesQuery);
   
   const latestAlert = globalAlerts?.[0];
+  const latestWhisper = whispers?.[0];
 
   const priceMap = useMemo(() => {
     const map: Record<string, MarketPrice> = {};
@@ -305,7 +306,7 @@ export default function NexusDashboard() {
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
               <div className="lg:col-span-3">
-                <WorldMood />
+                <WorldMood latestAlert={latestAlert} latestWhisper={latestWhisper} />
               </div>
 
               <div className="lg:col-span-6">

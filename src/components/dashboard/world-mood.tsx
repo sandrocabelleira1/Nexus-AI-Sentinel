@@ -1,16 +1,24 @@
+
 "use client"
 
 import { Globe, Activity, ShieldCheck, Target } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+import { GlobalIntelligenceAlert, AutonomousInsight } from "@/lib/types";
 
 /**
- * @fileOverview Componente WorldMood com fidelidade visual extrema.
- * Simula um medidor de hardware de alta tecnologia com efeitos de varredura laser e brilho LED.
+ * @fileOverview Componente WorldMood dinâmico.
+ * Reflete o estado real da consciência do Nexus baseado em alertas e rumores.
  */
 
-export function WorldMood() {
+interface WorldMoodProps {
+  latestAlert?: GlobalIntelligenceAlert | null;
+  latestWhisper?: AutonomousInsight | null;
+}
+
+export function WorldMood({ latestAlert, latestWhisper }: WorldMoodProps) {
   const [mood, setMood] = useState({ score: 74, label: 'OPORTUNISTA' });
   const [mounted, setMounted] = useState(false);
+  const [latency, setLatency] = useState(12);
 
   useEffect(() => {
     setMounted(true);
@@ -24,9 +32,27 @@ export function WorldMood() {
         else if (newScore < 35) label = 'MEDO';
         return { score: newScore, label };
       });
+      // Simula flutuação de latência de processamento
+      setLatency(prev => Math.max(8, Math.min(25, prev + (Math.random() * 2 - 1))));
     }, 5000);
     return () => clearInterval(interval);
   }, []);
+
+  const dynamicInsight = useMemo(() => {
+    if (latestAlert) {
+      return `Nexus detectou impacto tático em ${latestAlert.affectedAssetTickerSymbols?.[0] || 'ativos selecionados'} via ${latestAlert.eventOrigin}.`;
+    }
+    if (latestWhisper) {
+      return `Radar captou rumor sobre "${latestWhisper.topic}" com ${latestWhisper.foundation_score}% de fundamento detectado.`;
+    }
+    return "Nexus em vigilância silenciosa. Fluxo de capital global operando em zona de estabilidade.";
+  }, [latestAlert, latestWhisper]);
+
+  const dynamicConfidence = useMemo(() => {
+    if (latestWhisper) return (latestWhisper.foundation_score + (Math.random() * 2)).toFixed(1);
+    if (latestAlert) return (88 + (latestAlert.priority * 1.5)).toFixed(1);
+    return "94.2";
+  }, [latestAlert, latestWhisper]);
 
   const radius = 100;
   const stroke = 8;
@@ -59,7 +85,6 @@ export function WorldMood() {
       
       {/* Medidor Radial Central */}
       <div className="relative flex items-center justify-center py-8 group-hover:scale-110 transition-transform duration-1000">
-        {/* Outer Rotating Scan Ring (O anel que gira) */}
         <div className="absolute inset-0 border border-primary/10 rounded-full animate-scan" style={{ borderStyle: 'dashed', borderWidth: '2px', margin: '-15px' }} />
         <div className="absolute inset-0 border border-accent/5 rounded-full animate-scan" style={{ borderStyle: 'dotted', borderWidth: '1px', margin: '-30px', animationDirection: 'reverse', animationDuration: '25s' }} />
         
@@ -80,7 +105,6 @@ export function WorldMood() {
             </filter>
           </defs>
 
-          {/* Círculo de Fundo (Pista) */}
           <circle
             stroke="rgba(255,255,255,0.05)"
             fill="transparent"
@@ -90,7 +114,6 @@ export function WorldMood() {
             cy={radius}
           />
           
-          {/* Círculo de Progresso LED */}
           <circle
             stroke="url(#nexusGradient)"
             fill="transparent"
@@ -106,7 +129,6 @@ export function WorldMood() {
           />
         </svg>
         
-        {/* Texto Central LED */}
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
           <div className="flex items-start">
             <span className="text-7xl font-headline font-bold text-white leading-none tracking-tighter led-text-blue animate-flicker">
@@ -128,28 +150,26 @@ export function WorldMood() {
           <div className="h-1.5 w-1.5 rounded-full bg-primary animate-ping" />
           <span className="text-[11px] text-muted-foreground font-bold tracking-[0.2em] uppercase">Análise Preditiva Ativa</span>
         </div>
-        <p className="text-[14px] text-white/80 leading-relaxed px-4 font-medium max-w-xs">
-          O Nexus identificou migração de capital para <span className="text-primary font-bold led-text-blue underline underline-offset-4 decoration-primary/30">Mercados Emergentes</span>.
+        <p className="text-[14px] text-white/80 leading-relaxed px-4 font-medium max-w-xs min-h-[48px]">
+          {dynamicInsight}
         </p>
         <div className="pt-6 border-t border-white/5 w-full flex items-center justify-center gap-6">
           <div className="flex flex-col items-center">
             <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-widest">Confiança</span>
-            <span className="text-emerald-400 font-bold text-sm">94.2%</span>
+            <span className="text-emerald-400 font-bold text-sm">{dynamicConfidence}%</span>
           </div>
           <div className="h-6 w-px bg-white/10" />
           <div className="flex flex-col items-center">
             <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-widest">Latência</span>
-            <span className="text-primary font-bold text-sm">12ms</span>
+            <span className="text-primary font-bold text-sm">{latency.toFixed(0)}ms</span>
           </div>
         </div>
       </div>
 
-      {/* Efeito Visual de Fundo (Globo Neon) */}
       <div className="absolute -bottom-32 -right-32 opacity-[0.06] animate-scan pointer-events-none group-hover:opacity-[0.12] transition-opacity duration-1000">
         <Globe size={380} className="text-white" />
       </div>
       
-      {/* Corner Status LEDs */}
       <div className="absolute top-6 right-6 h-2 w-2 rounded-full bg-primary/50 shadow-[0_0_10px_rgba(37,99,235,0.8)] animate-pulse" />
       <div className="absolute bottom-6 left-6 h-2 w-2 rounded-full bg-accent/40 shadow-[0_0_10px_rgba(249,115,22,0.8)] animate-pulse" />
     </div>
