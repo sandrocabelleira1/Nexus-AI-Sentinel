@@ -50,6 +50,21 @@ export interface GlobalIntelligenceAlert {
   fullLocationRiskAnalysis: string;
 }
 
+export interface AutonomousInsight {
+  id: string;
+  timestamp: string;
+  topic: string;
+  foundation_score: number;
+  source_credibility: 'Baixa' | 'Média' | 'Alta';
+  market_impact: string;
+  nexus_priority: number;
+  scenarios: {
+    optimistic: { desc: string; prob: string };
+    baseline: { desc: string; prob: string };
+    risk: { desc: string; prob: string };
+  };
+}
+
 export interface MarketPrice {
   id: string;
   ticker: string;

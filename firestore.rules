@@ -3,7 +3,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --- Global Helper Functions ---
     function isSignedIn() {
       return request.auth != null;
     }
@@ -12,55 +11,38 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
-    }
-
-    function isOwnerImmutable(field) {
-      return request.resource.data[field] == resource.data[field];
-    }
-
-    // --- Collection Rules ---
-
     match /users/{userId} {
       allow get: if isOwner(userId);
-      allow list: if false; 
       allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && isOwnerImmutable('id');
-      allow delete: if isExistingOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
     }
 
     match /users/{userId}/assets/{assetId} {
-      allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
-      allow update: if isExistingOwner(userId) && isOwnerImmutable('userId');
-      allow delete: if isExistingOwner(userId);
+      allow read, write: if isOwner(userId);
     }
 
     match /global_intelligence_alerts/{alertId} {
-      /**
-       * @description Alertas globais de inteligência.
-       * Acesso recursivo para garantir listagem (list) e leitura (get).
-       */
-      allow read, create: if isSignedIn();
-      allow update, delete: if false;
+      allow read, write: if isSignedIn();
+    }
+
+    match /autonomous_insights/{insightId} {
+      allow read, write: if isSignedIn();
     }
 
     match /market_prices/{ticker} {
-      /**
-       * @description Feed de preços em tempo real.
-       * Acesso recursivo para garantir que o onSnapshot funcione na coleção inteira.
-       */
       allow read, write: if isSignedIn();
-      allow delete: if false;
     }
     
-    // Fallback para garantir que caminhos recursivos de listagem funcionem
     match /global_intelligence_alerts {
        allow list: if isSignedIn();
     }
     
     match /market_prices {
+       allow list: if isSignedIn();
+    }
+
+    match /autonomous_insights {
        allow list: if isSignedIn();
     }
   }
