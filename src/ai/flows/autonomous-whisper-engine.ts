@@ -59,16 +59,23 @@ Análise:
 });
 
 export async function runAutonomousWhisperScan(): Promise<AutonomousWhisperOutput> {
-  const searchQueries = [
-    "latest financial rumors Bloomberg Reuters",
-    "geopolitical whispers Middle East China Taiwan",
-    "market speculation Bitcoin SEC ETFs",
-    "vazamentos decisões governo brasileiro economia"
-  ].join(", ");
+  try {
+    const searchQueries = [
+      "latest financial rumors Bloomberg Reuters",
+      "geopolitical whispers Middle East China Taiwan",
+      "market speculation Bitcoin SEC ETFs",
+      "vazamentos decisões governo brasileiro economia"
+    ].join(", ");
 
-  const { text: groundedAnalysis } = await whisperGroundingPrompt({ query: searchQueries });
-  const { output } = await whisperStructuringPrompt({ rawAnalysis: groundedAnalysis });
+    const { text: groundedAnalysis } = await whisperGroundingPrompt({ query: searchQueries });
+    const { output } = await whisperStructuringPrompt({ rawAnalysis: groundedAnalysis });
 
-  if (!output) throw new Error('Nexus: Falha no processamento autônomo de rumores.');
-  return output;
+    if (!output) throw new Error('Nexus: Falha no processamento autônomo de rumores.');
+    
+    // Garantir serialização limpa para Next.js Server Actions
+    return JSON.parse(JSON.stringify(output));
+  } catch (error) {
+    console.error("Whisper Engine Error:", error);
+    throw new Error("O Nexus encontrou uma instabilidade ao caçar rumores.");
+  }
 }

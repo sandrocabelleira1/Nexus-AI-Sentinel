@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A Genkit flow that proactively monitors global events and generates predictions.
@@ -17,7 +18,7 @@ const PredictiveAssetImpactAnalysisOutputSchema = z.object({
   alerts: z.array(z.object({
     id: z.string(),
     title: z.string(),
-    origin: z.enum(['Geopolítica', 'Natureza', 'Tech', 'Mercado']),
+    origin: z.string(),
     causality: z.string(),
     priority: z.number().int().min(1).max(5),
     timestamp: z.string(),
@@ -46,18 +47,13 @@ Modo: {{{displayMode}}}
 Gere os alertas em Português do Brasil.`,
 });
 
-const predictiveAssetImpactAnalysisFlow = ai.defineFlow(
-  {
-    name: 'predictiveAssetImpactAnalysisFlow',
-    inputSchema: PredictiveAssetImpactAnalysisInputSchema,
-    outputSchema: PredictiveAssetImpactAnalysisOutputSchema,
-  },
-  async (input) => {
-    const { output } = await predictiveAssetImpactAnalysisPrompt(input);
-    return output!;
-  }
-);
-
 export async function predictiveAssetImpactAnalysis(input: PredictiveAssetImpactAnalysisInput): Promise<PredictiveAssetImpactAnalysisOutput> {
-  return predictiveAssetImpactAnalysisFlow(input);
+  try {
+    const { output } = await predictiveAssetImpactAnalysisPrompt(input);
+    if (!output) throw new Error("Falha na análise preditiva.");
+    return JSON.parse(JSON.stringify(output));
+  } catch (error) {
+    console.error("Predictive Analysis Error:", error);
+    throw new Error("O Nexus falhou na projeção de impactos.");
+  }
 }
