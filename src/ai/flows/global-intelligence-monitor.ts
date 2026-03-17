@@ -1,7 +1,7 @@
 'use server';
 /**
  * @fileOverview Motor de Inteligência Estratégica Nexus AI com Google Search Grounding.
- * Corrigido para evitar conflito entre ferramentas e modo JSON.
+ * Refatorado para ser mais robusto contra falhas de validação de schema.
  */
 
 import { ai } from '@/ai/genkit';
@@ -12,9 +12,9 @@ const AffectedAssetDetailSchema = z.object({
   name: z.string(),
   currentPrice: z.string(),
   expectedGainPercentage: z.string(),
-  impactType: z.enum(['Positivo', 'Negativo', 'Neutro']),
+  impactType: z.string().describe('Positivo, Negativo ou Neutro'),
   explanation: z.string(),
-  recommendation: z.enum(['BUY', 'SELL', 'HOLD', 'WATCH']),
+  recommendation: z.string().describe('BUY, SELL, HOLD ou WATCH'),
   longTermOutlook: z.string(),
 });
 
@@ -32,12 +32,12 @@ const GlobalIntelligenceMonitorInputSchema = z.object({
 
 const GlobalIntelligenceMonitorOutputSchema = z.object({
   title: z.string(),
-  eventOrigin: z.enum(['Geopolítica', 'Governo', 'Natureza', 'Tech', 'Mercado']),
+  eventOrigin: z.string().describe('Geopolítica, Governo, Natureza, Tech ou Mercado'),
   causalityExplanation: z.string(),
   causalityLink: GeopoliticalCausalitySchema,
   priority: z.number().int().min(1).max(5),
-  marketAction: z.enum(['BUY', 'SELL', 'HOLD', 'WATCH']),
-  riskLevel: z.enum(['Conservador', 'Moderado', 'Agressivo', 'Crítico']),
+  marketAction: z.string().describe('BUY, SELL, HOLD ou WATCH'),
+  riskLevel: z.string().describe('Conservador, Moderado, Agressivo ou Crítico'),
   affectedAssetTickerSymbols: z.array(z.string()),
   affectedAssetsDetails: z.array(AffectedAssetDetailSchema),
   essentialText: z.string(),
@@ -56,17 +56,17 @@ const groundingPrompt = ai.definePrompt({
     googleSearchRetrieval: {},
   },
   prompt: `### PERSONA: NEXUS (SENTINELA ESTRATÉGICO GLOBAL)
-Você é o Nexus. Sua tarefa é vasculhar a internet AGORA em busca de decisões governamentais, decretos, mudanças geopolíticas e eventos naturais (clima) que afetem o bolso.
+Você é o Nexus. Sua tarefa é vasculhar a internet AGORA em busca de decisões governamentais, decretos e eventos naturais que afetem o mercado.
 
-### MOTOR DE BUSCA ATIVO (GROUNDING):
-1. Use sua ferramenta de busca para encontrar as últimas decisões no Diário Oficial da União (Brasil), anúncios do FED (EUA) e COPOM.
+### MOTOR DE BUSCA ATIVO:
+1. Encontre as últimas decisões no Diário Oficial da União (Brasil), FED (EUA) e COPOM.
 2. Identifique eventos climáticos extremos em polos de agronegócio e logística.
-3. Conecte o ato político ou natural (Causa) ao impacto financeiro (Efeito) para os próximos 7 dias.
+3. Conecte o ato político ou natural à consequência financeira nos próximos 7 dias.
 
 ### DADOS DE ENTRADA:
 {{{rawNewsData}}}
 
-Gere um relatório tático detalhado em Português do Brasil focado em PROTEÇÃO ou LUCRO IMEDIATO.`,
+Gere um relatório tático detalhado focado em PROTEÇÃO ou LUCRO IMEDIATO.`,
 });
 
 // Prompt 2: Structuring (Formatação JSON)
@@ -74,22 +74,27 @@ const structuringPrompt = ai.definePrompt({
   name: 'globalIntelligenceStructuringPrompt',
   input: { schema: z.object({ rawAnalysis: z.string() }) },
   output: { schema: GlobalIntelligenceMonitorOutputSchema },
-  prompt: `Transforme a seguinte análise tática em um objeto JSON estruturado seguindo o esquema definido.
+  prompt: `Transforme a seguinte análise tática em um objeto JSON estruturado seguindo rigorosamente o esquema.
   
 Análise:
 {{{rawAnalysis}}}`,
 });
 
 export async function monitorGlobalEvents(input: { rawNewsData: string }): Promise<GlobalIntelligenceMonitorOutput> {
-  // Passo 1: Obter análise fundamentada com pesquisa Google (Texto)
-  const { text: groundedAnalysis } = await groundingPrompt(input);
-  
-  // Passo 2: Estruturar o resultado em JSON
-  const { output } = await structuringPrompt({ rawAnalysis: groundedAnalysis });
-  
-  if (!output) {
-    throw new Error('Falha ao estruturar inteligência geopolítica.');
+  try {
+    // Passo 1: Obter análise fundamentada com pesquisa Google (Texto)
+    const { text: groundedAnalysis } = await groundingPrompt(input);
+    
+    // Passo 2: Estruturar o resultado em JSON
+    const { output } = await structuringPrompt({ rawAnalysis: groundedAnalysis });
+    
+    if (!output) {
+      throw new Error('Falha na estruturação JSON do Nexus.');
+    }
+    
+    return JSON.parse(JSON.stringify(output)); // Garantir serialização limpa
+  } catch (error: any) {
+    console.error("Nexus Engine Error:", error);
+    throw new Error("O Nexus encontrou uma instabilidade no processamento geopolítico. Tente novamente em instantes.");
   }
-  
-  return output;
 }
