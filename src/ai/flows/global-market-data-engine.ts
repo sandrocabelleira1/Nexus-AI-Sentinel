@@ -1,7 +1,7 @@
 'use server';
 /**
- * @fileOverview Nexus Global Market Data Engine v3.2.
- * Monitoramento de alta precisão: Binance (Real-time) + Brapi + Google Intelligence.
+ * @fileOverview Nexus Global Market Data Engine v3.3.
+ * Monitoramento de alta precisão: Binance (Real USD) + Brapi (BRL).
  */
 
 import { ai } from '@/ai/genkit';
@@ -11,7 +11,8 @@ const MarketDataOutputSchema = z.object({
   assets: z.array(z.object({
     ticker: z.string(),
     name: z.string(),
-    price: z.number().describe('Preço final convertido para BRL'),
+    price: z.number().describe('Preço real no mercado de origem (USD para Cripto/US, BRL para B3)'),
+    currency: z.enum(['BRL', 'USD']),
     change24h: z.number(),
     category: z.enum(['crypto', 'stocks', 'fiis', 'index']),
     region: z.string(),
@@ -79,26 +80,22 @@ const marketDataPrompt = ai.definePrompt({
   name: 'marketDataPrompt',
   tools: [fetchBrapiDataTool, fetchBinancePriceTool],
   input: { schema: z.object({ tickers: z.array(z.string()) }) },
-  config: { 
-    googleSearchRetrieval: {} 
-  },
-  system: `### PERSONA: SENTINELA OMNISCIENTE NEXUS v3.2
+  system: `### PERSONA: SENTINELA OMNISCIENTE NEXUS v3.3
 Sua missão é extrair preços REAIS e ATUALIZADOS. 
 
 ### PROTOCOLO CRIPTO (BINANCE):
 1. Para cada criptomoeda (BTC, ETH, SOL, XRP, DOT, BNB, etc), use a ferramenta 'fetchBinancePrice' com o par USDT (ex: BTCUSDT).
-2. **CRÍTICO**: Use o Google Search para obter a cotação ATUAL do Dólar (USD/BRL).
-3. Calcule o preço em BRL: (Preço Binance em USDT) * (Cotação USD/BRL). 
-4. Não invente valores. Se a Binance diz 65000 e o dólar é 5.00, o preço é 325000.
+2. **MANTENHA O PREÇO EM DÓLAR (USD)**. Não converta para BRL. Use o valor direto da Binance.
+3. Se o ativo for Cripto ou Stock US, a moeda (currency) deve ser "USD".
 
-### PROTOCOLO B3/US (BRAPI):
-1. Use 'fetchBrapiData' para ações e FIIs.
-2. Enriqueça com dados do Clube FII via Google Search para dividendos e vacância.
+### PROTOCOLO B3 (BRAPI):
+1. Use 'fetchBrapiData' para ações brasileiras e FIIs.
+2. A moeda (currency) para ativos B3 deve ser "BRL".
 
 ### OUTPUT:
-Retorne a análise técnica detalhada para TODOS os tickers solicitados.`,
+Retorne a análise técnica detalhada para TODOS os tickers solicitados, garantindo que o campo 'currency' esteja correto.`,
   prompt: `Execute varredura profunda para os ativos: {{#each tickers}}{{{this}}}, {{/each}}. 
-Consolide os preços da Binance convertidos para BRL e os fundamentos da Brapi/Clube FII.`,
+Mantenha preços de Cripto em USD e B3 em BRL.`,
 });
 
 const structurePrompt = ai.definePrompt({
@@ -106,7 +103,9 @@ const structurePrompt = ai.definePrompt({
   input: { schema: z.object({ rawData: z.string() }) },
   output: { schema: MarketDataOutputSchema },
   prompt: `Converta os dados brutos de mercado para o formato JSON estruturado do Nexus. 
-Garanta que os preços sejam números (number) e reflitam o valor real em BRL.
+Garanta que 'price' seja um número (number).
+Ativos Binance/US -> currency: "USD"
+Ativos B3 -> currency: "BRL"
 
 Dados: {{{rawData}}}`,
 });

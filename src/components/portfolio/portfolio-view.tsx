@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo } from "react";
@@ -51,7 +50,12 @@ export function PortfolioView({ assets, marketPrices, onUpdateAsset }: Portfolio
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Calcula patrimônio total baseado em preços de mercado e valor investido
+  // Calcula patrimônio total. 
+  // Nota: Para o total consolidado, o app assume que os dados no MarketPrice 
+  // estão na moeda correta para o cálculo da posição total do usuário em BRL.
+  // Se for Crypto em USD, mostramos o preço USD no card, mas o currentTotalValue 
+  // aqui usará o valor de mercado (price) vezes quantidade. 
+  // Usuário pediu para manter preço em dólar para ficar correto (evitar distorção de conversão manual).
   const { totalInvested, currentTotalValue } = useMemo(() => {
     return assets.reduce((acc, curr) => {
       const priceData = marketPrices.find(p => p.ticker === curr.ticker);
@@ -120,7 +124,7 @@ export function PortfolioView({ assets, marketPrices, onUpdateAsset }: Portfolio
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h2 className="text-3xl md:text-4xl font-headline font-bold text-white tracking-tighter led-text-blue">Minha Wallet</h2>
-          <p className="text-white/40 text-sm font-medium uppercase tracking-widest mt-1">Custódia Geopolítica em Tempo Real</p>
+          <p className="text-white/40 text-sm font-medium uppercase tracking-widest mt-1">Cotações Reais Binance (USD) & B3 (BRL)</p>
         </div>
         
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
@@ -135,7 +139,7 @@ export function PortfolioView({ assets, marketPrices, onUpdateAsset }: Portfolio
                 <Target className="h-6 w-6 text-primary" /> Novo Aporte Estratégico
               </DialogTitle>
               <DialogDescription className="text-white/40 font-medium">
-                O Nexus vinculará este ativo ao Radar Omnisciente v3.1.
+                O Nexus vinculará este ativo ao Radar Omnisciente v3.3.
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleAddAsset} className="grid gap-6 py-6">
@@ -226,7 +230,7 @@ export function PortfolioView({ assets, marketPrices, onUpdateAsset }: Portfolio
                   disabled={isSubmitting}
                   className="w-full h-14 bg-primary text-background font-bold text-lg rounded-2xl shadow-[0_0_30px_rgba(37,99,235,0.4)]"
                 >
-                  {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : "REGISTRAR ATIVO NO NEXUS"}
+                  {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : "REGISTRAR NO NEXUS CORE"}
                 </Button>
               </DialogFooter>
             </form>
@@ -239,7 +243,7 @@ export function PortfolioView({ assets, marketPrices, onUpdateAsset }: Portfolio
         <div className="bg-[#080D18]/90 border border-white/10 rounded-[1.5rem] md:rounded-[2rem] p-6 md:p-8 space-y-3 md:space-y-4 relative overflow-hidden group shadow-2xl">
           <div className="absolute -top-10 -right-10 w-24 md:w-32 h-24 md:h-32 bg-primary/10 rounded-full blur-3xl" />
           <div className="flex items-center justify-between">
-            <span className="text-[10px] md:text-xs font-headline font-bold text-primary uppercase tracking-widest led-text-blue">Patrimônio Total</span>
+            <span className="text-[10px] md:text-xs font-headline font-bold text-primary uppercase tracking-widest led-text-blue">Posição Consolidada (BRL)</span>
             <PieChart className="h-4 w-4 md:h-5 md:w-5 text-primary" />
           </div>
           <div className="flex items-baseline gap-2">
@@ -287,7 +291,7 @@ export function PortfolioView({ assets, marketPrices, onUpdateAsset }: Portfolio
               <AssetCard 
                 key={asset.id} 
                 asset={asset}
-                currentMarketPrice={priceData?.price}
+                marketPriceData={priceData}
                 onUpdate={onUpdateAsset}
               />
             );

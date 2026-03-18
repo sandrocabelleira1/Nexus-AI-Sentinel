@@ -1,10 +1,10 @@
 "use client"
 
-import { UserAsset } from "@/lib/types";
+import { UserAsset, MarketPrice } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Wallet, Zap, TrendingUp, Landmark, Boxes, Plus, Minus, Calculator, Info, ArrowUpRight, ArrowDownRight, Activity, Globe } from "lucide-react";
+import { Wallet, Zap, TrendingUp, Landmark, Boxes, Plus, Minus, Calculator, Info, ArrowUpRight, ArrowDownRight, Activity, Globe, Coins } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useMemo } from "react";
 import {
@@ -21,11 +21,11 @@ import { Label } from "@/components/ui/label";
 
 interface AssetCardProps {
   asset: UserAsset;
-  currentMarketPrice?: number;
+  marketPriceData?: MarketPrice;
   onUpdate: (id: string, newQuantity: number, newValue: number) => void;
 }
 
-export function AssetCard({ asset, currentMarketPrice, onUpdate }: AssetCardProps) {
+export function AssetCard({ asset, marketPriceData, onUpdate }: AssetCardProps) {
   const [isBuyOpen, setIsBuyOpen] = useState(false);
   const [isSellOpen, setIsSellOpen] = useState(false);
   
@@ -34,16 +34,20 @@ export function AssetCard({ asset, currentMarketPrice, onUpdate }: AssetCardProp
   const [unitPriceInput, setUnitPriceInput] = useState<number>(0);
   const [quantityInput, setQuantityInput] = useState<number>(0);
 
+  const isUSD = marketPriceData?.currency === 'USD' || asset.type === 'Criptomoeda';
+
   // Cálculos de Real-Time Valuation
   const { currentValuation, gainLoss, gainLossPercentage } = useMemo(() => {
-    if (!currentMarketPrice) {
+    if (!marketPriceData) {
       return { currentValuation: asset.investedValue, gainLoss: 0, gainLossPercentage: 0 };
     }
-    const currentVal = currentMarketPrice * asset.quantity;
+    // Para o total da Wallet, mantemos BRL como base de exibição (opcional, mas comum para consolidado)
+    // No entanto, para o ativo individual, o usuário quer ver o preço correto.
+    const currentVal = marketPriceData.price * asset.quantity;
     const gl = currentVal - asset.investedValue;
     const glp = asset.investedValue > 0 ? (gl / asset.investedValue) * 100 : 0;
     return { currentValuation: currentVal, gainLoss: gl, gainLossPercentage: glp };
-  }, [asset, currentMarketPrice]);
+  }, [asset, marketPriceData]);
 
   // Auto-calculate logic
   const handleValueChange = (val: number) => {
@@ -86,7 +90,7 @@ export function AssetCard({ asset, currentMarketPrice, onUpdate }: AssetCardProp
 
   const Icon = (() => {
     switch (asset.type) {
-      case 'Criptomoeda': return Zap;
+      case 'Criptomoeda': return Coins;
       case 'Ação': return TrendingUp;
       case 'Fundo Imobiliário': return Landmark;
       case 'Commodity': return Boxes;
@@ -105,8 +109,6 @@ export function AssetCard({ asset, currentMarketPrice, onUpdate }: AssetCardProp
     resetForm();
   };
 
-  const isBinancePowered = asset.type === 'Criptomoeda';
-
   return (
     <Card className={cn(
       "bg-[#080D18]/90 border transition-all duration-500 hover:scale-[1.02] group relative overflow-hidden rounded-[2.5rem]",
@@ -121,9 +123,9 @@ export function AssetCard({ asset, currentMarketPrice, onUpdate }: AssetCardProp
           </div>
           <div className="flex flex-col items-end gap-2">
             <div className="flex gap-2">
-              {isBinancePowered && (
+              {isUSD && (
                 <Badge className="bg-orange-500/10 text-orange-400 border-orange-500/20 text-[8px] font-bold uppercase px-2 py-0.5 flex items-center gap-1">
-                  <Globe className="h-2 w-2" /> Binance API
+                  <Globe className="h-2 w-2" /> BINANCE USD
                 </Badge>
               )}
               <Badge variant="outline" className="text-[9px] font-headline font-bold uppercase tracking-widest border-white/10 bg-white/5 px-3 py-1">
@@ -146,11 +148,15 @@ export function AssetCard({ asset, currentMarketPrice, onUpdate }: AssetCardProp
               <Landmark className="h-3 w-3" />
               <span>{asset.location}</span>
             </div>
-            {currentMarketPrice !== undefined && (
+            {marketPriceData && (
               <div className="flex items-center gap-2 mt-2">
                 <Activity className="h-3 w-3 text-emerald-400 animate-pulse" />
                 <span className="text-[11px] font-bold text-emerald-400">
-                  Cotação: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(currentMarketPrice)}
+                  Cotação: {new Intl.NumberFormat(isUSD ? 'en-US' : 'pt-BR', { 
+                    style: 'currency', 
+                    currency: isUSD ? 'USD' : 'BRL',
+                    maximumFractionDigits: isUSD ? 4 : 2 
+                  }).format(marketPriceData.price)}
                 </span>
               </div>
             )}
@@ -160,7 +166,7 @@ export function AssetCard({ asset, currentMarketPrice, onUpdate }: AssetCardProp
               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(currentValuation)}
             </div>
             <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
-              POSIÇÃO TOTAL
+              POSIÇÃO (BRL)
             </div>
           </div>
         </div>
@@ -187,7 +193,7 @@ export function AssetCard({ asset, currentMarketPrice, onUpdate }: AssetCardProp
               </DialogHeader>
               <div className="grid gap-6 py-6">
                 <div className="grid gap-2">
-                  <Label className="text-white font-bold uppercase tracking-widest text-[10px]">Valor Total do Aporte (R$)</Label>
+                  <Label className="text-white font-bold uppercase tracking-widest text-[10px]">Valor Total (BRL)</Label>
                   <Input 
                     type="number" 
                     placeholder="0.00" 
@@ -197,7 +203,7 @@ export function AssetCard({ asset, currentMarketPrice, onUpdate }: AssetCardProp
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label className="text-white font-bold uppercase tracking-widest text-[10px]">Preço Unitário Pago (R$)</Label>
+                  <Label className="text-white font-bold uppercase tracking-widest text-[10px]">Preço Unitário ({isUSD ? 'USD' : 'BRL'})</Label>
                   <Input 
                     type="number" 
                     placeholder="0.00" 
@@ -254,7 +260,7 @@ export function AssetCard({ asset, currentMarketPrice, onUpdate }: AssetCardProp
               </DialogHeader>
               <div className="grid gap-6 py-6">
                 <div className="grid gap-2">
-                  <Label className="text-white font-bold uppercase tracking-widest text-[10px]">Valor Bruto da Venda (R$)</Label>
+                  <Label className="text-white font-bold uppercase tracking-widest text-[10px]">Valor Bruto (BRL)</Label>
                   <Input 
                     type="number" 
                     placeholder="0.00" 
@@ -264,7 +270,7 @@ export function AssetCard({ asset, currentMarketPrice, onUpdate }: AssetCardProp
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label className="text-white font-bold uppercase tracking-widest text-[10px]">Preço de Venda Unitário (R$)</Label>
+                  <Label className="text-white font-bold uppercase tracking-widest text-[10px]">Preço de Venda ({isUSD ? 'USD' : 'BRL'})</Label>
                   <Input 
                     type="number" 
                     placeholder="0.00" 
@@ -283,9 +289,6 @@ export function AssetCard({ asset, currentMarketPrice, onUpdate }: AssetCardProp
                     value={quantityInput || ""}
                     onChange={(e) => handleQuantityChange(Number(e.target.value))}
                   />
-                  {quantityInput > asset.quantity && (
-                    <span className="text-[10px] text-rose-400 font-bold uppercase">Saldo insuficiente na Wallet</span>
-                  )}
                 </div>
               </div>
               <DialogFooter>
@@ -303,7 +306,7 @@ export function AssetCard({ asset, currentMarketPrice, onUpdate }: AssetCardProp
 
         <div className="pt-6 border-t border-white/5 flex items-center justify-between">
           <div className="space-y-1">
-            <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-[0.2em] block">Custo Médio</span>
+            <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-[0.2em] block">Custo Médio (BRL)</span>
             <span className="text-xs font-bold text-white/60">
               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(asset.investedValue / (asset.quantity || 1))}
             </span>
@@ -315,7 +318,7 @@ export function AssetCard({ asset, currentMarketPrice, onUpdate }: AssetCardProp
                 "h-1.5 w-1.5 rounded-full animate-pulse",
                 asset.riskLevel === 'Crítico' ? "bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,1)]" : "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,1)]"
               )} />
-              <span className="text-xs font-bold text-white uppercase tracking-widest">Ativo</span>
+              <span className="text-xs font-bold text-white uppercase tracking-widest">Sincronizado</span>
             </div>
           </div>
         </div>

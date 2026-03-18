@@ -83,6 +83,7 @@ export interface MarketPrice {
   id: string;
   ticker: string;
   price: number;
+  currency: 'BRL' | 'USD';
   change24h: number;
   updatedAt: string;
   category?: 'crypto' | 'stocks' | 'fiis' | 'index';

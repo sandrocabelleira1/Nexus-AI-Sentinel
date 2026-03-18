@@ -51,7 +51,7 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
             </div>
             <h2 className="text-3xl md:text-5xl font-headline font-bold text-white tracking-tighter led-text-blue">Terminal Global Pro</h2>
           </div>
-          <p className="text-white/40 font-medium text-sm md:text-lg max-w-2xl leading-snug">Monitoramento Omnisciente v3.1: IA conectada ao Clube FII, Brapi e Web Intelligence 24h.</p>
+          <p className="text-white/40 font-medium text-sm md:text-lg max-w-2xl leading-snug">Monitoramento Omnisciente v3.3: Binance Real-Time (USD) + B3 Brapi (BRL).</p>
         </div>
 
         <div className="flex items-center gap-4 md:gap-6 bg-[#080D18]/90 border border-white/10 p-4 md:p-6 rounded-[1.5rem] md:rounded-[2rem] shadow-2xl w-fit">
@@ -61,7 +61,7 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
           </div>
           <div className="flex items-center gap-2 md:gap-4 px-2 md:px-4">
             <Zap className="h-3 w-3 md:h-4 md:w-4 text-primary animate-pulse" />
-            <span className="text-[9px] md:text-[11px] text-primary font-bold uppercase tracking-[0.2em] md:tracking-[0.4em]">RADAR OMNI ATIVO</span>
+            <span className="text-[9px] md:text-[11px] text-primary font-bold uppercase tracking-[0.2em] md:tracking-[0.4em]">BINANCE CONNECTED</span>
           </div>
         </div>
       </div>
@@ -82,7 +82,7 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
             { id: 'all', label: 'TODOS', icon: Globe },
             { id: 'stocks', label: 'AÇÕES', icon: TrendingUp },
             { id: 'fiis', label: 'FIIs', icon: Building2 },
-            { id: 'crypto', label: 'CRIPTO', icon: Building2 }
+            { id: 'crypto', label: 'CRIPTO', icon: Coins }
           ].map((btn) => (
             <button
               key={btn.id}
@@ -102,9 +102,9 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
         {filteredPrices.map((price) => {
           const isUp = price.change24h > 0;
           const isFii = price.category === 'fiis';
+          const isUSD = price.currency === 'USD';
           const isBuySignal = isFii && (price.pvpRatio || 1) < 0.95 && (price.vacancyRate || 0) < 10;
           
-          // Lógica de sincronização mais resiliente: só trava se realmente não houver dado algum (undefined)
           const isSyncing = isFii && (price.dividendAmount === undefined && price.dataCom === undefined);
           
           return (
@@ -125,13 +125,13 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
                       <img src={price.logo} alt={price.ticker} className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-white p-1.5 md:p-2 border border-white/10" />
                     ) : (
                       <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 text-primary">
-                        {isFii ? <Building2 className="h-5 w-5 md:h-6 md:w-6" /> : <TrendingUp className="h-5 w-5 md:h-6 md:w-6" />}
+                        {isFii ? <Building2 className="h-5 w-5 md:h-6 md:w-6" /> : isUSD ? <Coins className="h-5 w-5 md:h-6 md:w-6" /> : <TrendingUp className="h-5 w-5 md:h-6 md:w-6" />}
                       </div>
                     )}
                     <div>
                       <div className="flex items-center gap-1.5 md:gap-2 mb-0.5 md:mb-1">
                         <Badge variant="outline" className="text-[7px] md:text-[8px] border-primary/30 text-primary uppercase font-bold tracking-widest px-1.5 md:px-2 py-0.5">
-                          {price.exchange || 'B3'}
+                          {price.exchange || (isUSD ? 'BINANCE' : 'B3')}
                         </Badge>
                         {isFii && <Badge className="bg-primary/20 text-primary border-primary/30 text-[7px] md:text-[8px]">{price.fiiType || 'Misto'}</Badge>}
                       </div>
@@ -145,9 +145,14 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
 
                 <div className="flex items-baseline gap-1.5 md:gap-2">
                   <span className="text-3xl md:text-4xl font-bold text-white tracking-tighter">
-                    {price.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    {price.price.toLocaleString(isUSD ? 'en-US' : 'pt-BR', { 
+                      style: 'currency', 
+                      currency: isUSD ? 'USD' : 'BRL',
+                      minimumFractionDigits: isUSD ? 2 : 2,
+                      maximumFractionDigits: isUSD ? 4 : 2 
+                    })}
                   </span>
-                  <span className="text-white/40 font-bold text-[8px] md:text-[10px] uppercase tracking-widest">Ativo</span>
+                  <span className="text-white/40 font-bold text-[8px] md:text-[10px] uppercase tracking-widest">{isUSD ? 'REAL-TIME USD' : 'Ativo BRL'}</span>
                 </div>
 
                 {isFii ? (
@@ -216,8 +221,10 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
                     </div>
                     <div className="grid grid-cols-2 gap-4 md:gap-8">
                       <div className="space-y-1">
-                        <span className="text-[7px] md:text-[8px] text-white/40 uppercase font-bold tracking-widest block">DY Anual</span>
-                        <span className="text-white font-bold text-xs md:text-sm">{(price.dividendYield || 0).toFixed(2)}%</span>
+                        <span className="text-[7px] md:text-[8px] text-white/40 uppercase font-bold tracking-widest block">{isUSD ? '24h Change' : 'DY Anual'}</span>
+                        <span className={cn("font-bold text-xs md:text-sm", isUSD && isUp ? "text-emerald-400" : isUSD ? "text-rose-400" : "text-white")}>
+                          {isUSD ? `${price.change24h.toFixed(2)}%` : `${(price.dividendYield || 0).toFixed(2)}%`}
+                        </span>
                       </div>
                       <div className="space-y-1">
                         <span className="text-[7px] md:text-[8px] text-white/40 uppercase font-bold tracking-widest block">Status</span>
