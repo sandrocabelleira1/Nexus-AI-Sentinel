@@ -33,6 +33,14 @@ service cloud.firestore {
     match /market_prices/{ticker} {
       allow read, write: if isSignedIn();
     }
+
+    match /whale_transactions/{txId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /market_entities/{entityId} {
+      allow read, write: if isSignedIn();
+    }
     
     match /global_intelligence_alerts {
        allow list: if isSignedIn();
@@ -43,6 +51,14 @@ service cloud.firestore {
     }
 
     match /autonomous_insights {
+       allow list: if isSignedIn();
+    }
+
+    match /whale_transactions {
+       allow list: if isSignedIn();
+    }
+
+    match /market_entities {
        allow list: if isSignedIn();
     }
   }
