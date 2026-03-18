@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo, useEffect, useCallback } from "react";
@@ -225,9 +226,9 @@ export default function NexusDashboard() {
 
   const NavButtons = () => (
     <>
-      <button onClick={() => setActiveTab('dashboard')} className={cn("flex items-center gap-2 px-6 py-2 rounded-xl text-xs font-bold transition-all", activeTab === 'dashboard' ? 'nav-item-active' : 'text-muted-foreground')}><LayoutGrid className="h-3.5 w-3.5" /> DASHBOARD</button>
-      <button onClick={() => setActiveTab('market')} className={cn("flex items-center gap-2 px-6 py-2 rounded-xl text-xs font-bold transition-all", activeTab === 'market' ? 'nav-item-active' : 'text-muted-foreground')}><TrendingUp className="h-3.5 w-3.5" /> MARKET</button>
-      <button onClick={() => setActiveTab('portfolio')} className={cn("flex items-center gap-2 px-6 py-2 rounded-xl text-xs font-bold transition-all", activeTab === 'portfolio' ? 'nav-item-active' : 'text-muted-foreground')}><Wallet className="h-3.5 w-3.5" /> WALLET</button>
+      <button onClick={() => setActiveTab('dashboard')} className={cn("flex items-center gap-2 px-6 py-2 rounded-xl text-xs font-bold transition-all w-full lg:w-auto text-left lg:text-center", activeTab === 'dashboard' ? 'nav-item-active' : 'text-muted-foreground')}><LayoutGrid className="h-3.5 w-3.5" /> DASHBOARD</button>
+      <button onClick={() => setActiveTab('market')} className={cn("flex items-center gap-2 px-6 py-2 rounded-xl text-xs font-bold transition-all w-full lg:w-auto text-left lg:text-center", activeTab === 'market' ? 'nav-item-active' : 'text-muted-foreground')}><TrendingUp className="h-3.5 w-3.5" /> MARKET</button>
+      <button onClick={() => setActiveTab('portfolio')} className={cn("flex items-center gap-2 px-6 py-2 rounded-xl text-xs font-bold transition-all w-full lg:w-auto text-left lg:text-center", activeTab === 'portfolio' ? 'nav-item-active' : 'text-muted-foreground')}><Wallet className="h-3.5 w-3.5" /> WALLET</button>
     </>
   );
 
@@ -246,7 +247,7 @@ export default function NexusDashboard() {
               <span className="text-[7px] md:text-[9px] text-primary font-bold uppercase tracking-[0.4em] opacity-80">Estrategista Ativo</span>
               <div className="flex items-center gap-1">
                 <Activity className="h-2 w-2 text-emerald-400 animate-pulse" />
-                <span className="text-[6px] md:text-[8px] text-emerald-400 font-bold uppercase tracking-widest">GLOBAL RADAR ACTIVE</span>
+                <span className="text-[6px] md:text-[8px] text-emerald-400 font-bold uppercase tracking-widest hidden sm:inline">GLOBAL RADAR ACTIVE</span>
               </div>
             </div>
           </div>
@@ -264,12 +265,13 @@ export default function NexusDashboard() {
           <div className="lg:hidden">
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-white">
+                <Button variant="ghost" size="icon" className="text-white hover:bg-white/5">
                   <Menu className="h-6 w-6" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="bg-[#080D18] border-white/10 p-6 flex flex-col gap-4">
-                <div className="mt-8 flex flex-col gap-2">
+              <SheetContent side="right" className="bg-background border-white/10 p-6 flex flex-col gap-6">
+                <div className="mt-12 flex flex-col gap-4">
+                   <h2 className="text-primary font-headline font-bold text-sm tracking-[0.3em] uppercase opacity-50 px-2">Navegação Central</h2>
                    <NavButtons />
                 </div>
               </SheetContent>
@@ -278,21 +280,13 @@ export default function NexusDashboard() {
         </div>
       </header>
 
-      <main className="max-w-[1800px] mx-auto px-4 md:px-8 py-6 md:py-10 space-y-6 md:space-y-10 relative z-10">
+      <main className="max-w-[1800px] mx-auto px-4 md:px-8 py-6 md:py-10 space-y-8 md:space-y-10 relative z-10">
         {activeTab === 'dashboard' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 items-start">
-            <div className="lg:col-span-3 flex flex-col gap-6 md:gap-8 order-2 lg:order-1">
-              <div className="h-[350px] md:h-[400px]">
-                <WorldMood latestAlert={latestAlert} latestWhisper={latestWhisper} onAnalyze={handleDeepAnalysis} />
-              </div>
-              <div className="h-[350px] md:h-[400px]">
-                <WhispersRadar insights={whispers || []} onAnalyze={(ctx) => handleDeepAnalysis(ctx)} />
-              </div>
-            </div>
-
-            <div className="lg:col-span-6 order-1 lg:order-2">
+          <div className="flex flex-col lg:grid lg:grid-cols-12 gap-8 items-start">
+            {/* Center Panel - Main Intelligence (Top on mobile) */}
+            <div className="w-full lg:col-span-6 order-1 lg:order-2">
               <div className={cn(
-                "bg-[#080D18]/95 border rounded-[2rem] md:rounded-[3rem] h-[600px] md:h-[850px] relative overflow-hidden flex flex-col shadow-2xl transition-all group",
+                "bg-[#080D18]/95 border rounded-[2rem] md:rounded-[3rem] min-h-[500px] md:h-[850px] relative overflow-hidden flex flex-col shadow-2xl transition-all group",
                 hasCriticalRisk ? "border-rose-500/40" : "border-white/10 hover:border-primary/40"
               )}>
                 <div className={cn(
@@ -302,14 +296,14 @@ export default function NexusDashboard() {
                 
                 <div className="absolute top-4 md:top-6 right-4 md:right-8 z-20 flex items-center gap-3 md:gap-4">
                   {hasCriticalRisk && (
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle className="h-4 w-4 md:h-5 md:w-5 text-rose-500 animate-bounce" />
-                      <span className="text-[8px] md:text-[10px] text-rose-500 font-bold uppercase tracking-[0.3em]">AMEAÇA</span>
+                    <div className="flex items-center gap-2 bg-rose-500/10 px-3 py-1.5 rounded-xl border border-rose-500/20">
+                      <AlertTriangle className="h-3 w-3 md:h-4 md:w-4 text-rose-500 animate-bounce" />
+                      <span className="text-[8px] md:text-[10px] text-rose-500 font-bold uppercase tracking-[0.2em]">AMEAÇA</span>
                     </div>
                   )}
                   <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
                     <DialogTrigger asChild>
-                      <Button variant="ghost" size="sm" className="bg-white/5 border border-white/10 rounded-xl text-[9px] md:text-[10px] font-bold text-white/40 uppercase hover:bg-white/10 hover:text-white transition-all px-3 md:px-4">
+                      <Button variant="ghost" size="sm" className="bg-white/5 border border-white/10 rounded-xl text-[9px] md:text-[10px] font-bold text-white/40 uppercase hover:bg-white/10 hover:text-white transition-all px-3 md:px-4 h-9">
                         <History className="h-3 w-3 mr-2" /> <span className="hidden sm:inline">Arquivo</span>
                       </Button>
                     </DialogTrigger>
@@ -349,7 +343,7 @@ export default function NexusDashboard() {
                   </Dialog>
                 </div>
 
-                <ScrollArea className="h-full no-scrollbar">
+                <ScrollArea className="flex-1">
                   <div className="p-6 md:p-10 space-y-8 md:space-y-12">
                     {latestAlert ? (
                       <div className="space-y-8 md:space-y-10 animate-in fade-in slide-in-from-bottom-5 duration-1000">
@@ -368,7 +362,7 @@ export default function NexusDashboard() {
                             </div>
                           </div>
 
-                          <h2 className="text-3xl md:text-5xl font-headline font-bold text-white leading-tight tracking-tighter">
+                          <h2 className="text-2xl md:text-5xl font-headline font-bold text-white leading-tight tracking-tighter">
                             {latestAlert.title}
                           </h2>
                           
@@ -384,10 +378,10 @@ export default function NexusDashboard() {
                           "border rounded-[1.5rem] md:rounded-[2.5rem] p-6 md:p-8 space-y-4 md:space-y-6 relative overflow-hidden shadow-2xl",
                           hasCriticalRisk ? "bg-rose-500/10 border-rose-500/30" : "bg-white/5 border-white/10"
                         )}>
-                          <p className="text-lg md:text-xl text-white font-medium leading-relaxed italic">
+                          <p className="text-base md:text-xl text-white font-medium leading-relaxed italic">
                             "{latestAlert.essentialText}"
                           </p>
-                          <p className="text-xs md:text-sm text-white/50 leading-relaxed font-light">
+                          <p className="text-[11px] md:text-sm text-white/50 leading-relaxed font-light">
                             {latestAlert.causalityExplanation}
                           </p>
 
@@ -395,11 +389,11 @@ export default function NexusDashboard() {
                             <div className="pt-4 md:pt-6 mt-4 md:mt-6 border-t border-white/10 space-y-3 md:space-y-4">
                               <div className="flex items-center gap-2 text-rose-400">
                                 <AlertTriangle className="h-3 w-3 md:h-4 md:w-4" />
-                                <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.3em]">IMPACTO NA CUSTÓDIA:</span>
+                                <span className="text-[8px] md:text-[10px] font-bold uppercase tracking-[0.3em]">IMPACTO NA CUSTÓDIA:</span>
                               </div>
                               <div className="flex flex-wrap gap-2">
                                 {affectedPortfolioAssets.map(asset => (
-                                  <Badge key={asset.id} variant="outline" className="border-rose-500/40 text-rose-500 bg-rose-500/5 px-3 md:px-4 py-1">
+                                  <Badge key={asset.id} variant="outline" className="border-rose-500/40 text-rose-500 bg-rose-500/5 px-3 md:px-4 py-1 text-[9px]">
                                     {asset.name}
                                   </Badge>
                                 ))}
@@ -414,13 +408,13 @@ export default function NexusDashboard() {
                               <div className="flex items-center justify-between mb-3 md:mb-4">
                                 <div className="flex items-center gap-3">
                                   {asset.ticker.includes('11') ? <Building2 className="h-4 w-4 md:h-5 md:w-5 text-primary" /> : <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-primary" />}
-                                  <span className="text-lg md:text-xl font-bold text-white group-hover/item:text-primary">{asset.ticker}</span>
+                                  <span className="text-base md:text-xl font-bold text-white group-hover/item:text-primary">{asset.ticker}</span>
                                 </div>
-                                <Badge className={asset.impactType === 'Positivo' ? 'bg-emerald-600' : 'bg-rose-600'}>{asset.expectedGainPercentage}</Badge>
+                                <Badge className={cn("text-[10px]", asset.impactType === 'Positivo' ? 'bg-emerald-600' : 'bg-rose-600')}>{asset.expectedGainPercentage}</Badge>
                               </div>
                               <div className="flex items-center gap-2">
-                                <Badge variant="outline" className="text-[8px] md:text-[9px] border-primary/20 text-primary">{asset.exchange}</Badge>
-                                <span className="text-[9px] md:text-[10px] text-white/40 uppercase font-bold tracking-widest">{asset.recommendation}</span>
+                                <Badge variant="outline" className="text-[7px] md:text-[9px] border-primary/20 text-primary">{asset.exchange}</Badge>
+                                <span className="text-[8px] md:text-[10px] text-white/40 uppercase font-bold tracking-widest">{asset.recommendation}</span>
                               </div>
                             </div>
                           ))}
@@ -429,18 +423,18 @@ export default function NexusDashboard() {
                         <Button 
                           onClick={() => handleDeepAnalysis(`Execute comando Nexus de análise massiva sobre: ${latestAlert.title}.`)} 
                           className={cn(
-                            "w-full h-16 md:h-20 rounded-[1.5rem] md:rounded-[2rem] font-bold text-lg md:text-xl transition-all group/btn flex items-center justify-center gap-3 md:gap-4",
+                            "w-full h-14 md:h-20 rounded-[1.2rem] md:rounded-[2rem] font-bold text-base md:text-xl transition-all group/btn flex items-center justify-center gap-3 md:gap-4",
                             hasCriticalRisk ? "bg-rose-600 hover:bg-rose-700 shadow-[0_0_40px_rgba(225,29,72,0.3)]" : "bg-primary hover:bg-primary/90 shadow-[0_0_40px_rgba(37,99,235,0.3)]"
                           )}
                         >
-                          <span className="hidden sm:inline">EXECUTAR</span> ANÁLISE PROFUNDA
-                          <ChevronRight className="h-5 w-5 md:h-6 md:w-6 group-hover/btn:translate-x-2 transition-transform" />
+                          EXECUTAR ANÁLISE PROFUNDA
+                          <ChevronRight className="h-4 w-4 md:h-6 md:w-6 group-hover/btn:translate-x-2 transition-transform" />
                         </Button>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center py-20 md:py-40 space-y-8 md:space-y-12 opacity-40">
                         <Radar className="h-16 w-16 md:h-24 md:w-24 text-primary animate-ping" />
-                        <p className="max-w-[200px] md:max-w-xs text-center text-base md:text-lg italic font-light">Nexus está decodificando o pulso global...</p>
+                        <p className="max-w-[200px] md:max-w-xs text-center text-sm md:text-lg italic font-light">Nexus está decodificando o pulso global...</p>
                       </div>
                     )}
                   </div>
@@ -449,7 +443,17 @@ export default function NexusDashboard() {
               </div>
             </div>
 
-            <div className="lg:col-span-3 flex flex-col gap-6 md:gap-8 order-3 lg:order-3">
+            {/* Side Panels - Strategic Indicators (Stacked below on mobile) */}
+            <div className="w-full lg:col-span-3 flex flex-col gap-8 order-2 lg:order-1">
+              <div className="h-[350px] md:h-[400px]">
+                <WorldMood latestAlert={latestAlert} latestWhisper={latestWhisper} onAnalyze={handleDeepAnalysis} />
+              </div>
+              <div className="h-[350px] md:h-[400px]">
+                <WhispersRadar insights={whispers || []} onAnalyze={(ctx) => handleDeepAnalysis(ctx)} />
+              </div>
+            </div>
+
+            <div className="w-full lg:col-span-3 flex flex-col gap-8 order-3 lg:order-3">
               <div className="h-[350px] md:h-[400px]">
                 <WhaleFlow transactions={whaleTransactions || []} onAnalyze={(ctx) => handleDeepAnalysis(`Analise o movimento da baleia: ${ctx}`)} />
               </div>
