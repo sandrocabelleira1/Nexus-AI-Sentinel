@@ -138,7 +138,6 @@ export default function NexusDashboard() {
           createdAt: new Date().toISOString()
         });
         
-        // Populate detected entities into War Room
         geopoliticalResult.detectedEntities?.forEach(entity => {
           setDocumentNonBlocking(doc(firestore, "market_entities", entity.name.replace(/\s+/g, '_').toLowerCase()), {
             ...entity,
@@ -267,73 +266,84 @@ export default function NexusDashboard() {
               <WarRoom entities={marketEntities || []} onAnalyze={handleDeepAnalysis} />
             </div>
 
-            <div className="lg:col-span-6 space-y-8">
-              <div className="bg-[#080D18]/95 border border-white/10 rounded-[3.5rem] p-12 h-full min-h-[650px] relative overflow-hidden flex flex-col justify-center shadow-2xl transition-all hover:border-primary/40">
-                
-                {latestAlert ? (
-                  <div className="space-y-10 z-10 animate-in fade-in duration-1000">
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-4">
-                        <Badge className={cn("text-white font-bold px-6 py-2 rounded-xl text-xs", latestAlert.marketAction === 'SELL' ? 'bg-rose-500' : 'bg-accent')}>
-                          ORDEM NEXUS: {latestAlert.marketAction}
-                        </Badge>
-                        <Badge variant="outline" className="text-primary border-primary/30 gap-1.5 px-4 py-1.5 uppercase font-bold text-[10px] tracking-widest">
-                          ELO DE CAUSALIDADE GLOBAL
-                        </Badge>
-                      </div>
-                      <h2 className="text-7xl font-headline font-bold text-white leading-[0.9] tracking-tighter">{latestAlert.title}</h2>
-                    </div>
-                    <p className="text-2xl font-medium italic text-white/90 leading-relaxed border-l-8 border-accent pl-8">
-                      "{latestAlert.essentialText}"
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                      {latestAlert.affectedAssetsDetails?.slice(0, 4).map((asset, i) => (
-                        <div key={i} className="bg-white/5 border border-white/10 rounded-[2rem] p-6 flex items-center justify-between hover:border-primary/40 transition-all cursor-pointer group/asset" onClick={() => handleDeepAnalysis(`Impacto de ${latestAlert.title} em ${asset.ticker}`)}>
-                          <div>
-                            <span className="text-[10px] font-bold text-primary block mb-1 uppercase tracking-widest">{asset.ticker}</span>
-                            <span className="text-lg font-bold text-white group-hover/asset:text-primary transition-colors">{asset.name}</span>
+            <div className="lg:col-span-6">
+              <div className="bg-[#080D18]/95 border border-white/10 rounded-[2.5rem] h-[800px] relative overflow-hidden flex flex-col shadow-2xl transition-all hover:border-primary/40">
+                <ScrollArea className="h-full">
+                  <div className="p-10 space-y-10 relative z-10">
+                    {latestAlert ? (
+                      <div className="space-y-8 animate-in fade-in duration-1000">
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-4">
+                            <Badge className={cn("text-white font-bold px-6 py-2 rounded-xl text-xs", latestAlert.marketAction === 'SELL' ? 'bg-rose-500' : 'bg-accent')}>
+                              ORDEM NEXUS: {latestAlert.marketAction}
+                            </Badge>
+                            <Badge variant="outline" className="text-primary border-primary/30 gap-1.5 px-4 py-1.5 uppercase font-bold text-[10px] tracking-widest">
+                              ELO DE CAUSALIDADE GLOBAL
+                            </Badge>
                           </div>
-                          <div className={cn("text-lg font-bold", asset.impactType === 'Positivo' ? 'text-emerald-400' : 'text-rose-400')}>
-                            {asset.expectedGainPercentage}
-                          </div>
+                          <h2 className="text-5xl font-headline font-bold text-white leading-[1.1] tracking-tighter">{latestAlert.title}</h2>
                         </div>
-                      ))}
-                    </div>
-                    <Button onClick={() => handleDeepAnalysis(latestAlert.title)} className="bg-primary hover:bg-primary/90 text-white rounded-[1.5rem] px-16 h-20 font-bold text-2xl shadow-[0_0_40px_rgba(37,99,235,0.4)] w-full">
-                      ANALISAR ESTRATÉGIA PRO <ChevronRight className="ml-2 h-8 w-8" />
-                    </Button>
+                        
+                        <p className="text-xl font-medium italic text-white/90 leading-relaxed border-l-4 border-accent pl-6">
+                          "{latestAlert.essentialText}"
+                        </p>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {latestAlert.affectedAssetsDetails?.slice(0, 6).map((asset, i) => (
+                            <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-5 flex items-center justify-between hover:border-primary/40 transition-all cursor-pointer group/asset" onClick={() => handleDeepAnalysis(`Impacto de ${latestAlert.title} em ${asset.ticker}`)}>
+                              <div>
+                                <span className="text-[9px] font-bold text-primary block mb-1 uppercase tracking-widest">{asset.ticker}</span>
+                                <span className="text-base font-bold text-white group-hover/asset:text-primary transition-colors">{asset.name}</span>
+                              </div>
+                              <div className={cn("text-base font-bold", asset.impactType === 'Positivo' ? 'text-emerald-400' : 'text-rose-400')}>
+                                {asset.expectedGainPercentage}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="space-y-4 bg-white/5 p-6 rounded-2xl border border-white/10">
+                          <h3 className="text-xs font-bold text-primary uppercase tracking-widest">Explicação de Causalidade</h3>
+                          <p className="text-sm text-white/70 leading-relaxed">{latestAlert.causalityExplanation}</p>
+                        </div>
+
+                        <Button onClick={() => handleDeepAnalysis(latestAlert.title)} className="bg-primary hover:bg-primary/90 text-white rounded-2xl px-12 h-16 font-bold text-lg shadow-[0_0_30px_rgba(37,99,235,0.4)] w-full">
+                          ANALISAR ESTRATÉGIA PRO <ChevronRight className="ml-2 h-6 w-6" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center space-y-8 py-20 z-10 text-center">
+                        <Radar className="h-20 w-20 text-primary animate-pulse" />
+                        <div className="space-y-4">
+                          <p className="text-primary font-headline font-bold text-2xl led-text-blue uppercase tracking-[0.2em]">Iniciando Varredura Global</p>
+                          <p className="text-white/40 text-base max-w-md mx-auto italic">O Nexus está vasculhando as 12 bolsas mundiais em busca de Cisnes Negros e Arbitragens.</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center space-y-8 py-20 z-10 text-center">
-                    <Radar className="h-24 w-24 text-primary animate-pulse" />
-                    <div className="space-y-4">
-                      <p className="text-primary font-headline font-bold text-3xl led-text-blue uppercase tracking-[0.2em]">Iniciando Varredura Global</p>
-                      <p className="text-white/40 text-lg max-w-md mx-auto italic">O Nexus está vasculhando as 12 bolsas mundiais em busca de Cisnes Negros e Arbitragens.</p>
-                    </div>
-                  </div>
-                )}
+                </ScrollArea>
               </div>
             </div>
 
             <div className="lg:col-span-3 space-y-8">
               <WhaleFlow transactions={whaleTransactions || []} onAnalyze={handleDeepAnalysis} />
-              <div className="bg-[#080D18]/90 border border-white/10 rounded-[3rem] p-10 h-[450px] flex flex-col shadow-2xl">
-                <div className="flex items-center justify-between mb-8">
+              <div className="bg-[#080D18]/90 border border-white/10 rounded-[2.5rem] p-8 h-[350px] flex flex-col shadow-2xl">
+                <div className="flex items-center justify-between mb-6">
                   <h3 className="text-[10px] font-headline font-bold uppercase tracking-[0.5em] text-primary">WHISPER RADAR</h3>
-                  <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-ping" />
+                  <div className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
                 </div>
-                <ScrollArea className="flex-1 pr-6">
-                  <div className="space-y-8">
+                <ScrollArea className="flex-1 pr-4">
+                  <div className="space-y-6">
                     {unifiedRadarFeed.map((item, idx) => (
-                      <div key={idx} className="p-6 rounded-[2rem] bg-white/5 border border-white/10 hover:border-primary/40 transition-all cursor-pointer group" onClick={() => handleDeepAnalysis(item.title)}>
-                        <div className="flex items-center justify-between mb-4">
-                          <Badge variant="outline" className="text-[9px] border-primary/20 text-primary uppercase font-bold tracking-widest px-3 py-1">
+                      <div key={idx} className="p-5 rounded-2xl bg-white/5 border border-white/10 hover:border-primary/40 transition-all cursor-pointer group" onClick={() => handleDeepAnalysis(item.title)}>
+                        <div className="flex items-center justify-between mb-2">
+                          <Badge variant="outline" className="text-[8px] border-primary/20 text-primary uppercase font-bold tracking-widest px-2 py-0.5">
                             {item.type === 'WHISPER' ? `RUMOR: ${item.score}%` : 'ALERTA'}
                           </Badge>
-                          <span className="text-[10px] text-white/40 font-bold">{formatDistanceToNow(new Date(item.timestamp), { locale: ptBR })}</span>
+                          <span className="text-[9px] text-white/40 font-bold">{formatDistanceToNow(new Date(item.timestamp), { locale: ptBR })}</span>
                         </div>
-                        <h4 className="text-sm font-bold text-white group-hover:text-primary transition-colors leading-tight mb-3">{item.title}</h4>
-                        <p className="text-[11px] text-white/50 line-clamp-2 italic">{item.summary}</p>
+                        <h4 className="text-xs font-bold text-white group-hover:text-primary transition-colors leading-tight mb-2">{item.title}</h4>
+                        <p className="text-[10px] text-white/50 line-clamp-2 italic">{item.summary}</p>
                       </div>
                     ))}
                   </div>
