@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo, useEffect } from "react";
@@ -104,7 +103,9 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
           const isUp = price.change24h > 0;
           const isFii = price.category === 'fiis';
           const isBuySignal = isFii && (price.pvpRatio || 1) < 0.95 && (price.vacancyRate || 0) < 10;
-          const hasData = isFii ? (price.dividendAmount !== undefined && price.dividendAmount > 0) : true;
+          
+          // Lógica de sincronização mais resiliente: só trava se realmente não houver dado algum (undefined)
+          const isSyncing = isFii && (price.dividendAmount === undefined && price.dataCom === undefined);
           
           return (
             <Card key={price.ticker} className={cn(
@@ -132,7 +133,7 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
                         <Badge variant="outline" className="text-[7px] md:text-[8px] border-primary/30 text-primary uppercase font-bold tracking-widest px-1.5 md:px-2 py-0.5">
                           {price.exchange || 'B3'}
                         </Badge>
-                        {isFii && <Badge className="bg-primary/20 text-primary border-primary/30 text-[7px] md:text-[8px]">{price.fiiType}</Badge>}
+                        {isFii && <Badge className="bg-primary/20 text-primary border-primary/30 text-[7px] md:text-[8px]">{price.fiiType || 'Misto'}</Badge>}
                       </div>
                       <h3 className="text-xl md:text-2xl font-headline font-bold text-white group-hover:text-primary transition-colors">{price.ticker}</h3>
                     </div>
@@ -151,7 +152,7 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
 
                 {isFii ? (
                   <div className="space-y-4">
-                    {!hasData ? (
+                    {isSyncing ? (
                       <div className="flex items-center gap-3 p-3 md:p-4 bg-white/5 border border-dashed border-white/10 rounded-xl md:rounded-2xl animate-pulse">
                         <Loader2 className="h-3 w-3 md:h-4 md:w-4 text-primary animate-spin" />
                         <span className="text-[9px] md:text-[10px] font-bold text-white/40 uppercase tracking-widest">Nexus Sincronizando...</span>
@@ -201,13 +202,11 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
                       </>
                     )}
 
-                    {price.nexusVerdict && (
-                      <div className="p-3 md:p-4 bg-primary/10 border border-primary/20 rounded-xl md:rounded-2xl">
-                        <p className="text-[10px] md:text-[11px] text-white/80 leading-relaxed italic font-medium">
-                          " {price.nexusVerdict} "
-                        </p>
-                      </div>
-                    )}
+                    <div className="p-3 md:p-4 bg-primary/10 border border-primary/20 rounded-xl md:rounded-2xl min-h-[60px]">
+                      <p className="text-[10px] md:text-[11px] text-white/80 leading-relaxed italic font-medium">
+                        " {price.nexusVerdict || 'O Nexus está avaliando as sinapses do mercado para este ativo.'} "
+                      </p>
+                    </div>
                   </div>
                 ) : (
                   <div className="bg-white/5 border border-white/10 rounded-xl md:rounded-2xl p-5 md:p-6 space-y-3 md:space-y-4">
