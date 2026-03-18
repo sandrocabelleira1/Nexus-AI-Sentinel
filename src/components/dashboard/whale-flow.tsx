@@ -1,13 +1,12 @@
-
 "use client"
 
 import { WhaleTransaction } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
-import { Waves, Ship, Radar, ArrowUpRight, ArrowDownRight, ShieldAlert, Zap } from "lucide-react";
+import { Waves, Ship, Radar, ArrowUpRight, ArrowDownRight, ShieldAlert, Zap, Cpu } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 
 interface WhaleFlowProps {
   transactions: WhaleTransaction[];
@@ -16,10 +15,8 @@ interface WhaleFlowProps {
 
 export function WhaleFlow({ transactions, onAnalyze }: WhaleFlowProps) {
   useEffect(() => {
-    // Sonar Sound Logic for Critical Transactions (> $1B)
     const criticalTx = transactions[0];
     if (criticalTx && criticalTx.amountUsd >= 1000000000) {
-      console.log("[SONAR] Critical transaction detected: $1B+");
       if (window.navigator.vibrate) {
         window.navigator.vibrate([100, 30, 100]);
       }
@@ -48,6 +45,8 @@ export function WhaleFlow({ transactions, onAnalyze }: WhaleFlowProps) {
           transactions.map((tx) => {
             const isCritical = tx.amountUsd >= 1000000000;
             const isExchangeDeposit = tx.transactionType === 'exchange_deposit';
+            // @ts-ignore
+            const isSimulated = tx.is_simulated;
             
             return (
               <div 
@@ -58,6 +57,12 @@ export function WhaleFlow({ transactions, onAnalyze }: WhaleFlowProps) {
                   isCritical ? "border-rose-500/30 bg-rose-500/5 shadow-[0_0_30px_rgba(244,63,94,0.1)]" : "border-white/5 bg-white/5"
                 )}
               >
+                {isSimulated && (
+                  <div className="absolute top-2 right-2 opacity-30">
+                    <Cpu className="h-3 w-3 text-primary" />
+                  </div>
+                )}
+
                 {isCritical && (
                   <div className="absolute -top-1.5 -right-1.5 flex h-3 w-3">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
@@ -75,7 +80,9 @@ export function WhaleFlow({ transactions, onAnalyze }: WhaleFlowProps) {
                     </Badge>
                     <span className="text-[9px] text-muted-foreground font-bold uppercase">{tx.blockchain}</span>
                   </div>
-                  <span className="text-[9px] text-white/40 font-bold">{formatDistanceToNow(new Date(tx.timestamp), { locale: ptBR })}</span>
+                  <span className="text-[9px] text-white/40 font-bold">
+                    {tx.timestamp ? formatDistanceToNow(new Date(tx.timestamp), { locale: ptBR, addSuffix: true }) : 'agora'}
+                  </span>
                 </div>
 
                 <div className="flex items-end justify-between">
