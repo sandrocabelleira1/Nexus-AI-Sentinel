@@ -252,10 +252,10 @@ export default function NexusDashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* Left Column */}
             <div className="lg:col-span-3 flex flex-col gap-8 h-[850px]">
-              <div className="flex-1">
+              <div className="h-[400px]">
                 <WorldMood latestAlert={latestAlert} latestWhisper={latestWhisper} onAnalyze={handleDeepAnalysis} />
               </div>
-              <div className="flex-1">
+              <div className="h-[400px]">
                 <WarRoom entities={marketEntities || []} onAnalyze={handleDeepAnalysis} />
               </div>
             </div>
@@ -314,6 +314,7 @@ export default function NexusDashboard() {
                             </div>
                           ))}
                         </div>
+                        <ScrollBar className="bg-white/5" />
                       </ScrollArea>
                     </DialogContent>
                   </Dialog>
@@ -417,7 +418,7 @@ export default function NexusDashboard() {
               <div className="h-[400px]">
                 <WhaleFlow transactions={whaleTransactions || []} onAnalyze={handleDeepAnalysis} />
               </div>
-              <div className="flex-1 bg-[#080D18]/90 border border-white/10 rounded-[3rem] p-8 flex flex-col shadow-2xl overflow-hidden">
+              <div className="h-[400px] bg-[#080D18]/90 border border-white/10 rounded-[3rem] p-8 flex flex-col shadow-2xl overflow-hidden">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-[10px] font-headline font-bold uppercase tracking-[0.5em] text-primary">RUMORES & WHISPERS</h3>
                   <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />

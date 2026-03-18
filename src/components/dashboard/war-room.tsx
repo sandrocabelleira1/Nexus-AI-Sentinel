@@ -4,7 +4,7 @@ import { MarketEntity } from "@/lib/types";
 import { Globe, ShieldCheck, Landmark, Cpu, Building2, UserCircle2, ArrowRightLeft, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface WarRoomProps {
   entities: MarketEntity[];
@@ -15,7 +15,7 @@ export function WarRoom({ entities, onAnalyze }: WarRoomProps) {
   const insightText = "Nexus identificou movimentos da BlackRock e do Governo Americano. Sinapses indicam acumulação tática em ativos de tecnologia.";
 
   return (
-    <div className="bg-[#080D18]/90 border border-white/10 rounded-[3rem] p-8 h-full flex flex-col shadow-2xl relative overflow-hidden group">
+    <div className="bg-[#080D18]/90 border border-white/10 rounded-[3rem] p-8 h-[400px] flex flex-col shadow-2xl relative overflow-hidden group">
       <div className="absolute inset-0 cyber-grid opacity-10 pointer-events-none" />
       
       <div className="flex items-center justify-between mb-6 z-10">
@@ -35,8 +35,8 @@ export function WarRoom({ entities, onAnalyze }: WarRoomProps) {
         </div>
       </div>
 
-      <ScrollArea className="flex-1 no-scrollbar z-10">
-        <div className="space-y-4 pr-2">
+      <ScrollArea className="flex-1 z-10 pr-4">
+        <div className="space-y-4">
           {entities.length > 0 ? (
             entities.map((entity) => {
               const Icon = entity.type === 'Government' ? Globe : 
@@ -71,6 +71,7 @@ export function WarRoom({ entities, onAnalyze }: WarRoomProps) {
             </div>
           )}
         </div>
+        <ScrollBar className="bg-white/5" />
       </ScrollArea>
 
       <div 
