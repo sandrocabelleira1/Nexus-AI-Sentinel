@@ -4,12 +4,16 @@
 import { MarketEntity } from "@/lib/types";
 import { Globe, ShieldCheck, Landmark, Cpu, Building2, UserCircle2, ArrowRightLeft, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 interface WarRoomProps {
   entities: MarketEntity[];
+  onAnalyze?: (context: string) => void;
 }
 
-export function WarRoom({ entities }: WarRoomProps) {
+export function WarRoom({ entities, onAnalyze }: WarRoomProps) {
+  const insightText = "Nexus identificou movimentos da BlackRock e do Governo Americano. Sinapses indicam acumulação tática em ativos de tecnologia e infraestrutura digital.";
+
   return (
     <div className="bg-[#080D18]/90 border border-white/10 rounded-[3rem] p-10 h-full flex flex-col shadow-2xl relative overflow-hidden group">
       <div className="absolute inset-0 cyber-grid opacity-10 pointer-events-none" />
@@ -41,7 +45,7 @@ export function WarRoom({ entities }: WarRoomProps) {
                            entity.type === 'Exchange' ? ArrowRightLeft : UserCircle2;
               
               return (
-                <div key={entity.id} className="relative group/entity">
+                <div key={entity.id} className="relative group/entity cursor-pointer" onClick={() => onAnalyze?.(`Movimentação de ${entity.name} (${entity.type})`)}>
                   <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 transition-all hover:border-accent/40 hover:bg-white/10">
                     <div className="flex items-center gap-4">
                       <div className="p-3 rounded-xl bg-accent/10 border border-accent/20 text-accent">
@@ -80,14 +84,20 @@ export function WarRoom({ entities }: WarRoomProps) {
         )}
       </div>
 
-      <div className="mt-10 p-6 rounded-3xl bg-accent/5 border border-accent/10">
+      <div 
+        className="mt-10 p-6 rounded-3xl bg-accent/5 border border-accent/10 cursor-pointer hover:bg-accent/10 transition-all group/insight"
+        onClick={() => onAnalyze?.(insightText)}
+      >
         <div className="flex items-center gap-3 mb-3">
           <ShieldCheck className="h-4 w-4 text-accent" />
           <span className="text-[10px] text-white font-bold uppercase tracking-widest">Soberania de Dados Ativa</span>
         </div>
-        <p className="text-[11px] text-white/60 leading-relaxed italic">
-          "Nexus identificou movimentos da BlackRock e do Governo Americano. Sinapses indicam acumulação tática em ativos de tecnologia e infraestrutura digital."
+        <p className="text-[11px] text-white/60 leading-relaxed italic group-hover:text-white transition-colors">
+          "{insightText}"
         </p>
+        <div className="mt-3 text-[8px] text-accent font-bold uppercase tracking-widest opacity-0 group-hover/insight:opacity-100 transition-opacity flex items-center gap-1">
+          <Activity className="h-2.5 w-2.5" /> Clique para Análise Profunda
+        </div>
       </div>
     </div>
   );

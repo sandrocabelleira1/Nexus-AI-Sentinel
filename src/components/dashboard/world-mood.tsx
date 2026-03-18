@@ -14,9 +14,10 @@ import { cn } from "@/lib/utils";
 interface WorldMoodProps {
   latestAlert?: GlobalIntelligenceAlert | null;
   latestWhisper?: AutonomousInsight | null;
+  onAnalyze?: (context: string) => void;
 }
 
-export function WorldMood({ latestAlert, latestWhisper }: WorldMoodProps) {
+export function WorldMood({ latestAlert, latestWhisper, onAnalyze }: WorldMoodProps) {
   const [mood, setMood] = useState({ score: 77, label: 'OPORTUNISTA' });
   const [mounted, setMounted] = useState(false);
 
@@ -104,7 +105,7 @@ export function WorldMood({ latestAlert, latestWhisper }: WorldMoodProps) {
         </div>
       </div>
 
-      <div className="mt-8 text-center z-10 w-full space-y-4">
+      <div className="mt-8 text-center z-10 w-full space-y-4 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => onAnalyze?.(`Análise neural de humor: ${mood.label} (${mood.score.toFixed(0)}%) - Insight: ${dynamicInsight}`)}>
         <div className="flex items-center justify-center gap-2">
           <Zap className="h-3 w-3 text-primary animate-pulse" />
           <span className="text-[9px] text-muted-foreground font-bold tracking-[0.2em] uppercase">Processando Ingestão Neural</span>

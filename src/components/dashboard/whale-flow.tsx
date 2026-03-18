@@ -11,16 +11,14 @@ import { useEffect, useRef } from "react";
 
 interface WhaleFlowProps {
   transactions: WhaleTransaction[];
+  onAnalyze?: (context: string) => void;
 }
 
-export function WhaleFlow({ transactions }: WhaleFlowProps) {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
+export function WhaleFlow({ transactions, onAnalyze }: WhaleFlowProps) {
   useEffect(() => {
     // Sonar Sound Logic for Critical Transactions (> $1B)
     const criticalTx = transactions[0];
     if (criticalTx && criticalTx.amountUsd >= 1000000000) {
-      // In a real app, we'd play a sonar beep here.
       console.log("[SONAR] Critical transaction detected: $1B+");
       if (window.navigator.vibrate) {
         window.navigator.vibrate([100, 30, 100]);
@@ -54,8 +52,9 @@ export function WhaleFlow({ transactions }: WhaleFlowProps) {
             return (
               <div 
                 key={tx.id} 
+                onClick={() => onAnalyze?.(`Transação de Baleia: ${tx.amount} ${tx.symbol} (US$ ${(tx.amountUsd / 1000000).toFixed(1)}M) na blockchain ${tx.blockchain}. Tipo: ${tx.transactionType}`)}
                 className={cn(
-                  "p-5 rounded-3xl border transition-all duration-500 hover:bg-white/5 relative group/item",
+                  "p-5 rounded-3xl border transition-all duration-500 hover:bg-white/10 cursor-pointer relative group/item",
                   isCritical ? "border-rose-500/30 bg-rose-500/5 shadow-[0_0_30px_rgba(244,63,94,0.1)]" : "border-white/5 bg-white/5"
                 )}
               >

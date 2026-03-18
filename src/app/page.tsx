@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo, useEffect, useCallback } from "react";
@@ -115,7 +116,6 @@ export default function NexusDashboard() {
     if (isScanning) return;
     setIsScanning(true);
     try {
-      // Usar allSettled para evitar que uma falha em um fluxo derrube toda a varredura
       const results = await Promise.allSettled([
         monitorGlobalEvents({ rawNewsData: "Varredura 360: Foco em Whale Flows e Geopolítica Institucional." }),
         runAutonomousWhisperScan()
@@ -154,6 +154,16 @@ export default function NexusDashboard() {
       return () => clearInterval(interval);
     }
   }, [user, isUserLoading, triggerGlobalScan]);
+
+  const handleDeepAnalysis = (context: string) => {
+    setChatInitialQuery(`Análise profunda sobre: ${context}. Me dê sugestões de investimento baseadas nisso.`);
+    setIsChatOpen(true);
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    setIsChatOpen(open);
+    if (!open) setChatInitialQuery(null);
+  };
 
   if (isUserLoading) {
     return (
@@ -206,8 +216,8 @@ export default function NexusDashboard() {
         {activeTab === 'dashboard' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div className="lg:col-span-3 space-y-8">
-              <WorldMood latestAlert={latestAlert} latestWhisper={latestWhisper} />
-              <WarRoom entities={marketEntities || []} />
+              <WorldMood latestAlert={latestAlert} latestWhisper={latestWhisper} onAnalyze={handleDeepAnalysis} />
+              <WarRoom entities={marketEntities || []} onAnalyze={handleDeepAnalysis} />
             </div>
 
             <div className="lg:col-span-6 space-y-8">
@@ -238,7 +248,7 @@ export default function NexusDashboard() {
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {latestAlert.affectedAssetsDetails?.slice(0, 4).map((asset, i) => (
-                        <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-5 flex items-center justify-between hover:border-primary/40 transition-all">
+                        <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-5 flex items-center justify-between hover:border-primary/40 transition-all cursor-pointer" onClick={() => handleDeepAnalysis(`Impacto de ${latestAlert.title} no ativo ${asset.ticker}`)}>
                           <div>
                             <span className="text-xs font-bold text-primary block mb-1">{asset.ticker}</span>
                             <span className="text-sm font-bold text-white">{asset.name}</span>
@@ -249,7 +259,7 @@ export default function NexusDashboard() {
                         </div>
                       ))}
                     </div>
-                    <Button onClick={() => setIsChatOpen(true)} className="bg-primary hover:bg-primary/90 text-white rounded-2xl px-12 h-16 font-bold text-xl shadow-lg w-full sm:w-auto">
+                    <Button onClick={() => handleDeepAnalysis(latestAlert.title)} className="bg-primary hover:bg-primary/90 text-white rounded-2xl px-12 h-16 font-bold text-xl shadow-lg w-full sm:w-auto">
                       ANALISAR ESTRATÉGIA <ChevronRight className="ml-2 h-6 w-6" />
                     </Button>
                   </div>
@@ -264,7 +274,7 @@ export default function NexusDashboard() {
             </div>
 
             <div className="lg:col-span-3 space-y-8">
-              <WhaleFlow transactions={whaleTransactions || []} />
+              <WhaleFlow transactions={whaleTransactions || []} onAnalyze={handleDeepAnalysis} />
               <div className="bg-[#080D18]/90 border border-white/10 rounded-[2.5rem] p-8 h-[400px] flex flex-col">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-xs font-headline font-bold uppercase tracking-[0.4em] text-primary">WHISPER RADAR</h3>
@@ -273,7 +283,7 @@ export default function NexusDashboard() {
                 <ScrollArea className="flex-1 pr-4">
                   <div className="space-y-6">
                     {unifiedRadarFeed.map((item, idx) => (
-                      <div key={idx} className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-primary/30 transition-all cursor-pointer">
+                      <div key={idx} className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-primary/30 transition-all cursor-pointer" onClick={() => handleDeepAnalysis(item.title)}>
                         <div className="flex items-center justify-between mb-2">
                           <Badge variant="outline" className="text-[8px] border-primary/20 text-primary">
                             {item.type === 'WHISPER' ? `SUSSURRO: ${item.score}%` : 'ALERTA GLOBAL'}
@@ -295,7 +305,7 @@ export default function NexusDashboard() {
         {activeTab === 'portfolio' && <PortfolioView assets={[]} onUpdateAsset={() => {}} />}
       </main>
 
-      <AssistantChat assets={[]} displayMode={displayMode} externalOpen={isChatOpen} onOpenChange={setIsChatOpen} initialQuery={chatInitialQuery} latestAlert={latestAlert} />
+      <AssistantChat assets={[]} displayMode={displayMode} externalOpen={isChatOpen} onOpenChange={handleOpenChange} initialQuery={chatInitialQuery} latestAlert={latestAlert} />
     </div>
   );
 }

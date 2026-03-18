@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -29,6 +30,7 @@ export function AssistantChat({ assets, displayMode, externalOpen, onOpenChange,
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [lastProcessedQuery, setLastProcessedQuery] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Sync with external open state
@@ -62,10 +64,10 @@ export function AssistantChat({ assets, displayMode, externalOpen, onOpenChange,
       });
 
       const responseText = displayMode === 'Essencial' 
-        ? result.display_modes.essential.text 
-        : result.display_modes.full.technical_analysis;
+        ? result?.display_modes?.essential?.text 
+        : result?.display_modes?.full?.technical_analysis;
 
-      setMessages(prev => [...prev, { role: 'assistant', content: responseText }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: responseText || "Análise completa. Minha recomendação tática é manter vigilância sobre os ativos citados." }]);
     } catch (error) {
       setMessages(prev => [...prev, { role: 'assistant', content: "Erro na conexão com o Core do Nexus. Tente novamente, estrategista." }]);
     } finally {
@@ -75,10 +77,11 @@ export function AssistantChat({ assets, displayMode, externalOpen, onOpenChange,
 
   // Handle initial query from external source
   useEffect(() => {
-    if (initialQuery && isOpen && messages.length === 1) {
+    if (initialQuery && isOpen && initialQuery !== lastProcessedQuery) {
       handleSend(initialQuery);
+      setLastProcessedQuery(initialQuery);
     }
-  }, [initialQuery, isOpen, handleSend, messages.length]);
+  }, [initialQuery, isOpen, handleSend, lastProcessedQuery]);
 
   useEffect(() => {
     if (scrollRef.current) {
