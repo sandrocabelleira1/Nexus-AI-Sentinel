@@ -13,9 +13,9 @@ const AffectedAssetDetailSchema = z.object({
   exchange: z.string().describe('Bolsa de valores (NYSE, NASDAQ, B3, LSE, etc.)'),
   currentPrice: z.string(),
   expectedGainPercentage: z.string(),
-  impactType: z.string().describe('Positivo, Negativo ou Neutro'),
+  impactType: z.enum(['Positivo', 'Negativo', 'Neutro']),
   explanation: z.string(),
-  recommendation: z.string().describe('BUY, SELL, HOLD ou WATCH'),
+  recommendation: z.enum(['BUY', 'SELL', 'HOLD', 'WATCH']),
   longTermOutlook: z.string(),
 });
 
@@ -29,27 +29,28 @@ const DetectedEntitySchema = z.object({
 
 const GlobalIntelligenceMonitorOutputSchema = z.object({
   title: z.string(),
-  eventOrigin: z.string().describe('Geopolítica, Governo, Natureza, Tech ou Mercado'),
+  eventOrigin: z.enum(['Geopolítica', 'Governo', 'Natureza', 'Tech', 'Mercado']),
   causalityExplanation: z.string(),
   priority: z.number().int().min(1).max(5),
-  marketAction: z.string().describe('BUY, SELL, HOLD ou WATCH'),
-  riskLevel: z.string().describe('Conservador, Moderado, Agressivo ou Crítico'),
+  marketAction: z.enum(['BUY', 'SELL', 'HOLD', 'WATCH']),
+  riskLevel: z.enum(['Conservador', 'Moderado', 'Agressivo', 'Crítico']),
   affectedAssetTickerSymbols: z.array(z.string()),
   affectedAssetsDetails: z.array(AffectedAssetDetailSchema),
   detectedEntities: z.array(DetectedEntitySchema).describe('Instituições ou governos agindo neste evento.'),
-  essentialText: z.string(),
+  essentialText: z.string().describe('Texto assertivo e curto no formato COMANDO AGORA. Racional.'),
 });
 
 export type GlobalIntelligenceMonitorOutput = z.infer<typeof GlobalIntelligenceMonitorOutputSchema>;
 
 const systemInstruction = `### PERSONA: NEXUS (O ESTRATEGISTA-CHEFE GLOBAL)
-Você é o Nexus. Seu objetivo é analisar dados de 12 bolsas mundiais (NYSE, B3, LSE, JPX, etc) e emitir comandos claros de investimento.
-Você não dá avisos genéricos. Você diz EXATAMENTE em qual bolsa e ativo o usuário deve investir.
+Você é o Nexus. Seu objetivo é analisar dados mundiais e emitir comandos claros de investimento.
+Você NÃO dá avisos genéricos. Você diz EXATAMENTE o que o usuário deve fazer.
 
-### DIRETRIZES:
-1. Identifique oportunidades de arbitragem entre mercados.
-2. Seja assertivo nas recomendações (BUY/SELL).
-3. Conecte eventos geopolíticos a ativos específicos em bolsas globais.`;
+### DIRETRIZES DE COMANDO:
+1. Seja assertivo: "COMPRE VALE3 AGORA. A alta do minério em Dalian justifica a entrada."
+2. Se houver risco real para ativos populares (BTC, PETR4, ITUB4), emita ordens de SELL se necessário.
+3. Conecte eventos geopolíticos a ativos específicos em bolsas globais.
+4. Identifique o ticker exato do ativo afetado.`;
 
 const groundingPrompt = ai.definePrompt({
   name: 'globalIntelligenceGroundingPrompt',
@@ -57,12 +58,12 @@ const groundingPrompt = ai.definePrompt({
   system: systemInstruction,
   config: { googleSearchRetrieval: {} },
   prompt: `### TAREFA:
-Varra o mercado global agora. Procure por:
+Varra o mercado global agora. Procure por eventos nas últimas 24h em:
 1. Movimentações institucionais em bolsas específicas (NYSE, NASDAQ, B3, LSE, TSE).
 2. Decisões de Bancos Centrais (FED, COPOM, BCE).
-3. Fluxos de capitais on-chain afetando o mercado tradicional.
+3. Fluxos de capitais on-chain e geopolítica.
 
-Contexto de Ingestão: {{{rawNewsData}}}`,
+Contexto: {{{rawNewsData}}}`,
 });
 
 const structuringPrompt = ai.definePrompt({
@@ -70,7 +71,7 @@ const structuringPrompt = ai.definePrompt({
   input: { schema: z.object({ rawAnalysis: z.string() }) },
   output: { schema: GlobalIntelligenceMonitorOutputSchema },
   prompt: `Transforme a análise estratégica em JSON. 
-Dê ênfase na recomendação direta: Qual Bolsa? Qual Ativo? Por que agora?
+Dê ênfase na recomendação direta: Qual Bolsa? Qual Ativo? Qual Ação (BUY/SELL)?
 
 Análise: {{{rawAnalysis}}}`,
 });

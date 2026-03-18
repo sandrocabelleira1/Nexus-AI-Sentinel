@@ -3,6 +3,7 @@ export type AssetType = 'Ação' | 'Criptomoeda' | 'Fundo Imobiliário' | 'Commo
 export interface UserAsset {
   id: string;
   name: string;
+  ticker?: string; // Ticker para cruzamento de dados
   type: AssetType;
   location: string;
   riskLevel?: 'Conservador' | 'Moderado' | 'Agressivo' | 'Crítico';
@@ -22,6 +23,8 @@ export interface WhaleTransaction {
   toAddress: string;
   transactionType: 'exchange_deposit' | 'exchange_withdrawal' | 'wallet_transfer';
   timestamp: string;
+  nexus_logic?: string;
+  is_simulated?: boolean;
 }
 
 export interface MarketEntity {
