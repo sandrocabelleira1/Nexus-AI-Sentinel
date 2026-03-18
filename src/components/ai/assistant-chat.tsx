@@ -5,9 +5,10 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { X, Send, Bot, Sparkles, Terminal, ShieldCheck } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { interactivePortfolioAssistant } from "@/ai/flows/interactive-portfolio-assistant";
 import { UserAsset, DisplayMode, GlobalIntelligenceAlert } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -92,8 +93,8 @@ export function AssistantChat({ assets, displayMode, externalOpen, onOpenChange,
   return (
     <div className="fixed bottom-6 right-6 z-50">
       {isOpen ? (
-        <div className="w-80 sm:w-[450px] glass-panel rounded-[2.5rem] shadow-2xl border-primary/30 flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 duration-300">
-          <div className="p-6 bg-primary/10 border-b border-primary/20 flex items-center justify-between">
+        <div className="w-80 sm:w-[500px] h-[750px] max-h-[85vh] glass-panel rounded-[2.5rem] shadow-2xl border-primary/30 flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 duration-300">
+          <div className="p-6 bg-primary/10 border-b border-primary/20 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-4">
               <div className="p-2.5 bg-primary rounded-2xl led-glow-blue animate-pulse">
                 <Terminal className="h-5 w-5 text-background" />
@@ -111,11 +112,11 @@ export function AssistantChat({ assets, displayMode, externalOpen, onOpenChange,
             </Button>
           </div>
 
-          <ScrollArea className="flex-1 h-[500px] p-6">
-            <div className="space-y-6">
+          <ScrollArea className="flex-1 p-6 overflow-y-auto custom-scrollbar">
+            <div className="space-y-6 pr-4">
               {messages.map((msg, idx) => (
                 <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[90%] p-4 rounded-3xl text-sm leading-relaxed ${
+                  <div className={`max-w-[90%] p-5 rounded-3xl text-sm leading-relaxed ${
                     msg.role === 'user' 
                       ? 'bg-primary text-background font-bold shadow-[0_0_20px_rgba(37,99,235,0.3)]' 
                       : 'bg-white/5 border border-white/10 text-foreground font-medium'
@@ -126,7 +127,7 @@ export function AssistantChat({ assets, displayMode, externalOpen, onOpenChange,
                         <span className="text-[9px] font-bold uppercase tracking-widest">Nexus Verified Response</span>
                       </div>
                     )}
-                    {msg.content}
+                    <div className="whitespace-pre-wrap">{msg.content}</div>
                   </div>
                 </div>
               ))}
@@ -141,9 +142,10 @@ export function AssistantChat({ assets, displayMode, externalOpen, onOpenChange,
               )}
               <div ref={scrollRef} />
             </div>
+            <ScrollBar className="bg-white/5" />
           </ScrollArea>
 
-          <div className="p-6 border-t border-white/10 bg-black/40">
+          <div className="p-6 border-t border-white/10 bg-black/40 shrink-0">
             <form onSubmit={(e) => { e.preventDefault(); handleSend(input); setInput(""); }} className="flex gap-3">
               <Input 
                 value={input}
