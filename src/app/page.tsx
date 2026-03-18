@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo, useEffect, useCallback } from "react";
@@ -251,7 +252,7 @@ export default function NexusDashboard() {
         {activeTab === 'dashboard' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* Left Column */}
-            <div className="lg:col-span-3 flex flex-col gap-8 h-[850px]">
+            <div className="lg:col-span-3 flex flex-col gap-8">
               <div className="h-[400px]">
                 <WorldMood latestAlert={latestAlert} latestWhisper={latestWhisper} onAnalyze={handleDeepAnalysis} />
               </div>
@@ -284,14 +285,14 @@ export default function NexusDashboard() {
                         <History className="h-3 w-3 mr-2" /> Arquivo
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="glass-panel border-white/10 sm:max-w-[800px] max-h-[80vh] flex flex-col">
-                      <DialogHeader>
+                    <DialogContent className="glass-panel border-white/10 sm:max-w-[800px] max-h-[85vh] flex flex-col p-0 overflow-hidden">
+                      <DialogHeader className="p-8 pb-0">
                         <DialogTitle className="text-2xl font-headline font-bold text-white flex items-center gap-3">
                           <History className="h-6 w-6 text-primary" /> Histórico de Inteligência
                         </DialogTitle>
                       </DialogHeader>
-                      <ScrollArea className="flex-1 mt-6">
-                        <div className="space-y-6 pb-10 pr-2">
+                      <ScrollArea className="flex-1 mt-6 h-[600px] px-8 pb-8">
+                        <div className="space-y-6 pr-4">
                           {globalAlerts?.map((alert, idx) => (
                             <div key={alert.id} className="p-6 rounded-3xl bg-white/5 border border-white/10 hover:border-primary/30 transition-all cursor-pointer group" onClick={() => { handleDeepAnalysis(alert.title); setIsHistoryOpen(false); }}>
                               <div className="flex items-center justify-between mb-4">
@@ -314,13 +315,13 @@ export default function NexusDashboard() {
                             </div>
                           ))}
                         </div>
-                        <ScrollBar className="bg-white/5" />
+                        <ScrollBar className="bg-white/10" />
                       </ScrollArea>
                     </DialogContent>
                   </Dialog>
                 </div>
 
-                <ScrollArea className="h-full no-scrollbar">
+                <ScrollArea className="h-full">
                   <div className="p-10 space-y-12">
                     {latestAlert ? (
                       <div className="space-y-10 animate-in fade-in slide-in-from-bottom-5 duration-1000">
@@ -409,22 +410,23 @@ export default function NexusDashboard() {
                       </div>
                     )}
                   </div>
+                  <ScrollBar className="bg-white/5" />
                 </ScrollArea>
               </div>
             </div>
 
             {/* Right Column */}
-            <div className="lg:col-span-3 flex flex-col gap-8 h-[850px]">
+            <div className="lg:col-span-3 flex flex-col gap-8">
               <div className="h-[400px]">
                 <WhaleFlow transactions={whaleTransactions || []} onAnalyze={handleDeepAnalysis} />
               </div>
-              <div className="h-[400px] bg-[#080D18]/90 border border-white/10 rounded-[3rem] p-8 flex flex-col shadow-2xl overflow-hidden">
-                <div className="flex items-center justify-between mb-6">
+              <div className="h-[400px] bg-[#080D18]/90 border border-white/10 rounded-[3rem] p-8 flex flex-col shadow-2xl overflow-hidden relative group">
+                <div className="flex items-center justify-between mb-6 z-10">
                   <h3 className="text-[10px] font-headline font-bold uppercase tracking-[0.5em] text-primary">RUMORES & WHISPERS</h3>
                   <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                 </div>
-                <ScrollArea className="flex-1 no-scrollbar">
-                  <div className="space-y-6 pr-4">
+                <ScrollArea className="flex-1 z-10 pr-4">
+                  <div className="space-y-6">
                     {whispers?.map((item, idx) => (
                       <div key={idx} className="p-5 rounded-2xl bg-white/5 border border-white/10 hover:border-primary/40 transition-all cursor-pointer group" onClick={() => handleDeepAnalysis(item.topic)}>
                         <div className="flex items-center justify-between mb-2">
@@ -438,7 +440,7 @@ export default function NexusDashboard() {
                       </div>
                     ))}
                   </div>
-                  <ScrollBar className="bg-white/5" />
+                  <ScrollBar className="bg-white/10" />
                 </ScrollArea>
               </div>
             </div>
