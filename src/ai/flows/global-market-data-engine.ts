@@ -2,6 +2,7 @@
 /**
  * @fileOverview Nexus Global Market Data Engine v3.3.
  * Monitoramento de alta precisão: Binance (Real USD) + Brapi (BRL).
+ * Utiliza credenciais de API via variáveis de ambiente.
  */
 
 import { ai } from '@/ai/genkit';
@@ -48,7 +49,7 @@ const fetchBrapiDataTool = ai.defineTool(
     outputSchema: z.any(),
   },
   async (input) => {
-    const apiKey = "2rb5157StMMfsE1ft1ErSq";
+    const apiKey = process.env.BRAPI_API_KEY;
     try {
       const response = await fetch(`https://brapi.dev/api/quote/${input.tickers.join(',')}?token=${apiKey}&fundamentals=true`);
       return await response.json();
@@ -66,8 +67,11 @@ const fetchBinancePriceTool = ai.defineTool(
     outputSchema: z.object({ price: z.string(), symbol: z.string() }),
   },
   async (input) => {
+    const apiKey = process.env.BINANCE_API_KEY;
     try {
-      const response = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${input.symbol}`);
+      const response = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${input.symbol}`, {
+        headers: apiKey ? { 'X-MBX-APIKEY': apiKey } : {}
+      });
       const data = await response.json();
       return { price: data.price, symbol: data.symbol };
     } catch (error) {
@@ -103,7 +107,7 @@ const structurePrompt = ai.definePrompt({
   input: { schema: z.object({ rawData: z.string() }) },
   output: { schema: MarketDataOutputSchema },
   prompt: `Converta os dados brutos de mercado para o formato JSON estruturado do Nexus. 
-Garanta que 'price' seja um número (number).
+Garanta que 'price' seja um number.
 Ativos Binance/US -> currency: "USD"
 Ativos B3 -> currency: "BRL"
 
