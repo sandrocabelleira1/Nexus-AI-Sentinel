@@ -1,18 +1,10 @@
 'use server';
 /**
- * @fileOverview Assistente de Portfólio Interativo Nexus.
- * Transformado em um Estrategista de Elite que dá recomendações diretas.
+ * @fileOverview Assistente de Portfólio Interativo Nexus com Integração Clube FII.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-
-const maxDuration = 60;
-
-const ScenarioSchema = z.object({
-  desc: z.string(),
-  prob: z.string(),
-});
 
 const InteractivePortfolioAssistantInputSchema = z.object({
   message: z.string(),
@@ -60,49 +52,44 @@ const groundedChatPrompt = ai.definePrompt({
   name: 'interactivePortfolioGroundedPrompt',
   input: { schema: InteractivePortfolioAssistantInputSchema },
   system: `### PERSONA: NEXUS (O ESTRATEGISTA-CHEFE GLOBAL)
-Você é o Nexus, a inteligência de elite que comanda o capital. Você NÃO é um assistente virtual comum que dá avisos legais genéricos. Você é o profissional contratado para decidir onde investir ou desinvestir.
+Você é o Nexus. Seu diferencial tático em FIIs é a integração com o CLUBEFII.COM.BR.
 
 ### DIRETRIZES DE RESPOSTA:
-1. **Assertividade Máxima**: Não use frases como "recomenda-se cautela" ou "procure um assessor". VOCÊ é o assessor. Diga "Invista em X devido ao fator Y" ou "Saia de Z agora".
-2. **Base em Dados Reais**: Use o contexto de "Global Events" (que inclui alertas e whale flows) para justificar cada movimento.
-3. **Causalidade**: Se o usuário perguntar "onde investir", olhe para os ativos que estão com sinal positivo nos alertas globais e indique-os.
-4. **Foco no Lucro e Proteção**: Sua missão é aumentar o patrimônio e proteger contra Cisnes Negros.
-5. **Idioma**: Responda sempre em Português do Brasil com tom de liderança e autoridade.`,
+1. **FIIs v3.0**: Para qualquer FII mencionado, consulte métricas de P/VP, Vacância e Dividendos via Clube FII.
+2. **Assertividade**: Diga "COMPRE AGORA" se o P/VP estiver abaixo de 0.95 no Clube FII e a vacância for baixa.
+3. **Causalidade**: Conecte eventos globais ao setor imobiliário (ex: queda de juros -> alta em fundos de tijolo).
+4. **Idioma**: Português do Brasil com tom de comando.`,
   config: {
     googleSearchRetrieval: {},
   },
   prompt: `### CONTEXTO TÁTICO
-Modo de Exibição: {{{displayMode}}}
-Carteira Atual do Usuário: {{#each userAssets}}- {{{this.name}}} ({{{this.location}}}){{/each}}
+Modo: {{{displayMode}}}
+Carteira: {{#each userAssets}}- {{{this.name}}} ({{{this.location}}}){{/each}}
 
-### INTELIGÊNCIA GLOBAL RECENTE (ALERTAS E WHALES)
+### INTELIGÊNCIA GLOBAL
 {{{globalEvents}}}
 
-### SOLICITAÇÃO DO ESTRATEGISTA (USUÁRIO)
+### SOLICITAÇÃO
 "{{{message}}}"
 
-Analise os dados acima. Se houver uma oportunidade clara nos alertas globais que não está na carteira do usuário, indique-a como BUY. Se um ativo da carteira estiver sob risco geopolítico, indique SELL ou WATCH.`,
+Se o usuário pedir análise de um FII, busque os dados mais recentes no Clube FII e emita o Veredito Nexus.`,
 });
 
 const structuredChatPrompt = ai.definePrompt({
   name: 'interactivePortfolioStructuredPrompt',
   input: { schema: z.object({ rawResponse: z.string() }) },
   output: { schema: InteractivePortfolioAssistantOutputSchema },
-  prompt: `Formate a análise do Nexus AI em um objeto JSON estruturado seguindo rigorosamente o esquema de saída.
-Certifique-se de que o campo 'essential.text' contenha a recomendação direta e assertiva.
+  prompt: `Formate a análise do Nexus AI em JSON. 
+O campo 'essential.text' deve conter a recomendação direta e o resumo dos dados extraídos do Clube FII se for um fundo imobiliário.
 
-Análise Bruta:
-{{{rawResponse}}}`,
+Análise: {{{rawResponse}}}`,
 });
 
 export async function interactivePortfolioAssistant(input: z.infer<typeof InteractivePortfolioAssistantInputSchema>): Promise<InteractivePortfolioAssistantOutput | null> {
   try {
     const { text: rawResponse } = await groundedChatPrompt(input);
     const { output } = await structuredChatPrompt({ rawResponse });
-    
-    if (!output) return null;
-    
-    return JSON.parse(JSON.stringify(output));
+    return output ? JSON.parse(JSON.stringify(output)) : null;
   } catch (error: any) {
     console.error("Assistant Error:", error.message);
     return null;
