@@ -1,7 +1,7 @@
 'use server';
 /**
  * @fileOverview Nexus Global Market Data Engine v3.1.
- * Monitoramento massivo multi-fonte: Brapi + Clube FII + Web Intelligence.
+ * Monitoramento massivo multi-fonte: Brapi + Clube FII + Binance + Web Intelligence.
  */
 
 import { ai } from '@/ai/genkit';
@@ -40,14 +40,14 @@ const PRIORITY_TICKERS = [
   "PETR4", "VALE3", "ITUB4", "BBDC4", "ABEV3", "BBAS3", "WEGE3", "MGLU3", "RENT3", "B3SA3",
   // US TOP
   "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA",
-  // CRYPTO TOP
+  // CRYPTO TOP (Monitorados via Binance)
   "BTC", "ETH", "SOL"
 ];
 
 const fetchBrapiDataTool = ai.defineTool(
   {
     name: 'fetchBrapiData',
-    description: 'Busca cotações e fundamentos na API Brapi.',
+    description: 'Busca cotações e fundamentos na API Brapi para ativos B3 e US.',
     inputSchema: z.object({ tickers: z.array(z.string()) }),
     outputSchema: z.any(),
   },
@@ -62,24 +62,40 @@ const fetchBrapiDataTool = ai.defineTool(
   }
 );
 
+const fetchBinancePriceTool = ai.defineTool(
+  {
+    name: 'fetchBinancePrice',
+    description: 'Busca o preço atual de criptomoedas na API da Binance (ex: BTCUSDT).',
+    inputSchema: z.object({ symbol: z.string().describe('O símbolo do par, ex: BTCUSDT') }),
+    outputSchema: z.object({ price: z.string(), symbol: z.string() }),
+  },
+  async (input) => {
+    try {
+      const response = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${input.symbol}`);
+      return await response.json();
+    } catch (error) {
+      return { error: "Erro Binance" };
+    }
+  }
+);
+
 const marketDataPrompt = ai.definePrompt({
   name: 'marketDataPrompt',
-  tools: [fetchBrapiDataTool],
+  tools: [fetchBrapiDataTool, fetchBinancePriceTool],
   input: { schema: z.object({ tickers: z.array(z.string()) }) },
   config: { 
     googleSearchRetrieval: {} 
   },
   system: `Você é o Sentinela Omnisciente do Nexus AI.
 ### MISSÃO DE VARREDURA 360°:
-1. Use a ferramenta fetchBrapiData para obter o esqueleto dos dados (preço, variação).
-2. Use a pesquisa na web (Google Search) para enriquecer os dados com fontes de elite:
+1. Para ativos B3 e US, use a ferramenta fetchBrapiData.
+2. Para CRIPTO (BTC, ETH, SOL), use obrigatoriamente a ferramenta fetchBinancePrice (use o par USDT, ex: BTCUSDT). Converta o valor para BRL (use cotação aproximada do USD via pesquisa se necessário).
+3. Use a pesquisa na web (Google Search) para enriquecer os dados com fontes de elite:
    - CLUBEFII.COM.BR (Obrigatório para FIIs: Dividendos, Vacância, P/VP, Data Com).
-   - Portais de RI (Relação com Investidores) para notícias de última hora.
-   - On-chain trackers para Cripto.
-3. Se os dados de dividendos ou vacância não estiverem na Brapi, você DEVE extraí-los manualmente das buscas web.
-4. Você DEVE retornar valores para TODOS os campos solicitados no output, mesmo que sejam 0 ou 'Aguardando'. Não deixe campos undefined.`,
+   - Portais de RI para notícias de última hora.
+4. Você DEVE retornar valores para TODOS os campos solicitados no output, mesmo que sejam 0 ou 'Aguardando'.`,
   prompt: `Execute varredura profunda e omnisciente para: {{#each tickers}}{{{this}}}, {{/each}}. 
-Cruze dados da Brapi com as informações mais recentes do Clube FII e portais financeiros mundiais. Garanta que a resposta contenha os fundamentos táticos completos.`,
+Cruze dados da Binance para Cripto, Brapi para ações e Clube FII para fundos imobiliários. Garanta que a resposta contenha os fundamentos táticos completos e o preço mais recente.`,
 });
 
 const structurePrompt = ai.definePrompt({
@@ -87,7 +103,7 @@ const structurePrompt = ai.definePrompt({
   input: { schema: z.object({ rawData: z.string() }) },
   output: { schema: MarketDataOutputSchema },
   prompt: `Converta a análise tática para JSON. 
-Garanta que dividendAmount, dataCom, paymentDate e vacancyRate estejam preenchidos. Se não encontrou o valor exato, use 0 para números e "Aguardando" para textos.
+Garanta que para Criptomoedas, a "exchange" seja marcada como "Binance".
 
 Dados brutos: {{{rawData}}}`,
 });

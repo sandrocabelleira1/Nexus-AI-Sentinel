@@ -1,11 +1,10 @@
-
 "use client"
 
 import { UserAsset } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Wallet, Zap, TrendingUp, Landmark, Boxes, Plus, Minus, Calculator, Info, ArrowUpRight, ArrowDownRight, Activity } from "lucide-react";
+import { Wallet, Zap, TrendingUp, Landmark, Boxes, Plus, Minus, Calculator, Info, ArrowUpRight, ArrowDownRight, Activity, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useMemo } from "react";
 import {
@@ -106,6 +105,8 @@ export function AssetCard({ asset, currentMarketPrice, onUpdate }: AssetCardProp
     resetForm();
   };
 
+  const isBinancePowered = asset.type === 'Criptomoeda';
+
   return (
     <Card className={cn(
       "bg-[#080D18]/90 border transition-all duration-500 hover:scale-[1.02] group relative overflow-hidden rounded-[2.5rem]",
@@ -119,9 +120,16 @@ export function AssetCard({ asset, currentMarketPrice, onUpdate }: AssetCardProp
             <Icon className="h-6 w-6" />
           </div>
           <div className="flex flex-col items-end gap-2">
-            <Badge variant="outline" className="text-[9px] font-headline font-bold uppercase tracking-widest border-white/10 bg-white/5 px-3 py-1">
-              {asset.type}
-            </Badge>
+            <div className="flex gap-2">
+              {isBinancePowered && (
+                <Badge className="bg-orange-500/10 text-orange-400 border-orange-500/20 text-[8px] font-bold uppercase px-2 py-0.5 flex items-center gap-1">
+                  <Globe className="h-2 w-2" /> Binance API
+                </Badge>
+              )}
+              <Badge variant="outline" className="text-[9px] font-headline font-bold uppercase tracking-widest border-white/10 bg-white/5 px-3 py-1">
+                {asset.type}
+              </Badge>
+            </div>
             {gainLossPercentage !== 0 && (
               <div className={cn("text-[10px] font-bold flex items-center gap-1", gainLoss >= 0 ? "text-emerald-400" : "text-rose-400")}>
                 {gainLoss >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
@@ -158,7 +166,6 @@ export function AssetCard({ asset, currentMarketPrice, onUpdate }: AssetCardProp
         </div>
 
         <div className="grid grid-cols-2 gap-3 pt-2">
-          {/* Botão Comprar com Calculadora */}
           <Dialog open={isBuyOpen} onOpenChange={(open) => { setIsBuyOpen(open); if(!open) resetForm(); }}>
             <DialogTrigger asChild>
               <Button 
@@ -225,7 +232,6 @@ export function AssetCard({ asset, currentMarketPrice, onUpdate }: AssetCardProp
             </DialogContent>
           </Dialog>
 
-          {/* Botão Vender com Calculadora */}
           <Dialog open={isSellOpen} onOpenChange={(open) => { setIsSellOpen(open); if(!open) resetForm(); }}>
             <DialogTrigger asChild>
               <Button 
