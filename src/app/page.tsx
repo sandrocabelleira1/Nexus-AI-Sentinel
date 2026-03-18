@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo, useEffect, useCallback } from "react";
@@ -23,7 +24,10 @@ import {
   BrainCircuit,
   AlertTriangle,
   Zap,
-  Target
+  Target,
+  History,
+  Clock,
+  ExternalLink
 } from "lucide-react";
 import { AssistantChat } from "@/components/ai/assistant-chat";
 import { Badge } from "@/components/ui/badge";
@@ -39,12 +43,20 @@ import { runWhaleDiscovery } from "@/ai/flows/whale-discovery";
 import { fetchGlobalMarketData } from "@/ai/flows/global-market-data-engine";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export default function NexusDashboard() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'portfolio' | 'market'>('dashboard');
   const [isScanning, setIsScanning] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatInitialQuery, setChatInitialQuery] = useState<string | null>(null);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   const firestore = useFirestore();
   const auth = useAuth();
@@ -52,7 +64,7 @@ export default function NexusDashboard() {
 
   const alertsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, "global_intelligence_alerts"), orderBy("createdAt", "desc"), limit(10));
+    return query(collection(firestore, "global_intelligence_alerts"), orderBy("createdAt", "desc"), limit(20));
   }, [firestore]);
 
   const whispersQuery = useMemoFirebase(() => {
@@ -263,6 +275,48 @@ export default function NexusDashboard() {
                     <span className="text-[10px] text-rose-500 font-bold uppercase tracking-[0.3em]">AMEAÇA À CARTEIRA DETECTADA</span>
                   </div>
                 )}
+
+                <div className="absolute top-6 right-8 z-20">
+                  <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="ghost" size="sm" className="bg-white/5 border border-white/10 rounded-xl text-[10px] font-bold text-white/40 uppercase hover:bg-white/10 hover:text-white transition-all px-4">
+                        <History className="h-3 w-3 mr-2" /> Arquivo de Comandos
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="glass-panel border-white/10 sm:max-w-[800px] max-h-[80vh] flex flex-col">
+                      <DialogHeader>
+                        <DialogTitle className="text-2xl font-headline font-bold text-white flex items-center gap-3">
+                          <History className="h-6 w-6 text-primary" /> Histórico de Inteligência Global
+                        </DialogTitle>
+                      </DialogHeader>
+                      <ScrollArea className="flex-1 mt-6 pr-4">
+                        <div className="space-y-6 pb-10">
+                          {globalAlerts?.map((alert, idx) => (
+                            <div key={alert.id} className="p-6 rounded-3xl bg-white/5 border border-white/10 hover:border-primary/30 transition-all cursor-pointer group" onClick={() => { handleDeepAnalysis(alert.title); setIsHistoryOpen(false); }}>
+                              <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-3">
+                                  <Badge className={cn(
+                                    "text-[9px] font-bold px-3 py-1 rounded-lg uppercase tracking-widest",
+                                    alert.marketAction === 'SELL' ? 'bg-rose-600' : 
+                                    alert.marketAction === 'BUY' ? 'bg-emerald-600' : 'bg-primary'
+                                  )}>
+                                    {alert.marketAction}
+                                  </Badge>
+                                  <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest">
+                                    {formatDistanceToNow(new Date(alert.createdAt), { locale: ptBR, addSuffix: true })}
+                                  </span>
+                                </div>
+                                <ExternalLink className="h-4 w-4 text-white/20 group-hover:text-primary transition-colors" />
+                              </div>
+                              <h4 className="text-lg font-bold text-white mb-2 leading-tight">{alert.title}</h4>
+                              <p className="text-xs text-white/60 line-clamp-2 italic">{alert.essentialText}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    </DialogContent>
+                  </Dialog>
+                </div>
 
                 <ScrollArea className="h-full">
                   <div className="p-10 space-y-12">
