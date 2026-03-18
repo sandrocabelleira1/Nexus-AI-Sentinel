@@ -5,7 +5,7 @@ import { UserAsset } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Wallet, Zap, TrendingUp, Landmark, Boxes, Plus, Minus, Calculator, Info, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Wallet, Zap, TrendingUp, Landmark, Boxes, Plus, Minus, Calculator, Info, ArrowUpRight, ArrowDownRight, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useMemo } from "react";
 import {
@@ -85,15 +85,6 @@ export function AssetCard({ asset, currentMarketPrice, onUpdate }: AssetCardProp
     }
   };
 
-  const getRiskText = (risk?: string) => {
-    switch (risk) {
-      case 'Crítico': return 'text-rose-400';
-      case 'Agressivo': return 'text-orange-400';
-      case 'Moderado': return 'text-blue-400';
-      default: return 'text-emerald-400';
-    }
-  };
-
   const Icon = (() => {
     switch (asset.type) {
       case 'Criptomoeda': return Zap;
@@ -147,13 +138,21 @@ export function AssetCard({ asset, currentMarketPrice, onUpdate }: AssetCardProp
               <Landmark className="h-3 w-3" />
               <span>{asset.location}</span>
             </div>
+            {currentMarketPrice !== undefined && (
+              <div className="flex items-center gap-2 mt-2">
+                <Activity className="h-3 w-3 text-emerald-400 animate-pulse" />
+                <span className="text-[11px] font-bold text-emerald-400">
+                  Cotação: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(currentMarketPrice)}
+                </span>
+              </div>
+            )}
           </div>
           <div className="text-right">
             <div className="text-primary font-bold text-xl led-text-blue">
               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(currentValuation)}
             </div>
             <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
-              QTD: {asset.quantity.toLocaleString(undefined, { maximumFractionDigits: 4 })}
+              POSIÇÃO TOTAL
             </div>
           </div>
         </div>
