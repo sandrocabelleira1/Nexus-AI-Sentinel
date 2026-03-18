@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo, useEffect, useCallback } from "react";
@@ -102,7 +101,6 @@ export default function NexusDashboard() {
   const latestAlert = globalAlerts?.[0];
   const latestWhisper = whispers?.[0];
 
-  // Logic to identify if any user asset is affected by the latest global event
   const affectedPortfolioAssets = useMemo(() => {
     if (!latestAlert || !userAssetsData) return [];
     const affectedTickers = latestAlert.affectedAssetTickerSymbols || [];
@@ -249,21 +247,18 @@ export default function NexusDashboard() {
       </header>
 
       <main className="max-w-[1800px] mx-auto px-8 py-10 space-y-10 relative z-10">
-        {activeTab === 'dashboard' && (
+        {activeTab === 'dashboard' && ( activeTab === 'dashboard' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            {/* Coluna Esquerda: World Mood & War Room */}
             <div className="lg:col-span-3 space-y-8">
               <WorldMood latestAlert={latestAlert} latestWhisper={latestWhisper} onAnalyze={handleDeepAnalysis} />
               <WarRoom entities={marketEntities || []} onAnalyze={handleDeepAnalysis} />
             </div>
 
-            {/* Coluna Central: Centro de Comando (Comandos Diretos) */}
             <div className="lg:col-span-6">
               <div className={cn(
                 "bg-[#080D18]/95 border rounded-[3rem] h-[850px] relative overflow-hidden flex flex-col shadow-2xl transition-all group",
                 hasCriticalRisk ? "border-rose-500/40" : "border-white/10 hover:border-primary/40"
               )}>
-                {/* Visual Indicators */}
                 <div className={cn(
                   "absolute top-0 left-0 w-full h-2 animate-pulse",
                   hasCriticalRisk ? "bg-gradient-to-r from-rose-500 via-rose-300 to-rose-500" : "bg-gradient-to-r from-primary via-accent to-primary"
@@ -289,8 +284,8 @@ export default function NexusDashboard() {
                           <History className="h-6 w-6 text-primary" /> Histórico de Inteligência Global
                         </DialogTitle>
                       </DialogHeader>
-                      <ScrollArea className="flex-1 mt-6 pr-4">
-                        <div className="space-y-6 pb-10">
+                      <ScrollArea className="flex-1 mt-6 no-scrollbar">
+                        <div className="space-y-6 pb-10 pr-2">
                           {globalAlerts?.map((alert, idx) => (
                             <div key={alert.id} className="p-6 rounded-3xl bg-white/5 border border-white/10 hover:border-primary/30 transition-all cursor-pointer group" onClick={() => { handleDeepAnalysis(alert.title); setIsHistoryOpen(false); }}>
                               <div className="flex items-center justify-between mb-4">
@@ -318,11 +313,10 @@ export default function NexusDashboard() {
                   </Dialog>
                 </div>
 
-                <ScrollArea className="h-full">
+                <ScrollArea className="h-full no-scrollbar">
                   <div className="p-10 space-y-12">
                     {latestAlert ? (
                       <div className="space-y-10 animate-in fade-in slide-in-from-bottom-5 duration-1000">
-                        {/* Status Header */}
                         <div className="space-y-6">
                           <div className="flex items-center justify-between">
                             <Badge className={cn(
@@ -350,7 +344,6 @@ export default function NexusDashboard() {
                           </div>
                         </div>
 
-                        {/* Rationale - Command Style */}
                         <div className={cn(
                           "border rounded-[2.5rem] p-10 space-y-6 relative overflow-hidden shadow-2xl",
                           hasCriticalRisk ? "bg-rose-500/10 border-rose-500/30" : "bg-white/5 border-white/10"
@@ -391,7 +384,6 @@ export default function NexusDashboard() {
                           )}
                         </div>
 
-                        {/* Tactical Targets */}
                         <div className="space-y-6">
                           <div className="flex items-center justify-between ml-2">
                             <h3 className="text-[10px] font-bold text-white/40 uppercase tracking-[0.6em]">Alvos de Alocação em Tempo Real</h3>
@@ -453,7 +445,6 @@ export default function NexusDashboard() {
               </div>
             </div>
 
-            {/* Coluna Direita: Whale Flow & Whispers */}
             <div className="lg:col-span-3 space-y-8">
               <WhaleFlow transactions={whaleTransactions || []} onAnalyze={handleDeepAnalysis} />
               
@@ -462,7 +453,7 @@ export default function NexusDashboard() {
                   <h3 className="text-[10px] font-headline font-bold uppercase tracking-[0.5em] text-primary">RUMORES & WHISPERS</h3>
                   <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                 </div>
-                <ScrollArea className="flex-1">
+                <ScrollArea className="flex-1 no-scrollbar">
                   <div className="space-y-6 pr-4">
                     {whispers?.map((item, idx) => (
                       <div key={idx} className="p-5 rounded-2xl bg-white/5 border border-white/10 hover:border-primary/40 transition-all cursor-pointer group" onClick={() => handleDeepAnalysis(item.topic)}>
@@ -481,7 +472,7 @@ export default function NexusDashboard() {
               </div>
             </div>
           </div>
-        )}
+        ))}
 
         {activeTab === 'market' && <MarketExplorer prices={marketPrices || []} latestAlert={latestAlert} />}
         {activeTab === 'portfolio' && <PortfolioView assets={userAssetsData || []} onUpdateAsset={handleUpdateAsset} />}
