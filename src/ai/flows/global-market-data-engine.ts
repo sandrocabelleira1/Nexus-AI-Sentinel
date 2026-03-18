@@ -1,7 +1,7 @@
 'use server';
 /**
- * @fileOverview Nexus Global Market Data Engine.
- * Monitoramento massivo de FIIs v3.0 com extração rigorosa de dados do Clube FII.
+ * @fileOverview Nexus Global Market Data Engine v3.1.
+ * Monitoramento massivo multi-fonte: Brapi + Clube FII + Web Intelligence.
  */
 
 import { ai } from '@/ai/genkit';
@@ -21,7 +21,7 @@ const MarketDataOutputSchema = z.object({
     peRatio: z.number().optional(),
     pvpRatio: z.number().optional(),
     healthStatus: z.string().optional(),
-    // FII v3.0 - Extração Obrigatória
+    // FII v3.1 - Extração Omnisciente
     fiiType: z.enum(['Papel', 'Tijolo', 'Agro', 'Misto']).optional(),
     dividendAmount: z.number().optional(),
     dataCom: z.string().optional(),
@@ -34,7 +34,7 @@ const MarketDataOutputSchema = z.object({
 export type MarketDataOutput = z.infer<typeof MarketDataOutputSchema>;
 
 const PRIORITY_TICKERS = [
-  // B3 FIIs v3.0
+  // B3 FIIs v3.1
   "HGLG11", "MXRF11", "XPLG11", "KNRI11", "VISC11", "BTLG11", "XPML11", "HCTR11", "IRDM11", "CPTS11", "RECR11", "VILG11", "KNCR11", "HGBS11",
   // B3 TOP
   "PETR4", "VALE3", "ITUB4", "BBDC4", "ABEV3", "BBAS3", "WEGE3", "MGLU3", "RENT3", "B3SA3",
@@ -69,27 +69,27 @@ const marketDataPrompt = ai.definePrompt({
   config: { 
     googleSearchRetrieval: {} 
   },
-  system: `Você é o Sentinela de Mercados Globais e Especialista em FIIs v3.0. 
-### MISSÃO DE EXTRAÇÃO RIGOROSA:
-1. Para cada ticker de FII listado, você DEVE encontrar os seguintes dados reais no site CLUBEFII.COM.BR:
-   - Valor do último dividendo pago (em R$).
-   - Data Com e Data de Pagamento.
-   - Vacância Física (%).
-   - P/VP atual.
-2. Se os dados não estiverem disponíveis na ferramenta de cotação, use a pesquisa na web para capturar os valores mais recentes do Clube FII.
-3. Não retorne 0 se a informação puder ser encontrada. Procure por "rendimento anunciado" ou "dividendos [TICKER]".`,
-  prompt: `Execute varredura profunda para: {{#each tickers}}{{{this}}}, {{/each}}. 
-Priorize capturar os fundamentos reais de dividendos e vacância para os fundos imobiliários usando o Clube FII.`,
+  system: `Você é o Sentinela Omnisciente do Nexus AI.
+### MISSÃO DE VARREDURA 360°:
+1. Use a ferramenta fetchBrapiData para obter o esqueleto dos dados (preço, variação).
+2. Use a pesquisa na web (Google Search) para enriquecer os dados com fontes de elite:
+   - CLUBEFII.COM.BR (Obrigatório para FIIs: Dividendos, Vacância, P/VP, Data Com).
+   - Portais de RI (Relação com Investidores) para notícias de última hora.
+   - On-chain trackers para Cripto.
+3. Se os dados de dividendos ou vacância não estiverem na Brapi, você DEVE extraí-los manualmente das buscas web.
+4. Mantenha o radar ligado em rumores e decisões governamentais que afetem esses tickers.`,
+  prompt: `Execute varredura profunda e omnisciente para: {{#each tickers}}{{{this}}}, {{/each}}. 
+Cruze dados da Brapi com as informações mais recentes do Clube FII e portais financeiros mundiais.`,
 });
 
 const structurePrompt = ai.definePrompt({
   name: 'marketStructurePrompt',
   input: { schema: z.object({ rawData: z.string() }) },
   output: { schema: MarketDataOutputSchema },
-  prompt: `Converta a análise técnica para JSON. 
-Certifique-se de que os campos dividendAmount, dataCom, paymentDate e vacancyRate para FIIs estejam preenchidos com os valores reais encontrados na análise.
+  prompt: `Converta a análise tática para JSON. 
+Garanta que dividendAmount, dataCom, paymentDate e vacancyRate estejam preenchidos com os valores reais encontrados na varredura.
 
-Dados: {{{rawData}}}`,
+Dados brutos: {{{rawData}}}`,
 });
 
 export async function fetchGlobalMarketData(): Promise<MarketDataOutput | null> {

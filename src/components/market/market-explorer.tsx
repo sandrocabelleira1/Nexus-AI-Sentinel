@@ -17,7 +17,8 @@ import {
   CheckCircle2, 
   Coins, 
   ChevronRight,
-  Loader2
+  Loader2,
+  Zap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -50,7 +51,7 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
             </div>
             <h2 className="text-5xl font-headline font-bold text-white tracking-tighter led-text-blue">Terminal Global Pro</h2>
           </div>
-          <p className="text-white/40 font-medium text-lg max-w-2xl">Monitoramento massivo v3.0: FIIs, Ações e Cripto com inteligência de dividendos do Clube FII.</p>
+          <p className="text-white/40 font-medium text-lg max-w-2xl">Monitoramento Omnisciente v3.1: IA conectada ao Clube FII, Brapi e Web Intelligence 24h.</p>
         </div>
 
         <div className="flex items-center gap-6 bg-[#080D18]/90 border border-white/10 p-6 rounded-[2rem] shadow-2xl">
@@ -59,8 +60,8 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
             <span className="text-3xl font-bold text-white">{prices.length}</span>
           </div>
           <div className="flex items-center gap-4 px-4">
-            <Activity className="h-4 w-4 text-emerald-400 animate-pulse" />
-            <span className="text-[11px] text-emerald-400 font-bold uppercase tracking-[0.4em]">FII RADAR V3.0 ONLINE</span>
+            <Zap className="h-4 w-4 text-primary animate-pulse" />
+            <span className="text-[11px] text-primary font-bold uppercase tracking-[0.4em]">RADAR OMNI ATIVO</span>
           </div>
         </div>
       </div>
@@ -69,7 +70,7 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
         <div className="relative flex-1 group">
           <Search className="absolute left-8 top-1/2 -translate-y-1/2 h-6 w-6 text-primary" />
           <Input 
-            placeholder="Pesquisar Ativo (HGLG11, MXRF11, AAPL, BTC)..."
+            placeholder="Pesquisar Ativo (HGLG11, AAPL, BTC)..."
             className="h-20 pl-20 bg-[#080D18]/95 border-white/10 rounded-[1.5rem] text-xl font-bold focus-visible:ring-primary shadow-2xl"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -152,7 +153,7 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
                     {!hasData ? (
                       <div className="flex items-center gap-3 p-4 bg-white/5 border border-dashed border-white/10 rounded-2xl animate-pulse">
                         <Loader2 className="h-4 w-4 text-primary animate-spin" />
-                        <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Sincronizando Clube FII...</span>
+                        <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Nexus Sincronizando...</span>
                       </div>
                     ) : (
                       <>
@@ -229,7 +230,7 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
               
               <div className="p-6 pt-0 mt-auto">
                 <Button 
-                  onClick={() => onAnalyze?.(`Execute comando Nexus de Análise 360 para o ativo ${price.ticker}. Verifique P/VP, Vacância, Dividendos no Clube FII e projete o elo de causalidade.`)}
+                  onClick={() => onAnalyze?.(`Execute comando Nexus de Análise 360 para o ativo ${price.ticker}. Varredura Omnisciente obrigatória em Clube FII, Brapi e Web Intelligence.`)}
                   className="w-full bg-white/5 hover:bg-white/10 border-white/10 text-white font-bold text-xs h-12 rounded-xl group/btn"
                 >
                   EXECUTAR ANÁLISE 360°
