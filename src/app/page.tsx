@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo, useEffect, useCallback } from "react";
@@ -22,7 +23,8 @@ import {
   Heart,
   Waves,
   LayoutGrid,
-  Activity
+  Activity,
+  Target
 } from "lucide-react";
 import { AssistantChat } from "@/components/ai/assistant-chat";
 import { Badge } from "@/components/ui/badge";
@@ -248,9 +250,12 @@ export default function NexusDashboard() {
         </nav>
 
         <div className="flex items-center gap-4">
-          <div className="hidden xl:flex flex-col items-end mr-4">
-            <span className="text-[8px] text-muted-foreground font-bold uppercase tracking-widest">Sync v3.9</span>
-            <span className="text-[10px] text-white font-bold">{formatDistanceToNow(lastAutoScan, { addSuffix: true, locale: ptBR })}</span>
+          <div className="hidden xl:flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl px-4 py-2 mr-2">
+            <Target className="h-3.5 w-3.5 text-accent animate-pulse" />
+            <div className="flex flex-col">
+              <span className="text-[8px] text-accent font-bold uppercase tracking-widest">Missão Neural</span>
+              <span className="text-[9px] text-white/70 font-bold uppercase">Causalidade & Projeção</span>
+            </div>
           </div>
           <Button variant="ghost" size="sm" onClick={triggerGlobalScan} disabled={isScanning} className="rounded-xl bg-accent/10 border border-accent/30 text-accent text-[10px] font-bold uppercase px-6 h-10 hover:bg-accent/20">
             {isScanning ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Radar className="h-3 w-3 mr-2" />} VARREDURA 360°
