@@ -7,6 +7,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface WhaleFlowProps {
   transactions: WhaleTransaction[];
@@ -24,108 +25,74 @@ export function WhaleFlow({ transactions, onAnalyze }: WhaleFlowProps) {
   }, [transactions]);
 
   return (
-    <div className="bg-[#080D18]/90 border border-white/10 rounded-[2.5rem] p-8 h-full flex flex-col shadow-2xl relative overflow-hidden group">
-      <div className="flex items-center justify-between mb-8 z-10">
-        <div className="flex items-center gap-4">
-          <div className="p-2.5 rounded-xl bg-primary/20 border border-primary/40 led-glow-blue">
-            <Waves className="h-5 w-5 text-primary animate-pulse" />
+    <div className="bg-[#080D18]/90 border border-white/10 rounded-[3rem] p-8 h-full flex flex-col shadow-2xl relative overflow-hidden group">
+      <div className="flex items-center justify-between mb-6 z-10">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-primary/20 border border-primary/40 led-glow-blue">
+            <Waves className="h-4 w-4 text-primary animate-pulse" />
           </div>
-          <div>
-            <span className="text-[11px] font-headline font-bold uppercase tracking-[0.4em] text-primary block led-text-blue">
-              WHALE FLOW
-            </span>
-            <span className="text-[8px] text-muted-foreground font-bold tracking-[0.2em] uppercase">Sentinela On-Chain</span>
-          </div>
+          <span className="text-[10px] font-headline font-bold uppercase tracking-[0.4em] text-primary block led-text-blue">
+            WHALE FLOW
+          </span>
         </div>
-        <Radar className="h-5 w-5 text-emerald-500/40 animate-spin-slow" />
+        <Radar className="h-4 w-4 text-emerald-500/40 animate-spin-slow" />
       </div>
 
-      <div className="flex-1 space-y-6 overflow-y-auto pr-2 custom-scrollbar">
-        {transactions.length > 0 ? (
-          transactions.map((tx) => {
-            const isCritical = tx.amountUsd >= 1000000000;
-            const isExchangeDeposit = tx.transactionType === 'exchange_deposit';
-            // @ts-ignore
-            const isSimulated = tx.is_simulated;
-            
-            return (
-              <div 
-                key={tx.id} 
-                onClick={() => onAnalyze?.(`Transação de Baleia: ${tx.amount} ${tx.symbol} (US$ ${(tx.amountUsd / 1000000).toFixed(1)}M) na blockchain ${tx.blockchain}. Tipo: ${tx.transactionType}`)}
-                className={cn(
-                  "p-5 rounded-3xl border transition-all duration-500 hover:bg-white/10 cursor-pointer relative group/item",
-                  isCritical ? "border-rose-500/30 bg-rose-500/5 shadow-[0_0_30px_rgba(244,63,94,0.1)]" : "border-white/5 bg-white/5"
-                )}
-              >
-                {isSimulated && (
-                  <div className="absolute top-2 right-2 opacity-30">
-                    <Cpu className="h-3 w-3 text-primary" />
-                  </div>
-                )}
-
-                {isCritical && (
-                  <div className="absolute -top-1.5 -right-1.5 flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
-                  </div>
-                )}
-
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
+      <ScrollArea className="flex-1 no-scrollbar z-10">
+        <div className="space-y-4 pr-2">
+          {transactions.length > 0 ? (
+            transactions.map((tx) => {
+              const isCritical = tx.amountUsd >= 1000000000;
+              const isExchangeDeposit = tx.transactionType === 'exchange_deposit';
+              
+              return (
+                <div 
+                  key={tx.id} 
+                  onClick={() => onAnalyze?.(`Baleia: ${tx.amount} ${tx.symbol}`)}
+                  className={cn(
+                    "p-4 rounded-2xl border transition-all hover:bg-white/10 cursor-pointer relative",
+                    isCritical ? "border-rose-500/30 bg-rose-500/5" : "border-white/5 bg-white/5"
+                  )}
+                >
+                  <div className="flex items-center justify-between mb-2">
                     <Badge variant="outline" className={cn(
-                      "text-[9px] font-bold uppercase tracking-widest px-2 py-0.5",
+                      "text-[8px] font-bold uppercase px-2 py-0.5",
                       isExchangeDeposit ? "text-rose-400 border-rose-500/30" : "text-emerald-400 border-emerald-500/30"
                     )}>
-                      {isExchangeDeposit ? 'SINAL DE VENDA' : 'ACUMULAÇÃO'}
+                      {isExchangeDeposit ? 'LIQUIDAÇÃO' : 'ACUMULAÇÃO'}
                     </Badge>
-                    <span className="text-[9px] text-muted-foreground font-bold uppercase">{tx.blockchain}</span>
+                    <span className="text-[8px] text-white/40 font-bold">
+                      {tx.timestamp ? formatDistanceToNow(new Date(tx.timestamp), { locale: ptBR, addSuffix: true }) : 'agora'}
+                    </span>
                   </div>
-                  <span className="text-[9px] text-white/40 font-bold">
-                    {tx.timestamp ? formatDistanceToNow(new Date(tx.timestamp), { locale: ptBR, addSuffix: true }) : 'agora'}
-                  </span>
-                </div>
 
-                <div className="flex items-end justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <Ship className={cn("h-4 w-4", isCritical ? "text-rose-400" : "text-primary/60")} />
-                      <h4 className="text-lg font-headline font-bold text-white tracking-tight">
-                        {tx.amount.toLocaleString()} {tx.symbol}
-                      </h4>
+                  <div className="flex items-end justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <Ship className={cn("h-3 w-3", isCritical ? "text-rose-400" : "text-primary/60")} />
+                        <h4 className="text-sm font-headline font-bold text-white">
+                          {tx.amount.toLocaleString()} {tx.symbol}
+                        </h4>
+                      </div>
                     </div>
-                    <p className="text-[11px] text-white/60 font-medium">
-                      {isExchangeDeposit ? 'Transferido para Exchange' : 'Movido para Wallet Fria'}
-                    </p>
-                  </div>
-                  <div className="text-right">
                     <div className={cn(
-                      "text-sm font-bold flex items-center gap-1 justify-end",
+                      "text-[10px] font-bold flex items-center gap-1",
                       isExchangeDeposit ? "text-rose-400" : "text-emerald-400"
                     )}>
-                      {isExchangeDeposit ? <ArrowDownRight className="h-4 w-4" /> : <ArrowUpRight className="h-4 w-4" />}
                       US$ {(tx.amountUsd / 1000000).toFixed(1)}M
                     </div>
-                    {isCritical && <span className="text-[8px] text-rose-500 font-bold uppercase tracking-tighter">MOVIMENTO INSTITUCIONAL CRÍTICO</span>}
                   </div>
                 </div>
-              </div>
-            );
-          })
-        ) : (
-          <div className="flex flex-col items-center justify-center py-20 opacity-20 space-y-4">
-            <Zap className="h-10 w-10 text-primary" />
-            <span className="text-[10px] font-bold uppercase tracking-widest">Aguardando pulsos on-chain...</span>
-          </div>
-        )}
-      </div>
-
-      <div className="mt-6 pt-6 border-t border-white/5 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest">Sonar Ativo</span>
+              );
+            })
+          ) : (
+            <div className="flex flex-col items-center justify-center h-40 opacity-20 space-y-4">
+              <Zap className="h-8 w-8 text-primary" />
+              <span className="text-[8px] font-bold uppercase">SONAR ATIVO</span>
+            </div>
+          )}
         </div>
-        <ShieldAlert className="h-4 w-4 text-primary/30" />
-      </div>
+      </ScrollArea>
     </div>
   );
 }

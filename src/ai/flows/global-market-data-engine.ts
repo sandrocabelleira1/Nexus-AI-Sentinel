@@ -1,7 +1,7 @@
 'use server';
 /**
  * @fileOverview Nexus Global Market Data Engine.
- * Otimizado para Brapi Pro com Logotipos e Fundamentos, incluindo FIIs.
+ * Expandido para monitoramento massivo e busca global via Google Search fallback.
  */
 
 import { ai } from '@/ai/genkit';
@@ -26,11 +26,16 @@ const MarketDataOutputSchema = z.object({
 
 export type MarketDataOutput = z.infer<typeof MarketDataOutputSchema>;
 
+// Lista expandida para varredura inicial massiva
 const PRIORITY_TICKERS = [
-  "PETR4", "VALE3", "ITUB4", "BBDC4", "ABEV3", "BBAS3", "WEGE3", "MGLU3", "RENT3", "B3SA3", // Ações B3
-  "HGLG11", "MXRF11", "XPLG11", "KNRI11", "VISC11", "BTLG11", "XPML11", "HCTR11", // FIIs B3
-  "AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA", "META", // Stocks US
-  "BTC", "ETH", "SOL", "BNB", "ADA", "XRP", "DOT" // Crypto
+  // B3 TOP
+  "PETR4", "VALE3", "ITUB4", "BBDC4", "ABEV3", "BBAS3", "WEGE3", "MGLU3", "RENT3", "B3SA3", "HYPE3", "LREN3", "GGBR4", "CSNA3", "NTCO3",
+  // B3 FIIs
+  "HGLG11", "MXRF11", "XPLG11", "KNRI11", "VISC11", "BTLG11", "XPML11", "HCTR11", "IRDM11", "CPTS11", "RECR11", "VILG11",
+  // US TOP
+  "AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA", "META", "BRK.B", "V", "JNJ", "WMT", "JPM", "PG", "MA", "UNH",
+  // CRYPTO TOP
+  "BTC", "ETH", "SOL", "BNB", "ADA", "XRP", "DOT", "LINK", "AVAX", "MATIC", "SHIB", "TRX", "LTC", "BCH"
 ];
 
 const fetchBrapiDataTool = ai.defineTool(
@@ -55,20 +60,21 @@ const marketDataPrompt = ai.definePrompt({
   name: 'marketDataPrompt',
   tools: [fetchBrapiDataTool],
   input: { schema: z.object({ tickers: z.array(z.string()) }) },
-  system: `Você é o Sentinela de Mercados. Use a Brapi para obter dados reais.
-Identifique corretamente a categoria: 
-- Termina com 11 e é da B3? categoria: 'fiis'.
-- É uma cripto (BTC, ETH, etc)? categoria: 'crypto'.
-- É uma empresa listada (VALE3, AAPL)? categoria: 'stocks'.
-Avalie a saúde: Empresa Saudável se P/L < 15 e Margens altas. FIIs são saudáveis se P/VP próximo de 1 e Yield estável.`,
-  prompt: `Busque dados completos para: {{#each tickers}}{{{this}}}, {{/each}}`,
+  config: { googleSearchRetrieval: {} },
+  system: `Você é o Sentinela de Mercados Globais. 
+1. Use a ferramenta Brapi para ativos conhecidos.
+2. Use Google Search para ativos que não retornarem dados na Brapi ou para encontrar novos ativos em alta no Japão, Europa, Ásia, etc.
+3. Classifique categoricamente: 'crypto', 'stocks', 'fiis' ou 'index'.
+4. Avalie saúde financeira com base em P/L, Margens e P/VP.`,
+  prompt: `Varredura Global: Busque dados em tempo real para: {{#each tickers}}{{{this}}}, {{/each}}. 
+Se encontrar novos ativos relevantes durante a busca na web, inclua-os na análise.`,
 });
 
 const structurePrompt = ai.definePrompt({
   name: 'marketStructurePrompt',
   input: { schema: z.object({ rawData: z.string() }) },
   output: { schema: MarketDataOutputSchema },
-  prompt: `Converta para JSON. Inclua URLs de logo e dividendos.
+  prompt: `Converta a análise tática de ativos globais para JSON rigoroso.
 Dados: {{{rawData}}}`,
 });
 

@@ -63,27 +63,27 @@ export default function NexusDashboard() {
 
   const alertsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, "global_intelligence_alerts"), orderBy("createdAt", "desc"), limit(20));
+    return query(collection(firestore, "global_intelligence_alerts"), orderBy("createdAt", "desc"), limit(50));
   }, [firestore]);
 
   const whispersQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, "autonomous_insights"), orderBy("timestamp", "desc"), limit(10));
+    return query(collection(firestore, "autonomous_insights"), orderBy("timestamp", "desc"), limit(20));
   }, [firestore]);
 
   const whalesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, "whale_transactions"), orderBy("timestamp", "desc"), limit(15));
+    return query(collection(firestore, "whale_transactions"), orderBy("timestamp", "desc"), limit(30));
   }, [firestore]);
 
   const entitiesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, "market_entities"), orderBy("influenceScore", "desc"), limit(8));
+    return query(collection(firestore, "market_entities"), orderBy("influenceScore", "desc"), limit(15));
   }, [firestore]);
 
   const pricesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, "market_prices"), orderBy("updatedAt", "desc"), limit(50));
+    return query(collection(firestore, "market_prices"), orderBy("updatedAt", "desc"), limit(500));
   }, [firestore]);
 
   const userAssetsQuery = useMemoFirebase(() => {
@@ -123,7 +123,7 @@ export default function NexusDashboard() {
     setIsScanning(true);
     try {
       const results = await Promise.allSettled([
-        monitorGlobalEvents({ rawNewsData: "Varredura Crítica Global: Identificar ordens táticas de investimento em NYSE, B3 e LSE." }),
+        monitorGlobalEvents({ rawNewsData: "Varredura Crítica Global Massiva: Monitorar todas as bolsas e ativos do mundo via Brapi e Neural Search." }),
         runAutonomousWhisperScan(),
         runWhaleDiscovery(),
         fetchGlobalMarketData()
@@ -227,7 +227,7 @@ export default function NexusDashboard() {
               <span className="text-[9px] text-primary font-bold uppercase tracking-[0.4em] opacity-80">Estrategista Ativo</span>
               <div className="flex items-center gap-1">
                 <Activity className="h-2 w-2 text-emerald-400 animate-pulse" />
-                <span className="text-[8px] text-emerald-400 font-bold uppercase tracking-widest">REAL-TIME OPS</span>
+                <span className="text-[8px] text-emerald-400 font-bold uppercase tracking-widest">GLOBAL RADAR ACTIVE</span>
               </div>
             </div>
           </div>
@@ -247,11 +247,15 @@ export default function NexusDashboard() {
       </header>
 
       <main className="max-w-[1800px] mx-auto px-8 py-10 space-y-10 relative z-10">
-        {activeTab === 'dashboard' && ( activeTab === 'dashboard' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <div className="lg:col-span-3 space-y-8">
-              <WorldMood latestAlert={latestAlert} latestWhisper={latestWhisper} onAnalyze={handleDeepAnalysis} />
-              <WarRoom entities={marketEntities || []} onAnalyze={handleDeepAnalysis} />
+        {activeTab === 'dashboard' && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <div className="lg:col-span-3 flex flex-col gap-8 h-[850px]">
+              <div className="flex-1">
+                <WorldMood latestAlert={latestAlert} latestWhisper={latestWhisper} onAnalyze={handleDeepAnalysis} />
+              </div>
+              <div className="flex-1">
+                <WarRoom entities={marketEntities || []} onAnalyze={handleDeepAnalysis} />
+              </div>
             </div>
 
             <div className="lg:col-span-6">
@@ -264,24 +268,23 @@ export default function NexusDashboard() {
                   hasCriticalRisk ? "bg-gradient-to-r from-rose-500 via-rose-300 to-rose-500" : "bg-gradient-to-r from-primary via-accent to-primary"
                 )} />
                 
-                {hasCriticalRisk && (
-                  <div className="absolute top-6 right-10 flex items-center gap-2 z-20">
-                    <AlertTriangle className="h-5 w-5 text-rose-500 animate-bounce" />
-                    <span className="text-[10px] text-rose-500 font-bold uppercase tracking-[0.3em]">AMEAÇA À CARTEIRA DETECTADA</span>
-                  </div>
-                )}
-
-                <div className="absolute top-6 right-8 z-20">
+                <div className="absolute top-6 right-8 z-20 flex items-center gap-4">
+                  {hasCriticalRisk && (
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="h-5 w-5 text-rose-500 animate-bounce" />
+                      <span className="text-[10px] text-rose-500 font-bold uppercase tracking-[0.3em]">AMEAÇA DETECTADA</span>
+                    </div>
+                  )}
                   <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
                     <DialogTrigger asChild>
                       <Button variant="ghost" size="sm" className="bg-white/5 border border-white/10 rounded-xl text-[10px] font-bold text-white/40 uppercase hover:bg-white/10 hover:text-white transition-all px-4">
-                        <History className="h-3 w-3 mr-2" /> Arquivo de Comandos
+                        <History className="h-3 w-3 mr-2" /> Arquivo
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="glass-panel border-white/10 sm:max-w-[800px] max-h-[80vh] flex flex-col">
                       <DialogHeader>
                         <DialogTitle className="text-2xl font-headline font-bold text-white flex items-center gap-3">
-                          <History className="h-6 w-6 text-primary" /> Histórico de Inteligência Global
+                          <History className="h-6 w-6 text-primary" /> Histórico de Inteligência
                         </DialogTitle>
                       </DialogHeader>
                       <ScrollArea className="flex-1 mt-6 no-scrollbar">
@@ -324,7 +327,7 @@ export default function NexusDashboard() {
                               latestAlert.marketAction === 'SELL' ? 'bg-rose-600' : 
                               latestAlert.marketAction === 'BUY' ? 'bg-emerald-600' : 'bg-primary'
                             )}>
-                              ORDEM NEXUS: {latestAlert.marketAction === 'BUY' ? 'COMPRAR AGORA' : latestAlert.marketAction === 'SELL' ? 'VENDER AGORA' : latestAlert.marketAction}
+                              ORDEM NEXUS: {latestAlert.marketAction === 'BUY' ? 'COMPRAR' : latestAlert.marketAction === 'SELL' ? 'VENDER' : latestAlert.marketAction}
                             </Badge>
                             <div className="flex items-center gap-3">
                               <ShieldAlert className={cn("h-6 w-6", latestAlert.priority === 5 ? "text-rose-500" : "text-accent")} />
@@ -332,12 +335,12 @@ export default function NexusDashboard() {
                             </div>
                           </div>
 
-                          <h2 className="text-6xl font-headline font-bold text-white leading-tight tracking-tighter">
+                          <h2 className="text-5xl font-headline font-bold text-white leading-tight tracking-tighter">
                             {latestAlert.title}
                           </h2>
                           
-                          <div className="flex items-center gap-4 text-white/40 text-xs font-bold uppercase tracking-widest">
-                            <Globe className="h-4 w-4 text-primary" />
+                          <div className="flex items-center gap-4 text-white/40 text-[10px] font-bold uppercase tracking-widest">
+                            <Globe className="h-3.5 w-3.5 text-primary" />
                             <span>Origem: {latestAlert.eventOrigin}</span>
                             <div className="h-1 w-1 rounded-full bg-white/20" />
                             <span>Sinal: {latestAlert.riskLevel}</span>
@@ -345,22 +348,13 @@ export default function NexusDashboard() {
                         </div>
 
                         <div className={cn(
-                          "border rounded-[2.5rem] p-10 space-y-6 relative overflow-hidden shadow-2xl",
+                          "border rounded-[2.5rem] p-8 space-y-6 relative overflow-hidden shadow-2xl",
                           hasCriticalRisk ? "bg-rose-500/10 border-rose-500/30" : "bg-white/5 border-white/10"
                         )}>
-                          {hasCriticalRisk && (
-                            <div className="absolute top-0 left-0 w-1.5 h-full bg-rose-500" />
-                          )}
-                          <div className="flex items-center gap-4">
-                            <BrainCircuit className={cn("h-8 w-8", hasCriticalRisk ? "text-rose-500" : "text-primary")} />
-                            <h3 className="text-sm font-bold uppercase tracking-[0.5em] text-white/60">Análise Estratégica Verificada</h3>
-                          </div>
-                          
-                          <p className="text-2xl text-white font-medium leading-relaxed italic">
+                          <p className="text-xl text-white font-medium leading-relaxed italic">
                             "{latestAlert.essentialText}"
                           </p>
-                          
-                          <p className="text-base text-white/50 leading-relaxed font-light">
+                          <p className="text-sm text-white/50 leading-relaxed font-light">
                             {latestAlert.causalityExplanation}
                           </p>
 
@@ -368,7 +362,7 @@ export default function NexusDashboard() {
                             <div className="pt-6 mt-6 border-t border-white/10 space-y-4">
                               <div className="flex items-center gap-2 text-rose-400">
                                 <AlertTriangle className="h-4 w-4" />
-                                <span className="text-[10px] font-bold uppercase tracking-[0.3em]">IMPACTO NA SUA CUSTÓDIA:</span>
+                                <span className="text-[10px] font-bold uppercase tracking-[0.3em]">IMPACTO NA CUSTÓDIA:</span>
                               </div>
                               <div className="flex flex-wrap gap-2">
                                 {affectedPortfolioAssets.map(asset => (
@@ -377,67 +371,37 @@ export default function NexusDashboard() {
                                   </Badge>
                                 ))}
                               </div>
-                              <p className="text-sm text-rose-300 font-bold italic">
-                                Nexus indica: Execute {latestAlert.marketAction} imediatamente para mitigar exposição.
-                              </p>
                             </div>
                           )}
                         </div>
 
-                        <div className="space-y-6">
-                          <div className="flex items-center justify-between ml-2">
-                            <h3 className="text-[10px] font-bold text-white/40 uppercase tracking-[0.6em]">Alvos de Alocação em Tempo Real</h3>
-                            <Zap className="h-4 w-4 text-emerald-500" />
-                          </div>
-                          
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {latestAlert.affectedAssetsDetails?.map((asset, i) => (
-                              <div key={i} className="bg-white/5 border border-white/10 rounded-[2rem] p-8 hover:bg-white/10 transition-all cursor-pointer group/item hover:border-primary/40" onClick={() => handleDeepAnalysis(`Projeção ROI para ${asset.ticker}`)}>
-                                <div className="flex items-center justify-between mb-6">
-                                  <div className="flex flex-col">
-                                    <Badge variant="outline" className="w-fit text-[9px] border-primary/30 text-primary mb-2 uppercase tracking-widest">{asset.exchange}</Badge>
-                                    <span className="text-3xl font-bold text-white group-hover/item:text-primary transition-colors">{asset.ticker}</span>
-                                  </div>
-                                  <div className={cn(
-                                    "text-xl font-bold flex flex-col items-end",
-                                    asset.impactType === 'Positivo' ? 'text-emerald-400' : 'text-rose-400'
-                                  )}>
-                                    <span>{asset.expectedGainPercentage}</span>
-                                    <span className="text-[8px] uppercase tracking-tighter opacity-60">Projeção 7d</span>
-                                  </div>
-                                </div>
-                                <div className="flex items-center justify-between pt-6 border-t border-white/5">
-                                  <span className={cn(
-                                    "text-[10px] font-bold uppercase tracking-[0.4em]",
-                                    asset.recommendation === 'BUY' ? 'text-emerald-400' : 'text-rose-400'
-                                  )}>
-                                    {asset.recommendation}
-                                  </span>
-                                  <Target className="h-5 w-5 text-white/20 group-hover/item:text-primary group-hover/item:scale-110 transition-all" />
-                                </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {latestAlert.affectedAssetsDetails?.slice(0, 4).map((asset, i) => (
+                            <div key={i} className="bg-white/5 border border-white/10 rounded-[2rem] p-6 hover:bg-white/10 transition-all cursor-pointer group/item" onClick={() => handleDeepAnalysis(`ROI ${asset.ticker}`)}>
+                              <div className="flex items-center justify-between mb-4">
+                                <span className="text-xl font-bold text-white group-hover/item:text-primary">{asset.ticker}</span>
+                                <Badge className={asset.impactType === 'Positivo' ? 'bg-emerald-600' : 'bg-rose-600'}>{asset.expectedGainPercentage}</Badge>
                               </div>
-                            ))}
-                          </div>
+                              <p className="text-[10px] text-white/40 uppercase tracking-widest">{asset.exchange}</p>
+                            </div>
+                          ))}
                         </div>
 
                         <Button 
                           onClick={() => handleDeepAnalysis(latestAlert.title)} 
                           className={cn(
-                            "w-full h-24 rounded-[2rem] font-bold text-2xl transition-all group/btn flex items-center justify-center gap-4",
-                            hasCriticalRisk ? "bg-rose-600 hover:bg-rose-700 shadow-[0_0_60px_rgba(225,29,72,0.4)]" : "bg-primary hover:bg-primary/90 shadow-[0_0_60px_rgba(37,99,235,0.4)]"
+                            "w-full h-20 rounded-[2rem] font-bold text-xl transition-all group/btn flex items-center justify-center gap-4",
+                            hasCriticalRisk ? "bg-rose-600 hover:bg-rose-700 shadow-[0_0_40px_rgba(225,29,72,0.3)]" : "bg-primary hover:bg-primary/90 shadow-[0_0_40px_rgba(37,99,235,0.3)]"
                           )}
                         >
-                          {hasCriticalRisk ? 'EXECUTAR DEFESA DE PORTFÓLIO' : 'EXECUTAR ANÁLISE PROFUNDA'}
-                          <ChevronRight className="h-8 w-8 group-hover/btn:translate-x-3 transition-transform" />
+                          EXECUTAR ANÁLISE PROFUNDA
+                          <ChevronRight className="h-6 w-6 group-hover/btn:translate-x-2 transition-transform" />
                         </Button>
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center py-40 space-y-12 opacity-40">
-                        <Radar className="h-32 w-32 text-primary animate-ping" />
-                        <div className="text-center space-y-6">
-                          <h2 className="text-4xl font-headline font-bold text-white uppercase tracking-[0.5em]">Malha Neural Ativa</h2>
-                          <p className="max-w-lg mx-auto text-xl italic font-light">Nexus está decodificando o pulso global para gerar seu próximo comando...</p>
-                        </div>
+                        <Radar className="h-24 w-24 text-primary animate-ping" />
+                        <p className="max-w-xs text-center text-lg italic font-light">Nexus está decodificando o pulso global...</p>
                       </div>
                     )}
                   </div>
@@ -445,10 +409,11 @@ export default function NexusDashboard() {
               </div>
             </div>
 
-            <div className="lg:col-span-3 space-y-8">
-              <WhaleFlow transactions={whaleTransactions || []} onAnalyze={handleDeepAnalysis} />
-              
-              <div className="bg-[#080D18]/90 border border-white/10 rounded-[2.5rem] p-8 h-[380px] flex flex-col shadow-2xl">
+            <div className="lg:col-span-3 flex flex-col gap-8 h-[850px]">
+              <div className="flex-1">
+                <WhaleFlow transactions={whaleTransactions || []} onAnalyze={handleDeepAnalysis} />
+              </div>
+              <div className="flex-1 bg-[#080D18]/90 border border-white/10 rounded-[3rem] p-8 flex flex-col shadow-2xl overflow-hidden">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-[10px] font-headline font-bold uppercase tracking-[0.5em] text-primary">RUMORES & WHISPERS</h3>
                   <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -459,7 +424,7 @@ export default function NexusDashboard() {
                       <div key={idx} className="p-5 rounded-2xl bg-white/5 border border-white/10 hover:border-primary/40 transition-all cursor-pointer group" onClick={() => handleDeepAnalysis(item.topic)}>
                         <div className="flex items-center justify-between mb-2">
                           <Badge variant="outline" className="text-[8px] border-primary/20 text-primary uppercase font-bold tracking-widest px-2 py-0.5">
-                            FUNDAÇÃO: {item.foundation_score}%
+                            SCORE: {item.foundation_score}%
                           </Badge>
                           <span className="text-[9px] text-white/40 font-bold">{formatDistanceToNow(new Date(item.timestamp), { locale: ptBR })}</span>
                         </div>
@@ -472,7 +437,7 @@ export default function NexusDashboard() {
               </div>
             </div>
           </div>
-        ))}
+        )}
 
         {activeTab === 'market' && <MarketExplorer prices={marketPrices || []} latestAlert={latestAlert} />}
         {activeTab === 'portfolio' && <PortfolioView assets={userAssetsData || []} onUpdateAsset={handleUpdateAsset} />}
