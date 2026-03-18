@@ -2,12 +2,12 @@
 
 import { WhaleTransaction } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
-import { Waves, Ship, Radar, ArrowUpRight, ArrowDownRight, ShieldAlert, Zap, Cpu } from "lucide-react";
+import { Waves, Ship, Radar, Zap } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface WhaleFlowProps {
   transactions: WhaleTransaction[];
@@ -25,7 +25,7 @@ export function WhaleFlow({ transactions, onAnalyze }: WhaleFlowProps) {
   }, [transactions]);
 
   return (
-    <div className="bg-[#080D18]/90 border border-white/10 rounded-[3rem] p-8 h-full flex flex-col shadow-2xl relative overflow-hidden group">
+    <div className="bg-[#080D18]/90 border border-white/10 rounded-[3rem] p-8 h-[400px] flex flex-col shadow-2xl relative overflow-hidden group">
       <div className="flex items-center justify-between mb-6 z-10">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-primary/20 border border-primary/40 led-glow-blue">
@@ -38,8 +38,8 @@ export function WhaleFlow({ transactions, onAnalyze }: WhaleFlowProps) {
         <Radar className="h-4 w-4 text-emerald-500/40 animate-spin-slow" />
       </div>
 
-      <ScrollArea className="flex-1 no-scrollbar z-10">
-        <div className="space-y-4 pr-2">
+      <ScrollArea className="flex-1 z-10 pr-4">
+        <div className="space-y-4">
           {transactions.length > 0 ? (
             transactions.map((tx) => {
               const isCritical = tx.amountUsd >= 1000000000;
@@ -92,6 +92,7 @@ export function WhaleFlow({ transactions, onAnalyze }: WhaleFlowProps) {
             </div>
           )}
         </div>
+        <ScrollBar className="bg-white/5" />
       </ScrollArea>
     </div>
   );

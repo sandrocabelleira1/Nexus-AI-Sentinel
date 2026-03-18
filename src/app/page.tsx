@@ -60,7 +60,6 @@ export default function NexusDashboard() {
   const firestore = useFirestore();
   const auth = useAuth();
 
-  // Using the actual useUser hook correctly
   const { user: currentUser, isUserLoading: isLoadingUser } = useUser();
 
   const alertsQuery = useMemoFirebase(() => {
@@ -251,6 +250,7 @@ export default function NexusDashboard() {
       <main className="max-w-[1800px] mx-auto px-8 py-10 space-y-10 relative z-10">
         {activeTab === 'dashboard' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* Left Column */}
             <div className="lg:col-span-3 flex flex-col gap-8 h-[850px]">
               <div className="flex-1">
                 <WorldMood latestAlert={latestAlert} latestWhisper={latestWhisper} onAnalyze={handleDeepAnalysis} />
@@ -260,6 +260,7 @@ export default function NexusDashboard() {
               </div>
             </div>
 
+            {/* Central Strategic Column */}
             <div className="lg:col-span-6">
               <div className={cn(
                 "bg-[#080D18]/95 border rounded-[3rem] h-[850px] relative overflow-hidden flex flex-col shadow-2xl transition-all group",
@@ -289,7 +290,7 @@ export default function NexusDashboard() {
                           <History className="h-6 w-6 text-primary" /> Histórico de Inteligência
                         </DialogTitle>
                       </DialogHeader>
-                      <ScrollArea className="flex-1 mt-6 custom-scrollbar">
+                      <ScrollArea className="flex-1 mt-6">
                         <div className="space-y-6 pb-10 pr-2">
                           {globalAlerts?.map((alert, idx) => (
                             <div key={alert.id} className="p-6 rounded-3xl bg-white/5 border border-white/10 hover:border-primary/30 transition-all cursor-pointer group" onClick={() => { handleDeepAnalysis(alert.title); setIsHistoryOpen(false); }}>
@@ -411,8 +412,9 @@ export default function NexusDashboard() {
               </div>
             </div>
 
+            {/* Right Column */}
             <div className="lg:col-span-3 flex flex-col gap-8 h-[850px]">
-              <div className="flex-1">
+              <div className="h-[400px]">
                 <WhaleFlow transactions={whaleTransactions || []} onAnalyze={handleDeepAnalysis} />
               </div>
               <div className="flex-1 bg-[#080D18]/90 border border-white/10 rounded-[3rem] p-8 flex flex-col shadow-2xl overflow-hidden">
