@@ -41,8 +41,9 @@ export function AssetCard({ asset, marketPriceData, onUpdate }: AssetCardProps) 
     if (!marketPriceData) {
       return { currentValuation: asset.investedValue, gainLoss: 0, gainLossPercentage: 0 };
     }
-    // Para o total da Wallet, mantemos BRL como base de exibição (opcional, mas comum para consolidado)
-    // No entanto, para o ativo individual, o usuário quer ver o preço correto.
+    // Para ativos em USD, o currentValuation é calculado em USD e exibido adequadamente.
+    // No entanto, para o total consolidado da Wallet em BRL, o app precisaria de conversão.
+    // Para simplificar e manter a precisão pedida, mostramos o valor na moeda do ativo.
     const currentVal = marketPriceData.price * asset.quantity;
     const gl = currentVal - asset.investedValue;
     const glp = asset.investedValue > 0 ? (gl / asset.investedValue) * 100 : 0;
@@ -163,10 +164,13 @@ export function AssetCard({ asset, marketPriceData, onUpdate }: AssetCardProps) 
           </div>
           <div className="text-right">
             <div className="text-primary font-bold text-xl led-text-blue">
-              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(currentValuation)}
+              {new Intl.NumberFormat(isUSD ? 'en-US' : 'pt-BR', { 
+                style: 'currency', 
+                currency: isUSD ? 'USD' : 'BRL' 
+              }).format(currentValuation)}
             </div>
             <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
-              POSIÇÃO (BRL)
+              POSIÇÃO ({isUSD ? 'USD' : 'BRL'})
             </div>
           </div>
         </div>
@@ -193,7 +197,7 @@ export function AssetCard({ asset, marketPriceData, onUpdate }: AssetCardProps) 
               </DialogHeader>
               <div className="grid gap-6 py-6">
                 <div className="grid gap-2">
-                  <Label className="text-white font-bold uppercase tracking-widest text-[10px]">Valor Total (BRL)</Label>
+                  <Label className="text-white font-bold uppercase tracking-widest text-[10px]">Valor Total ({isUSD ? 'USD' : 'BRL'})</Label>
                   <Input 
                     type="number" 
                     placeholder="0.00" 
@@ -260,7 +264,7 @@ export function AssetCard({ asset, marketPriceData, onUpdate }: AssetCardProps) 
               </DialogHeader>
               <div className="grid gap-6 py-6">
                 <div className="grid gap-2">
-                  <Label className="text-white font-bold uppercase tracking-widest text-[10px]">Valor Bruto (BRL)</Label>
+                  <Label className="text-white font-bold uppercase tracking-widest text-[10px]">Valor Bruto ({isUSD ? 'USD' : 'BRL'})</Label>
                   <Input 
                     type="number" 
                     placeholder="0.00" 
@@ -306,9 +310,12 @@ export function AssetCard({ asset, marketPriceData, onUpdate }: AssetCardProps) 
 
         <div className="pt-6 border-t border-white/5 flex items-center justify-between">
           <div className="space-y-1">
-            <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-[0.2em] block">Custo Médio (BRL)</span>
+            <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-[0.2em] block">Custo Médio ({isUSD ? 'USD' : 'BRL'})</span>
             <span className="text-xs font-bold text-white/60">
-              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(asset.investedValue / (asset.quantity || 1))}
+              {new Intl.NumberFormat(isUSD ? 'en-US' : 'pt-BR', { 
+                style: 'currency', 
+                currency: isUSD ? 'USD' : 'BRL' 
+              }).format(asset.investedValue / (asset.quantity || 1))}
             </span>
           </div>
           <div className="text-right space-y-1">
