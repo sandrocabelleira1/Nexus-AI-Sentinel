@@ -93,4 +93,11 @@ export interface MarketPrice {
   peRatio?: number;
   pvpRatio?: number;
   healthStatus?: string;
+  // FII Specific v3.0
+  fiiType?: 'Papel' | 'Tijolo' | 'Agro' | 'Misto';
+  dividendAmount?: number;
+  dataCom?: string;
+  paymentDate?: string;
+  vacancyRate?: number;
+  nexusVerdict?: string;
 }
