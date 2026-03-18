@@ -28,17 +28,17 @@ import { AssistantChat } from "@/components/ai/assistant-chat";
 import { Badge } from "@/components/ui/badge";
 import { PortfolioView } from "@/components/portfolio/portfolio-view";
 import { MarketExplorer } from "@/components/market/market-explorer";
-import { useCollection, useFirestore, useMemoFirebase, useUser, useAuth, initiateAnonymousSignIn, addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase";
-import { collection, query, orderBy, limit, doc } from "firebase/firestore";
+import { useCollection, useFirestore, useMemoFirebase, useUser, useAuth, initiateAnonymousSignIn, addDocumentNonBlocking } from "@/firebase";
+import { collection, query, orderBy, limit } from "firebase/firestore";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { monitorGlobalEvents } from "@/ai/flows/global-intelligence-monitor";
 import { runAutonomousWhisperScan } from "@/ai/flows/autonomous-whisper-engine";
+import { runWhaleDiscovery } from "@/ai/flows/whale-discovery";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
 export default function NexusDashboard() {
-  const [displayMode, setDisplayMode] = useState<DisplayMode>('Essencial');
   const [activeTab, setActiveTab] = useState<'dashboard' | 'portfolio' | 'market'>('dashboard');
   const [isScanning, setIsScanning] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -66,24 +66,13 @@ export default function NexusDashboard() {
     return query(collection(firestore, "market_entities"), orderBy("influenceScore", "desc"), limit(5));
   }, [firestore]);
 
-  const pricesQuery = useMemoFirebase(() => {
-    return query(collection(firestore, "market_prices"));
-  }, [firestore]);
-
   const { data: globalAlerts } = useCollection<GlobalIntelligenceAlert>(alertsQuery);
   const { data: whispers } = useCollection<AutonomousInsight>(whispersQuery);
   const { data: whaleTransactions } = useCollection<WhaleTransaction>(whalesQuery);
   const { data: marketEntities } = useCollection<MarketEntity>(entitiesQuery);
-  const { data: livePrices } = useCollection<MarketPrice>(pricesQuery);
   
   const latestAlert = globalAlerts?.[0];
   const latestWhisper = whispers?.[0];
-
-  const priceMap = useMemo(() => {
-    const map: Record<string, MarketPrice> = {};
-    livePrices?.forEach(p => { map[p.ticker.toUpperCase()] = p; });
-    return map;
-  }, [livePrices]);
 
   const unifiedRadarFeed = useMemo(() => {
     const alerts = (globalAlerts || []).map(a => ({
@@ -118,11 +107,13 @@ export default function NexusDashboard() {
     try {
       const results = await Promise.allSettled([
         monitorGlobalEvents({ rawNewsData: "Varredura 360: Foco em Whale Flows e Geopolítica Institucional." }),
-        runAutonomousWhisperScan()
+        runAutonomousWhisperScan(),
+        runWhaleDiscovery()
       ]);
 
       const geopoliticalResult = results[0].status === 'fulfilled' ? results[0].value : null;
       const whispersResult = results[1].status === 'fulfilled' ? results[1].value : null;
+      const whalesResult = results[2].status === 'fulfilled' ? results[2].value : null;
 
       if (geopoliticalResult) {
         addDocumentNonBlocking(collection(firestore, "global_intelligence_alerts"), {
@@ -139,6 +130,17 @@ export default function NexusDashboard() {
           });
         });
       }
+
+      if (whalesResult?.detected_whales) {
+        whalesResult.detected_whales.forEach(tw => {
+          addDocumentNonBlocking(collection(firestore, "whale_transactions"), {
+            ...tw,
+            id: Math.random().toString(36).substr(2, 9),
+            timestamp: new Date().toISOString()
+          });
+        });
+      }
+
       setLastAutoScan(new Date());
     } catch (e) { 
       console.error("Global Scan Error:", e); 
@@ -301,11 +303,11 @@ export default function NexusDashboard() {
           </div>
         )}
 
-        {activeTab === 'market' && <MarketExplorer prices={livePrices || []} latestAlert={latestAlert} />}
+        {activeTab === 'market' && <MarketExplorer prices={[]} latestAlert={latestAlert} />}
         {activeTab === 'portfolio' && <PortfolioView assets={[]} onUpdateAsset={() => {}} />}
       </main>
 
-      <AssistantChat assets={[]} displayMode={displayMode} externalOpen={isChatOpen} onOpenChange={handleOpenChange} initialQuery={chatInitialQuery} latestAlert={latestAlert} />
+      <AssistantChat assets={[]} displayMode={'Essencial'} externalOpen={isChatOpen} onOpenChange={handleOpenChange} initialQuery={chatInitialQuery} latestAlert={latestAlert} />
     </div>
   );
 }
