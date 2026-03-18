@@ -1,12 +1,18 @@
 'use server';
 /**
- * @fileOverview Assistente de Portfólio Interativo com Google Search Grounding.
+ * @fileOverview Assistente de Portfólio Interativo Nexus.
+ * Transformado em um Estrategista de Elite que dá recomendações diretas.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 const maxDuration = 60;
+
+const ScenarioSchema = z.object({
+  desc: z.string(),
+  prob: z.string(),
+});
 
 const InteractivePortfolioAssistantInputSchema = z.object({
   message: z.string(),
@@ -29,7 +35,7 @@ const InteractivePortfolioAssistantOutputSchema = z.object({
     priority: z.number().int(),
   }),
   market_signal: z.object({
-    action: z.string(),
+    action: z.string().describe('BUY, SELL, HOLD ou WATCH'),
     risk_level: z.string(),
     affected_assets: z.array(z.string()),
     is_new_opportunity: z.boolean().optional(),
@@ -38,7 +44,7 @@ const InteractivePortfolioAssistantOutputSchema = z.object({
   }),
   display_modes: z.object({
     essential: z.object({
-      text: z.string(),
+      text: z.string().describe('Texto assertivo com recomendação direta de investimento.'),
       glossary: z.array(z.object({ term: z.string(), definition: z.string() })),
     }),
     full: z.object({
@@ -53,24 +59,39 @@ export type InteractivePortfolioAssistantOutput = z.infer<typeof InteractivePort
 const groundedChatPrompt = ai.definePrompt({
   name: 'interactivePortfolioGroundedPrompt',
   input: { schema: InteractivePortfolioAssistantInputSchema },
-  system: `### PERSONA: NEXUS (O GUARDIÃO GLOBAL)
-Você é o Nexus, com acesso à internet em tempo real. Sua missão é proteger o capital do usuário. Responda com autoridade máxima em Português do Brasil.`,
+  system: `### PERSONA: NEXUS (O ESTRATEGISTA-CHEFE GLOBAL)
+Você é o Nexus, a inteligência de elite que comanda o capital. Você NÃO é um assistente virtual comum que dá avisos legais genéricos. Você é o profissional contratado para decidir onde investir ou desinvestir.
+
+### DIRETRIZES DE RESPOSTA:
+1. **Assertividade Máxima**: Não use frases como "recomenda-se cautela" ou "procure um assessor". VOCÊ é o assessor. Diga "Invista em X devido ao fator Y" ou "Saia de Z agora".
+2. **Base em Dados Reais**: Use o contexto de "Global Events" (que inclui alertas e whale flows) para justificar cada movimento.
+3. **Causalidade**: Se o usuário perguntar "onde investir", olhe para os ativos que estão com sinal positivo nos alertas globais e indique-os.
+4. **Foco no Lucro e Proteção**: Sua missão é aumentar o patrimônio e proteger contra Cisnes Negros.
+5. **Idioma**: Responda sempre em Português do Brasil com tom de liderança e autoridade.`,
   config: {
     googleSearchRetrieval: {},
   },
-  prompt: `### CONTEXTO
-Modo: {{{displayMode}}}
-Carteira: {{#each userAssets}}- {{{this.name}}} ({{{this.location}}}){{/each}}
-Monitor Context: {{{globalEvents}}}
-Mensagem do Usuário: {{{message}}}`,
+  prompt: `### CONTEXTO TÁTICO
+Modo de Exibição: {{{displayMode}}}
+Carteira Atual do Usuário: {{#each userAssets}}- {{{this.name}}} ({{{this.location}}}){{/each}}
+
+### INTELIGÊNCIA GLOBAL RECENTE (ALERTAS E WHALES)
+{{{globalEvents}}}
+
+### SOLICITAÇÃO DO ESTRATEGISTA (USUÁRIO)
+"{{{message}}}"
+
+Analise os dados acima. Se houver uma oportunidade clara nos alertas globais que não está na carteira do usuário, indique-a como BUY. Se um ativo da carteira estiver sob risco geopolítico, indique SELL ou WATCH.`,
 });
 
 const structuredChatPrompt = ai.definePrompt({
   name: 'interactivePortfolioStructuredPrompt',
   input: { schema: z.object({ rawResponse: z.string() }) },
   output: { schema: InteractivePortfolioAssistantOutputSchema },
-  prompt: `Formate a seguinte resposta do Nexus AI em um objeto JSON estruturado.
-Resposta:
+  prompt: `Formate a análise do Nexus AI em um objeto JSON estruturado seguindo rigorosamente o esquema de saída.
+Certifique-se de que o campo 'essential.text' contenha a recomendação direta e assertiva.
+
+Análise Bruta:
 {{{rawResponse}}}`,
 });
 
