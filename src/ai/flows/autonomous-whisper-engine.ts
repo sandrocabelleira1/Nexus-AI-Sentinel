@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview Nexus Autonomous Whisper & Speculation Engine.
@@ -7,6 +6,8 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+
+const maxDuration = 60;
 
 const ScenarioSchema = z.object({
   desc: z.string(),
@@ -33,13 +34,12 @@ export type AutonomousWhisperOutput = z.infer<typeof AutonomousWhisperOutputSche
 const whisperGroundingPrompt = ai.definePrompt({
   name: 'whisperGroundingPrompt',
   input: { schema: z.object({ query: z.string() }) },
+  system: `### PERSONA: NEXUS (WHISPER RADAR)
+Sua função é agir como um radar autônomo de rumores e especulações globais.`,
   config: {
     googleSearchRetrieval: {},
   },
-  prompt: `### PERSONA: NEXUS (WHISPER RADAR)
-Sua função é agir como um radar autônomo de rumores e especulações globais.
-
-### TAREFA:
+  prompt: `### TAREFA:
 1. Pesquise por rumores financeiros, sussurros geopolíticos e vazamentos governamentais que ainda não são manchetes oficiais.
 2. Identifique sinais fracos em fóruns especializados, discursos ambíguos e movimentações on-chain.
 
@@ -58,7 +58,7 @@ Análise:
 {{{rawAnalysis}}}`,
 });
 
-export async function runAutonomousWhisperScan(): Promise<AutonomousWhisperOutput> {
+export async function runAutonomousWhisperScan(): Promise<AutonomousWhisperOutput | null> {
   try {
     const searchQueries = [
       "latest financial rumors Bloomberg Reuters",
@@ -70,12 +70,11 @@ export async function runAutonomousWhisperScan(): Promise<AutonomousWhisperOutpu
     const { text: groundedAnalysis } = await whisperGroundingPrompt({ query: searchQueries });
     const { output } = await whisperStructuringPrompt({ rawAnalysis: groundedAnalysis });
 
-    if (!output) throw new Error('Nexus: Falha no processamento autônomo de rumores.');
+    if (!output) return null;
     
-    // Garantir serialização limpa para Next.js Server Actions
     return JSON.parse(JSON.stringify(output));
-  } catch (error) {
-    console.error("Whisper Engine Error:", error);
-    throw new Error("O Nexus encontrou uma instabilidade ao caçar rumores.");
+  } catch (error: any) {
+    console.error("Whisper Engine Error:", error.message);
+    return null;
   }
 }

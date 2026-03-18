@@ -1,11 +1,13 @@
 'use server';
 /**
  * @fileOverview Motor de Inteligência Estratégica Nexus AI com Google Search Grounding.
- * Refatorado para ser mais robusto contra falhas de validação de schema.
+ * Refatorado para ser robusto contra timeouts e falhas de serialização.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+
+const maxDuration = 60; // Aumenta o tempo de execução para Server Actions complexas
 
 const AffectedAssetDetailSchema = z.object({
   ticker: z.string(),
@@ -48,25 +50,25 @@ const GlobalIntelligenceMonitorOutputSchema = z.object({
 
 export type GlobalIntelligenceMonitorOutput = z.infer<typeof GlobalIntelligenceMonitorOutputSchema>;
 
+const systemInstruction = `### PERSONA: NEXUS (SENTINELA ESTRATÉGICO GLOBAL)
+Você é o Nexus. Sua tarefa é vasculhar a internet AGORA em busca de decisões governamentais, decretos e eventos naturais que afetem o mercado.
+Gere um relatório tático detalhado focado em PROTEÇÃO ou LUCRO IMEDIATO.`;
+
 // Prompt 1: Grounding (Pesquisa em Tempo Real)
 const groundingPrompt = ai.definePrompt({
   name: 'globalIntelligenceGroundingPrompt',
   input: { schema: GlobalIntelligenceMonitorInputSchema },
+  system: systemInstruction,
   config: {
     googleSearchRetrieval: {},
   },
-  prompt: `### PERSONA: NEXUS (SENTINELA ESTRATÉGICO GLOBAL)
-Você é o Nexus. Sua tarefa é vasculhar a internet AGORA em busca de decisões governamentais, decretos e eventos naturais que afetem o mercado.
-
-### MOTOR DE BUSCA ATIVO:
+  prompt: `### MOTOR DE BUSCA ATIVO:
 1. Encontre as últimas decisões no Diário Oficial da União (Brasil), FED (EUA) e COPOM.
 2. Identifique eventos climáticos extremos em polos de agronegócio e logística.
 3. Conecte o ato político ou natural à consequência financeira nos próximos 7 dias.
 
 ### DADOS DE ENTRADA:
-{{{rawNewsData}}}
-
-Gere um relatório tático detalhado focado em PROTEÇÃO ou LUCRO IMEDIATO.`,
+{{{rawNewsData}}}`,
 });
 
 // Prompt 2: Structuring (Formatação JSON)
@@ -80,21 +82,16 @@ Análise:
 {{{rawAnalysis}}}`,
 });
 
-export async function monitorGlobalEvents(input: { rawNewsData: string }): Promise<GlobalIntelligenceMonitorOutput> {
+export async function monitorGlobalEvents(input: { rawNewsData: string }): Promise<GlobalIntelligenceMonitorOutput | null> {
   try {
-    // Passo 1: Obter análise fundamentada com pesquisa Google (Texto)
     const { text: groundedAnalysis } = await groundingPrompt(input);
-    
-    // Passo 2: Estruturar o resultado em JSON
     const { output } = await structuringPrompt({ rawAnalysis: groundedAnalysis });
     
-    if (!output) {
-      throw new Error('Falha na estruturação JSON do Nexus.');
-    }
+    if (!output) return null;
     
-    return JSON.parse(JSON.stringify(output)); // Garantir serialização limpa
+    return JSON.parse(JSON.stringify(output));
   } catch (error: any) {
-    console.error("Nexus Engine Error:", error);
-    throw new Error("O Nexus encontrou uma instabilidade no processamento geopolítico. Tente novamente em instantes.");
+    console.error("Nexus Monitor Global Error:", error.message);
+    return null; // Retorna null para evitar crash na Server Action
   }
 }

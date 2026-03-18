@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo, useEffect, useCallback } from "react";
@@ -35,6 +34,7 @@ import { ptBR } from "date-fns/locale";
 import { monitorGlobalEvents } from "@/ai/flows/global-intelligence-monitor";
 import { runAutonomousWhisperScan } from "@/ai/flows/autonomous-whisper-engine";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 export default function NexusDashboard() {
   const [displayMode, setDisplayMode] = useState<DisplayMode>('Essencial');
@@ -115,16 +115,22 @@ export default function NexusDashboard() {
     if (isScanning) return;
     setIsScanning(true);
     try {
-      const [geopoliticalResult, whispersResult] = await Promise.all([
+      // Usar allSettled para evitar que uma falha em um fluxo derrube toda a varredura
+      const results = await Promise.allSettled([
         monitorGlobalEvents({ rawNewsData: "Varredura 360: Foco em Whale Flows e Geopolítica Institucional." }),
         runAutonomousWhisperScan()
       ]);
+
+      const geopoliticalResult = results[0].status === 'fulfilled' ? results[0].value : null;
+      const whispersResult = results[1].status === 'fulfilled' ? results[1].value : null;
+
       if (geopoliticalResult) {
         addDocumentNonBlocking(collection(firestore, "global_intelligence_alerts"), {
           ...geopoliticalResult,
           createdAt: new Date().toISOString()
         });
       }
+      
       if (whispersResult?.detected_whispers) {
         whispersResult.detected_whispers.forEach(w => {
           addDocumentNonBlocking(collection(firestore, "autonomous_insights"), {
@@ -134,13 +140,17 @@ export default function NexusDashboard() {
         });
       }
       setLastAutoScan(new Date());
-    } catch (e) { console.error(e); } finally { setIsScanning(false); }
+    } catch (e) { 
+      console.error("Global Scan Error:", e); 
+    } finally { 
+      setIsScanning(false); 
+    }
   }, [isScanning, firestore]);
 
   useEffect(() => {
     if (user && !isUserLoading) {
       triggerGlobalScan();
-      const interval = setInterval(triggerGlobalScan, 900000);
+      const interval = setInterval(triggerGlobalScan, 900000); // 15 min
       return () => clearInterval(interval);
     }
   }, [user, isUserLoading, triggerGlobalScan]);
@@ -176,9 +186,9 @@ export default function NexusDashboard() {
         </div>
 
         <nav className="hidden lg:flex items-center bg-[#080D18] rounded-2xl p-1 border border-white/10 shadow-2xl">
-          <button onClick={() => setActiveTab('dashboard')} className={`flex items-center gap-2 px-6 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === 'dashboard' ? 'nav-item-active' : 'text-muted-foreground'}`}><LayoutGrid className="h-3.5 w-3.5" /> DASHBOARD</button>
-          <button onClick={() => setActiveTab('market')} className={`flex items-center gap-2 px-6 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === 'market' ? 'nav-item-active' : 'text-muted-foreground'}`}><TrendingUp className="h-3.5 w-3.5" /> MARKET</button>
-          <button onClick={() => setActiveTab('portfolio')} className={`flex items-center gap-2 px-6 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === 'portfolio' ? 'nav-item-active' : 'text-muted-foreground'}`}><Wallet className="h-3.5 w-3.5" /> WALLET</button>
+          <button onClick={() => setActiveTab('dashboard')} className={cn("flex items-center gap-2 px-6 py-2 rounded-xl text-xs font-bold transition-all", activeTab === 'dashboard' ? 'nav-item-active' : 'text-muted-foreground')}><LayoutGrid className="h-3.5 w-3.5" /> DASHBOARD</button>
+          <button onClick={() => setActiveTab('market')} className={cn("flex items-center gap-2 px-6 py-2 rounded-xl text-xs font-bold transition-all", activeTab === 'market' ? 'nav-item-active' : 'text-muted-foreground')}><TrendingUp className="h-3.5 w-3.5" /> MARKET</button>
+          <button onClick={() => setActiveTab('portfolio')} className={cn("flex items-center gap-2 px-6 py-2 rounded-xl text-xs font-bold transition-all", activeTab === 'portfolio' ? 'nav-item-active' : 'text-muted-foreground')}><Wallet className="h-3.5 w-3.5" /> WALLET</button>
         </nav>
 
         <div className="flex items-center gap-4">
@@ -195,13 +205,11 @@ export default function NexusDashboard() {
       <main className="max-w-[1800px] mx-auto px-8 py-10 space-y-10 relative z-10">
         {activeTab === 'dashboard' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            {/* Esquerda: Neural Sphere & War Room */}
             <div className="lg:col-span-3 space-y-8">
               <WorldMood latestAlert={latestAlert} latestWhisper={latestWhisper} />
               <WarRoom entities={marketEntities || []} />
             </div>
 
-            {/* Centro: Sentinela Principal */}
             <div className="lg:col-span-6 space-y-8">
               <div className="bg-[#080D18]/95 border border-white/10 rounded-[3.5rem] p-12 h-full min-h-[600px] relative overflow-hidden flex flex-col justify-center shadow-2xl transition-all hover:border-primary/40">
                 {isScanning ? (
@@ -216,7 +224,7 @@ export default function NexusDashboard() {
                   <div className="space-y-8 z-10 animate-in fade-in duration-700">
                     <div className="space-y-3">
                       <div className="flex items-center gap-4">
-                        <Badge className={`${latestAlert.marketAction === 'SELL' ? 'bg-rose-500' : 'bg-accent'} text-white font-bold px-5 py-2 rounded-xl`}>
+                        <Badge className={cn("text-white font-bold px-5 py-2 rounded-xl", latestAlert.marketAction === 'SELL' ? 'bg-rose-500' : 'bg-accent')}>
                           ORDEM: {latestAlert.marketAction}
                         </Badge>
                         <Badge variant="outline" className="text-primary border-primary/30 gap-1.5 px-3 py-1 uppercase font-bold text-[10px]">
@@ -255,7 +263,6 @@ export default function NexusDashboard() {
               </div>
             </div>
 
-            {/* Direita: Whale Flow & Whisper Radar */}
             <div className="lg:col-span-3 space-y-8">
               <WhaleFlow transactions={whaleTransactions || []} />
               <div className="bg-[#080D18]/90 border border-white/10 rounded-[2.5rem] p-8 h-[400px] flex flex-col">

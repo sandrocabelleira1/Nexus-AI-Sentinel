@@ -1,11 +1,12 @@
 'use server';
 /**
  * @fileOverview Assistente de Portfólio Interativo com Google Search Grounding.
- * Refatorado para evitar erros de serialização e conflitos de ferramentas.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+
+const maxDuration = 60;
 
 const InteractivePortfolioAssistantInputSchema = z.object({
   message: z.string(),
@@ -52,19 +53,16 @@ export type InteractivePortfolioAssistantOutput = z.infer<typeof InteractivePort
 const groundedChatPrompt = ai.definePrompt({
   name: 'interactivePortfolioGroundedPrompt',
   input: { schema: InteractivePortfolioAssistantInputSchema },
+  system: `### PERSONA: NEXUS (O GUARDIÃO GLOBAL)
+Você é o Nexus, com acesso à internet em tempo real. Sua missão é proteger o capital do usuário. Responda com autoridade máxima em Português do Brasil.`,
   config: {
     googleSearchRetrieval: {},
   },
-  prompt: `### PERSONA: NEXUS (O GUARDIÃO GLOBAL)
-Você é o Nexus, com acesso à internet em tempo real. Sua missão é proteger o capital do usuário.
-
-### CONTEXTO
+  prompt: `### CONTEXTO
 Modo: {{{displayMode}}}
 Carteira: {{#each userAssets}}- {{{this.name}}} ({{{this.location}}}){{/each}}
 Monitor Context: {{{globalEvents}}}
-Mensagem do Usuário: {{{message}}}
-
-Responda com autoridade máxima em Português do Brasil.`,
+Mensagem do Usuário: {{{message}}}`,
 });
 
 const structuredChatPrompt = ai.definePrompt({
@@ -76,18 +74,16 @@ Resposta:
 {{{rawResponse}}}`,
 });
 
-export async function interactivePortfolioAssistant(input: z.infer<typeof InteractivePortfolioAssistantInputSchema>): Promise<InteractivePortfolioAssistantOutput> {
+export async function interactivePortfolioAssistant(input: z.infer<typeof InteractivePortfolioAssistantInputSchema>): Promise<InteractivePortfolioAssistantOutput | null> {
   try {
     const { text: rawResponse } = await groundedChatPrompt(input);
     const { output } = await structuredChatPrompt({ rawResponse });
     
-    if (!output) {
-      throw new Error('Falha na estruturação da resposta.');
-    }
+    if (!output) return null;
     
     return JSON.parse(JSON.stringify(output));
   } catch (error: any) {
-    console.error("Assistant Error:", error);
-    throw new Error("O assistente Nexus está temporariamente indisponível devido a uma falha na rede global.");
+    console.error("Assistant Error:", error.message);
+    return null;
   }
 }
