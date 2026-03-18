@@ -2,7 +2,7 @@
 'use server';
 /**
  * @fileOverview Nexus Global Market Data Engine.
- * Utiliza Google Search Grounding para buscar preços de ativos em tempo real em diversos mercados.
+ * Monitora todas as bolsas globais solicitadas (NYSE, B3, LSE, TSE, etc).
  */
 
 import { ai } from '@/ai/genkit';
@@ -15,7 +15,8 @@ const MarketDataOutputSchema = z.object({
     price: z.number(),
     change24h: z.number(),
     category: z.enum(['crypto', 'stocks', 'fiis', 'index']),
-    region: z.enum(['Brazil', 'USA', 'Global']),
+    region: z.string(),
+    exchange: z.string(),
   })),
 });
 
@@ -24,31 +25,46 @@ export type MarketDataOutput = z.infer<typeof MarketDataOutputSchema>;
 const marketDataPrompt = ai.definePrompt({
   name: 'marketDataPrompt',
   input: { schema: z.object({ markets: z.array(z.string()) }) },
-  system: `### PERSONA: NEXUS (ANALISTA DE MERCADO GLOBAL)
-Sua função é fornecer cotações atualizadas e precisas. Utilize o Google Search para encontrar os preços atuais.
-Foque nos principais ativos de cada mercado solicitado.`,
+  system: `### PERSONA: NEXUS (SENTINELA DE MERCADOS GLOBAIS)
+Sua função é rastrear ativos nas principais bolsas do mundo AGORA. 
+Utilize o Google Search para encontrar preços atuais para:
+NYSE, NASDAQ, B3, LSE (Londres), TSE (Tóquio), HKEX (Hong Kong), SSE (Xangai), Euronext, TSX (Canadá), BSE (Índia), ASX (Austrália) e FSX (Alemanha).
+
+Foque em ativos de alta liquidez e blue chips de cada bolsa.`,
   config: {
     googleSearchRetrieval: {},
   },
   prompt: `### TAREFA:
-Busque as cotações atuais (últimas 24h) para os seguintes mercados: {{#each markets}}{{{this}}}, {{/each}}.
-Retorne uma lista diversificada incluindo Ações (Brasil e EUA), FIIs (Brasil) e Criptomoedas.
+Busque as cotações atuais para os seguintes mercados: {{#each markets}}{{{this}}}, {{/each}}.
+Identifique o ativo, preço, variação e a bolsa específica (Exchange).
 
-Importante: Retorne os preços em formato numérico puro.`,
+Retorne dados diversificados para compor o radar global do usuário.`,
 });
 
 const structurePrompt = ai.definePrompt({
   name: 'marketStructurePrompt',
   input: { schema: z.object({ rawData: z.string() }) },
   output: { schema: MarketDataOutputSchema },
-  prompt: `Converta a análise de mercado em um JSON estruturado.
+  prompt: `Converta a varredura global em um JSON estruturado.
 Dados:
 {{{rawData}}}`,
 });
 
 export async function fetchGlobalMarketData(): Promise<MarketDataOutput | null> {
   try {
-    const markets = ["B3 Brasil", "NYSE USA", "NASDAQ USA", "Crypto Global"];
+    const markets = [
+      "NYSE & NASDAQ USA", 
+      "B3 Brasil", 
+      "LSE UK", 
+      "TSE Japan", 
+      "HKEX Hong Kong", 
+      "SSE China", 
+      "Euronext EU", 
+      "TSX Canada", 
+      "BSE India", 
+      "ASX Australia", 
+      "FSX Germany"
+    ];
     const { text: rawData } = await marketDataPrompt({ markets });
     const { output } = await structurePrompt({ rawData });
 
