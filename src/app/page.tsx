@@ -59,7 +59,9 @@ export default function NexusDashboard() {
 
   const firestore = useFirestore();
   const auth = useAuth();
-  const { user, isUserLoading } = useUser();
+
+  // Using the actual useUser hook correctly
+  const { user: currentUser, isUserLoading: isLoadingUser } = useUser();
 
   const alertsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -87,9 +89,9 @@ export default function NexusDashboard() {
   }, [firestore]);
 
   const userAssetsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return collection(firestore, "users", user.uid, "assets");
-  }, [firestore, user]);
+    if (!firestore || !currentUser) return null;
+    return collection(firestore, "users", currentUser.uid, "assets");
+  }, [firestore, currentUser]);
 
   const { data: globalAlerts, isLoading: isLoadingAlerts } = useCollection<GlobalIntelligenceAlert>(alertsQuery);
   const { data: whispers } = useCollection<AutonomousInsight>(whispersQuery);
@@ -115,8 +117,8 @@ export default function NexusDashboard() {
   }, [affectedPortfolioAssets, latestAlert]);
 
   useEffect(() => {
-    if (!user && !isUserLoading && auth) initiateAnonymousSignIn(auth);
-  }, [user, isUserLoading, auth]);
+    if (!currentUser && !isLoadingUser && auth) initiateAnonymousSignIn(auth);
+  }, [currentUser, isLoadingUser, auth]);
 
   const triggerGlobalScan = useCallback(async () => {
     if (isScanning || !firestore) return;
@@ -177,12 +179,12 @@ export default function NexusDashboard() {
   }, [isScanning, firestore]);
 
   useEffect(() => {
-    if (user && !isUserLoading) {
+    if (currentUser && !isLoadingUser) {
       triggerGlobalScan();
       const interval = setInterval(triggerGlobalScan, 900000); // 15 min
       return () => clearInterval(interval);
     }
-  }, [user, isUserLoading, triggerGlobalScan]);
+  }, [currentUser, isLoadingUser, triggerGlobalScan]);
 
   const handleDeepAnalysis = (context: string) => {
     setChatInitialQuery(`Comando Nexus sobre: ${context}. Execute projeção de ROI e análise de risco.`);
@@ -195,15 +197,15 @@ export default function NexusDashboard() {
   };
 
   const handleUpdateAsset = (id: string, newQty: number, newVal: number) => {
-    if (!firestore || !user) return;
-    setDocumentNonBlocking(doc(firestore, "users", user.uid, "assets", id), {
+    if (!firestore || !currentUser) return;
+    setDocumentNonBlocking(doc(firestore, "users", currentUser.uid, "assets", id), {
       quantity: newQty,
       investedValue: newVal,
       updatedAt: new Date().toISOString()
     }, { merge: true });
   };
 
-  if (isUserLoading || isLoadingAlerts) {
+  if (isLoadingUser || isLoadingAlerts) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center space-y-4">
         <Loader2 className="h-12 w-12 text-primary animate-spin" />
@@ -287,7 +289,7 @@ export default function NexusDashboard() {
                           <History className="h-6 w-6 text-primary" /> Histórico de Inteligência
                         </DialogTitle>
                       </DialogHeader>
-                      <ScrollArea className="flex-1 mt-6 no-scrollbar">
+                      <ScrollArea className="flex-1 mt-6 custom-scrollbar">
                         <div className="space-y-6 pb-10 pr-2">
                           {globalAlerts?.map((alert, idx) => (
                             <div key={alert.id} className="p-6 rounded-3xl bg-white/5 border border-white/10 hover:border-primary/30 transition-all cursor-pointer group" onClick={() => { handleDeepAnalysis(alert.title); setIsHistoryOpen(false); }}>
