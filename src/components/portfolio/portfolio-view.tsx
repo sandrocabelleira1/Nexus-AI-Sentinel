@@ -1,8 +1,8 @@
 
 "use client"
 
-import { useState } from "react";
-import { UserAsset, AssetType } from "@/lib/types";
+import { useState, useMemo } from "react";
+import { UserAsset, AssetType, MarketPrice } from "@/lib/types";
 import { AssetCard } from "./asset-card";
 import { 
   TrendingUp, 
@@ -15,7 +15,8 @@ import {
   Wallet,
   Coins,
   Boxes,
-  Loader2
+  Loader2,
+  ArrowDownRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,16 +39,32 @@ import {
 } from "@/components/ui/select";
 import { useFirestore, useUser, addDocumentNonBlocking } from "@/firebase";
 import { collection } from "firebase/firestore";
+import { cn } from "@/lib/utils";
 
 interface PortfolioViewProps {
   assets: UserAsset[];
+  marketPrices: MarketPrice[];
   onUpdateAsset: (id: string, newQuantity: number, newValue: number) => void;
 }
 
-export function PortfolioView({ assets, onUpdateAsset }: PortfolioViewProps) {
+export function PortfolioView({ assets, marketPrices, onUpdateAsset }: PortfolioViewProps) {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const totalValue = assets.reduce((acc, curr) => acc + curr.investedValue, 0);
+
+  // Calcula patrimônio total baseado em preços de mercado e valor investido
+  const { totalInvested, currentTotalValue } = useMemo(() => {
+    return assets.reduce((acc, curr) => {
+      const priceData = marketPrices.find(p => p.ticker === curr.ticker);
+      const currentVal = priceData ? priceData.price * curr.quantity : curr.investedValue;
+      return {
+        totalInvested: acc.totalInvested + curr.investedValue,
+        currentTotalValue: acc.currentTotalValue + currentVal
+      };
+    }, { totalInvested: 0, currentTotalValue: 0 });
+  }, [assets, marketPrices]);
+
+  const totalGainLoss = currentTotalValue - totalInvested;
+  const totalGainLossPercentage = totalInvested > 0 ? (totalGainLoss / totalInvested) * 100 : 0;
 
   const firestore = useFirestore();
   const { user } = useUser();
@@ -227,9 +244,12 @@ export function PortfolioView({ assets, onUpdateAsset }: PortfolioViewProps) {
           </div>
           <div className="flex items-baseline gap-2">
             <h4 className="text-3xl md:text-4xl font-headline font-bold text-white tracking-tighter">
-              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValue)}
+              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(currentTotalValue)}
             </h4>
-            <span className="text-emerald-400 text-xs md:text-sm font-bold">+12.4%</span>
+            <div className={cn("flex items-center gap-1 text-xs md:text-sm font-bold", totalGainLoss >= 0 ? "text-emerald-400" : "text-rose-400")}>
+              {totalGainLoss >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+              {totalGainLossPercentage.toFixed(2)}%
+            </div>
           </div>
         </div>
 
@@ -261,13 +281,17 @@ export function PortfolioView({ assets, onUpdateAsset }: PortfolioViewProps) {
       {/* Assets Grid */}
       {assets.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-          {assets.map((asset) => (
-            <AssetCard 
-              key={asset.id} 
-              asset={asset} 
-              onUpdate={onUpdateAsset}
-            />
-          ))}
+          {assets.map((asset) => {
+            const priceData = marketPrices.find(p => p.ticker === asset.ticker);
+            return (
+              <AssetCard 
+                key={asset.id} 
+                asset={asset}
+                currentMarketPrice={priceData?.price}
+                onUpdate={onUpdateAsset}
+              />
+            );
+          })}
         </div>
       ) : (
         <div className="py-20 flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-[3rem] bg-white/5 space-y-6">

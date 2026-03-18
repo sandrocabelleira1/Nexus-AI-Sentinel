@@ -5,9 +5,9 @@ import { UserAsset } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Wallet, Zap, TrendingUp, Landmark, Boxes, Plus, Minus, Calculator, Info } from "lucide-react";
+import { Wallet, Zap, TrendingUp, Landmark, Boxes, Plus, Minus, Calculator, Info, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -22,46 +22,58 @@ import { Label } from "@/components/ui/label";
 
 interface AssetCardProps {
   asset: UserAsset;
+  currentMarketPrice?: number;
   onUpdate: (id: string, newQuantity: number, newValue: number) => void;
 }
 
-export function AssetCard({ asset, onUpdate }: AssetCardProps) {
+export function AssetCard({ asset, currentMarketPrice, onUpdate }: AssetCardProps) {
   const [isBuyOpen, setIsBuyOpen] = useState(false);
   const [isSellOpen, setIsSellOpen] = useState(false);
   
   // Transaction State
-  const [totalValue, setTotalValue] = useState<number>(0);
-  const [unitPrice, setUnitPrice] = useState<number>(0);
-  const [quantity, setQuantity] = useState<number>(0);
+  const [totalValueInput, setTotalValueInput] = useState<number>(0);
+  const [unitPriceInput, setUnitPriceInput] = useState<number>(0);
+  const [quantityInput, setQuantityInput] = useState<number>(0);
+
+  // Cálculos de Real-Time Valuation
+  const { currentValuation, gainLoss, gainLossPercentage } = useMemo(() => {
+    if (!currentMarketPrice) {
+      return { currentValuation: asset.investedValue, gainLoss: 0, gainLossPercentage: 0 };
+    }
+    const currentVal = currentMarketPrice * asset.quantity;
+    const gl = currentVal - asset.investedValue;
+    const glp = asset.investedValue > 0 ? (gl / asset.investedValue) * 100 : 0;
+    return { currentValuation: currentVal, gainLoss: gl, gainLossPercentage: glp };
+  }, [asset, currentMarketPrice]);
 
   // Auto-calculate logic
   const handleValueChange = (val: number) => {
-    setTotalValue(val);
-    if (unitPrice > 0) {
-      setQuantity(Number((val / unitPrice).toFixed(4)));
+    setTotalValueInput(val);
+    if (unitPriceInput > 0) {
+      setQuantityInput(Number((val / unitPriceInput).toFixed(4)));
     }
   };
 
   const handlePriceChange = (price: number) => {
-    setUnitPrice(price);
-    if (price > 0 && totalValue > 0) {
-      setQuantity(Number((totalValue / price).toFixed(4)));
+    setUnitPriceInput(price);
+    if (price > 0 && totalValueInput > 0) {
+      setQuantityInput(Number((totalValueInput / price).toFixed(4)));
     }
   };
 
   const handleQuantityChange = (qty: number) => {
-    setQuantity(qty);
-    if (qty > 0 && unitPrice > 0) {
-      setTotalValue(Number((qty * unitPrice).toFixed(2)));
-    } else if (qty > 0 && totalValue > 0) {
-      setUnitPrice(Number((totalValue / qty).toFixed(2)));
+    setQuantityInput(qty);
+    if (qty > 0 && unitPriceInput > 0) {
+      setTotalValueInput(Number((qty * unitPriceInput).toFixed(2)));
+    } else if (qty > 0 && totalValueInput > 0) {
+      setUnitPriceInput(Number((totalValueInput / qty).toFixed(2)));
     }
   };
 
   const resetForm = () => {
-    setTotalValue(0);
-    setUnitPrice(0);
-    setQuantity(0);
+    setTotalValueInput(0);
+    setUnitPriceInput(0);
+    setQuantityInput(0);
   };
 
   const getRiskStyles = (risk?: string) => {
@@ -94,8 +106,8 @@ export function AssetCard({ asset, onUpdate }: AssetCardProps) {
 
   const handleTransaction = (type: 'buy' | 'sell') => {
     const multiplier = type === 'buy' ? 1 : -1;
-    const newQty = Math.max(0, asset.quantity + (quantity * multiplier));
-    const newVal = Math.max(0, asset.investedValue + (totalValue * multiplier));
+    const newQty = Math.max(0, asset.quantity + (quantityInput * multiplier));
+    const newVal = Math.max(0, asset.investedValue + (totalValueInput * multiplier));
     
     onUpdate(asset.id, newQty, newVal);
     setIsBuyOpen(false);
@@ -115,9 +127,17 @@ export function AssetCard({ asset, onUpdate }: AssetCardProps) {
           <div className="p-4 rounded-2xl bg-primary/10 border border-primary/20 text-primary group-hover:led-glow-blue transition-all">
             <Icon className="h-6 w-6" />
           </div>
-          <Badge variant="outline" className="text-[9px] font-headline font-bold uppercase tracking-widest border-white/10 bg-white/5 px-3 py-1">
-            {asset.type}
-          </Badge>
+          <div className="flex flex-col items-end gap-2">
+            <Badge variant="outline" className="text-[9px] font-headline font-bold uppercase tracking-widest border-white/10 bg-white/5 px-3 py-1">
+              {asset.type}
+            </Badge>
+            {gainLossPercentage !== 0 && (
+              <div className={cn("text-[10px] font-bold flex items-center gap-1", gainLoss >= 0 ? "text-emerald-400" : "text-rose-400")}>
+                {gainLoss >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                {gainLossPercentage.toFixed(2)}%
+              </div>
+            )}
+          </div>
         </div>
         
         <div className="flex justify-between items-end">
@@ -130,7 +150,7 @@ export function AssetCard({ asset, onUpdate }: AssetCardProps) {
           </div>
           <div className="text-right">
             <div className="text-primary font-bold text-xl led-text-blue">
-              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(asset.investedValue)}
+              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(currentValuation)}
             </div>
             <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
               QTD: {asset.quantity.toLocaleString(undefined, { maximumFractionDigits: 4 })}
@@ -166,7 +186,7 @@ export function AssetCard({ asset, onUpdate }: AssetCardProps) {
                     type="number" 
                     placeholder="0.00" 
                     className="bg-white/5 border-white/10 text-white"
-                    value={totalValue || ""}
+                    value={totalValueInput || ""}
                     onChange={(e) => handleValueChange(Number(e.target.value))}
                   />
                 </div>
@@ -176,7 +196,7 @@ export function AssetCard({ asset, onUpdate }: AssetCardProps) {
                     type="number" 
                     placeholder="0.00" 
                     className="bg-white/5 border-white/10 text-white"
-                    value={unitPrice || ""}
+                    value={unitPriceInput || ""}
                     onChange={(e) => handlePriceChange(Number(e.target.value))}
                   />
                 </div>
@@ -186,7 +206,7 @@ export function AssetCard({ asset, onUpdate }: AssetCardProps) {
                     type="number" 
                     placeholder="0.0000" 
                     className="bg-white/5 border-white/10 text-white pr-10"
-                    value={quantity || ""}
+                    value={quantityInput || ""}
                     onChange={(e) => handleQuantityChange(Number(e.target.value))}
                   />
                   <div className="absolute right-3 bottom-2.5 opacity-40">
@@ -197,7 +217,7 @@ export function AssetCard({ asset, onUpdate }: AssetCardProps) {
               <DialogFooter>
                 <Button 
                   onClick={() => handleTransaction('buy')}
-                  disabled={!quantity || !totalValue}
+                  disabled={!quantityInput || !totalValueInput}
                   className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold h-12 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)]"
                 >
                   CONFIRMAR APORTE
@@ -234,7 +254,7 @@ export function AssetCard({ asset, onUpdate }: AssetCardProps) {
                     type="number" 
                     placeholder="0.00" 
                     className="bg-white/5 border-white/10 text-white"
-                    value={totalValue || ""}
+                    value={totalValueInput || ""}
                     onChange={(e) => handleValueChange(Number(e.target.value))}
                   />
                 </div>
@@ -244,7 +264,7 @@ export function AssetCard({ asset, onUpdate }: AssetCardProps) {
                     type="number" 
                     placeholder="0.00" 
                     className="bg-white/5 border-white/10 text-white"
-                    value={unitPrice || ""}
+                    value={unitPriceInput || ""}
                     onChange={(e) => handlePriceChange(Number(e.target.value))}
                   />
                 </div>
@@ -255,10 +275,10 @@ export function AssetCard({ asset, onUpdate }: AssetCardProps) {
                     placeholder="0.0000" 
                     max={asset.quantity}
                     className="bg-white/5 border-white/10 text-white"
-                    value={quantity || ""}
+                    value={quantityInput || ""}
                     onChange={(e) => handleQuantityChange(Number(e.target.value))}
                   />
-                  {quantity > asset.quantity && (
+                  {quantityInput > asset.quantity && (
                     <span className="text-[10px] text-rose-400 font-bold uppercase">Saldo insuficiente na Wallet</span>
                   )}
                 </div>
@@ -266,7 +286,7 @@ export function AssetCard({ asset, onUpdate }: AssetCardProps) {
               <DialogFooter>
                 <Button 
                   onClick={() => handleTransaction('sell')}
-                  disabled={!quantity || !totalValue || quantity > asset.quantity}
+                  disabled={!quantityInput || !totalValueInput || quantityInput > asset.quantity}
                   className="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold h-12 rounded-xl shadow-[0_0_20px_rgba(244,63,94,0.3)]"
                 >
                   CONFIRMAR VENDA
@@ -278,9 +298,9 @@ export function AssetCard({ asset, onUpdate }: AssetCardProps) {
 
         <div className="pt-6 border-t border-white/5 flex items-center justify-between">
           <div className="space-y-1">
-            <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-[0.2em] block">Risco</span>
-            <span className={cn("text-xs font-bold uppercase", getRiskText(asset.riskLevel))}>
-              {asset.riskLevel || 'Estável'}
+            <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-[0.2em] block">Custo Médio</span>
+            <span className="text-xs font-bold text-white/60">
+              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(asset.investedValue / (asset.quantity || 1))}
             </span>
           </div>
           <div className="text-right space-y-1">

@@ -461,7 +461,7 @@ export default function NexusDashboard() {
         )}
 
         {activeTab === 'market' && <MarketExplorer prices={marketPrices || []} latestAlert={latestAlert} onAnalyze={handleDeepAnalysis} />}
-        {activeTab === 'portfolio' && <PortfolioView assets={userAssetsData || []} onUpdateAsset={handleUpdateAsset} />}
+        {activeTab === 'portfolio' && <PortfolioView assets={userAssetsData || []} marketPrices={marketPrices || []} onUpdateAsset={handleUpdateAsset} />}
       </main>
 
       <AssistantChat assets={userAssetsData || []} displayMode={'Essencial'} externalOpen={isChatOpen} onOpenChange={handleOpenChange} initialQuery={chatInitialQuery} latestAlert={latestAlert} />
