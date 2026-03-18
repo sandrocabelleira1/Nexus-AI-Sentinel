@@ -22,7 +22,8 @@ import {
   Radar,
   Heart,
   Waves,
-  LayoutGrid
+  LayoutGrid,
+  Activity
 } from "lucide-react";
 import { AssistantChat } from "@/components/ai/assistant-chat";
 import { Badge } from "@/components/ui/badge";
@@ -51,22 +52,26 @@ export default function NexusDashboard() {
 
   // Real-time Listeners
   const alertsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
     return query(collection(firestore, "global_intelligence_alerts"), orderBy("createdAt", "desc"), limit(10));
   }, [firestore]);
 
   const whispersQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
     return query(collection(firestore, "autonomous_insights"), orderBy("timestamp", "desc"), limit(10));
   }, [firestore]);
 
   const whalesQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
     return query(collection(firestore, "whale_transactions"), orderBy("timestamp", "desc"), limit(10));
   }, [firestore]);
 
   const entitiesQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
     return query(collection(firestore, "market_entities"), orderBy("influenceScore", "desc"), limit(5));
   }, [firestore]);
 
-  const { data: globalAlerts } = useCollection<GlobalIntelligenceAlert>(alertsQuery);
+  const { data: globalAlerts, isLoading: isLoadingAlerts } = useCollection<GlobalIntelligenceAlert>(alertsQuery);
   const { data: whispers } = useCollection<AutonomousInsight>(whispersQuery);
   const { data: whaleTransactions } = useCollection<WhaleTransaction>(whalesQuery);
   const { data: marketEntities } = useCollection<MarketEntity>(entitiesQuery);
@@ -98,11 +103,11 @@ export default function NexusDashboard() {
 
   // Initial Auth
   useEffect(() => {
-    if (!user && !isUserLoading) initiateAnonymousSignIn(auth);
+    if (!user && !isUserLoading && auth) initiateAnonymousSignIn(auth);
   }, [user, isUserLoading, auth]);
 
   const triggerGlobalScan = useCallback(async () => {
-    if (isScanning) return;
+    if (isScanning || !firestore) return;
     setIsScanning(true);
     try {
       const results = await Promise.allSettled([
@@ -118,6 +123,20 @@ export default function NexusDashboard() {
       if (geopoliticalResult) {
         addDocumentNonBlocking(collection(firestore, "global_intelligence_alerts"), {
           ...geopoliticalResult,
+          createdAt: new Date().toISOString()
+        });
+      } else if (!latestAlert) {
+        // Fallback para não ficar vazio se for a primeira vez
+        addDocumentNonBlocking(collection(firestore, "global_intelligence_alerts"), {
+          id: 'initial',
+          title: "Nexus Sentinel Online",
+          eventOrigin: "Tech",
+          causalityExplanation: "A unidade de inteligência foi inicializada. Monitorando canais globais.",
+          priority: 3,
+          marketAction: "WATCH",
+          riskLevel: "Moderado",
+          affectedAssetTickerSymbols: ["BTC", "IBOV"],
+          essentialText: "Sentinela ativa. Aguardando anomalias geopolíticas críticas.",
           createdAt: new Date().toISOString()
         });
       }
@@ -147,7 +166,7 @@ export default function NexusDashboard() {
     } finally { 
       setIsScanning(false); 
     }
-  }, [isScanning, firestore]);
+  }, [isScanning, firestore, latestAlert]);
 
   useEffect(() => {
     if (user && !isUserLoading) {
@@ -167,7 +186,7 @@ export default function NexusDashboard() {
     if (!open) setChatInitialQuery(null);
   };
 
-  if (isUserLoading) {
+  if (isUserLoading || isLoadingAlerts) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center space-y-4">
         <Loader2 className="h-12 w-12 text-primary animate-spin" />
@@ -224,16 +243,15 @@ export default function NexusDashboard() {
 
             <div className="lg:col-span-6 space-y-8">
               <div className="bg-[#080D18]/95 border border-white/10 rounded-[3.5rem] p-12 h-full min-h-[600px] relative overflow-hidden flex flex-col justify-center shadow-2xl transition-all hover:border-primary/40">
-                {isScanning ? (
-                  <div className="flex flex-col items-center justify-center space-y-6 py-20 z-10">
-                    <div className="relative h-24 w-24">
-                      <div className="absolute inset-0 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-                      <Radar className="absolute inset-0 m-auto h-8 w-8 text-primary animate-pulse" />
-                    </div>
-                    <p className="text-primary font-headline font-bold text-xl led-text-blue uppercase tracking-widest">Processando Ciclo Neural...</p>
-                  </div>
-                ) : latestAlert ? (
+                
+                {latestAlert ? (
                   <div className="space-y-8 z-10 animate-in fade-in duration-700">
+                    {isScanning && (
+                      <div className="absolute top-8 right-12 flex items-center gap-2 text-primary/40">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        <span className="text-[8px] font-bold uppercase tracking-widest">Atualizando Inteligência...</span>
+                      </div>
+                    )}
                     <div className="space-y-3">
                       <div className="flex items-center gap-4">
                         <Badge className={cn("text-white font-bold px-5 py-2 rounded-xl", latestAlert.marketAction === 'SELL' ? 'bg-rose-500' : 'bg-accent')}>
@@ -264,6 +282,14 @@ export default function NexusDashboard() {
                     <Button onClick={() => handleDeepAnalysis(latestAlert.title)} className="bg-primary hover:bg-primary/90 text-white rounded-2xl px-12 h-16 font-bold text-xl shadow-lg w-full sm:w-auto">
                       ANALISAR ESTRATÉGIA <ChevronRight className="ml-2 h-6 w-6" />
                     </Button>
+                  </div>
+                ) : isScanning ? (
+                  <div className="flex flex-col items-center justify-center space-y-6 py-20 z-10">
+                    <div className="relative h-24 w-24">
+                      <div className="absolute inset-0 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                      <Radar className="absolute inset-0 m-auto h-8 w-8 text-primary animate-pulse" />
+                    </div>
+                    <p className="text-primary font-headline font-bold text-xl led-text-blue uppercase tracking-widest">Processando Ciclo Neural...</p>
                   </div>
                 ) : (
                   <div className="text-center py-20 flex flex-col items-center">
@@ -311,3 +337,4 @@ export default function NexusDashboard() {
     </div>
   );
 }
+
