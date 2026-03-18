@@ -40,7 +40,7 @@ import { monitorGlobalEvents } from "@/ai/flows/global-intelligence-monitor";
 import { runAutonomousWhisperScan } from "@/ai/flows/autonomous-whisper-engine";
 import { runWhaleDiscovery } from "@/ai/flows/whale-discovery";
 import { fetchGlobalMarketData } from "@/ai/flows/global-market-data-engine";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -438,6 +438,7 @@ export default function NexusDashboard() {
                       </div>
                     ))}
                   </div>
+                  <ScrollBar className="bg-white/5" />
                 </ScrollArea>
               </div>
             </div>
