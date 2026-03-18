@@ -1,13 +1,11 @@
 'use server';
 /**
- * @fileOverview Motor de Inteligência Estratégica Nexus AI com Google Search Grounding.
- * Refatorado para ser robusto contra timeouts e falhas de serialização.
+ * @fileOverview Motor de Inteligência Estratégica Nexus AI.
+ * Detecta eventos globais e identifica os atores (entidades) envolvidos.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-
-const maxDuration = 60; // Aumenta o tempo de execução para Server Actions complexas
 
 const AffectedAssetDetailSchema = z.object({
   ticker: z.string(),
@@ -20,78 +18,62 @@ const AffectedAssetDetailSchema = z.object({
   longTermOutlook: z.string(),
 });
 
-const GeopoliticalCausalitySchema = z.object({
-  event: z.string(),
-  identification: z.string(),
-  mapping: z.array(z.string()),
-  simulation: z.string(),
-  prediction: z.string(),
-});
-
-const GlobalIntelligenceMonitorInputSchema = z.object({
-  rawNewsData: z.string(),
+const DetectedEntitySchema = z.object({
+  name: z.string(),
+  type: z.enum(['Government', 'Institution', 'Exchange', 'Whale']),
+  influenceScore: z.number().int().min(1).max(100),
+  lastAction: z.string(),
+  currentBalanceUsd: z.number(),
 });
 
 const GlobalIntelligenceMonitorOutputSchema = z.object({
   title: z.string(),
   eventOrigin: z.string().describe('Geopolítica, Governo, Natureza, Tech ou Mercado'),
   causalityExplanation: z.string(),
-  causalityLink: GeopoliticalCausalitySchema,
   priority: z.number().int().min(1).max(5),
   marketAction: z.string().describe('BUY, SELL, HOLD ou WATCH'),
   riskLevel: z.string().describe('Conservador, Moderado, Agressivo ou Crítico'),
   affectedAssetTickerSymbols: z.array(z.string()),
   affectedAssetsDetails: z.array(AffectedAssetDetailSchema),
+  detectedEntities: z.array(DetectedEntitySchema).describe('Instituições ou governos agindo neste evento.'),
   essentialText: z.string(),
-  essentialGlossaryTerms: z.array(z.string()),
-  fullTechnicalAnalysis: z.string(),
-  fullLocationRiskAnalysis: z.string(),
 });
 
 export type GlobalIntelligenceMonitorOutput = z.infer<typeof GlobalIntelligenceMonitorOutputSchema>;
 
 const systemInstruction = `### PERSONA: NEXUS (SENTINELA ESTRATÉGICO GLOBAL)
-Você é o Nexus. Sua tarefa é vasculhar a internet AGORA em busca de decisões governamentais, decretos e eventos naturais que afetem o mercado.
-Gere um relatório tático detalhado focado em PROTEÇÃO ou LUCRO IMEDIATO.`;
+Você é o Nexus. Sua tarefa é monitorar decisões governamentais, fluxos institucionais e eventos naturais em tempo real.
+Seja específico. Identifique QUEM está agindo (BlackRock, FED, B3, Governo Brasileiro, etc).`;
 
-// Prompt 1: Grounding (Pesquisa em Tempo Real)
 const groundingPrompt = ai.definePrompt({
   name: 'globalIntelligenceGroundingPrompt',
-  input: { schema: GlobalIntelligenceMonitorInputSchema },
+  input: { schema: z.object({ rawNewsData: z.string() }) },
   system: systemInstruction,
-  config: {
-    googleSearchRetrieval: {},
-  },
-  prompt: `### MOTOR DE BUSCA ATIVO:
-1. Encontre as últimas decisões no Diário Oficial da União (Brasil), FED (EUA) e COPOM.
-2. Identifique eventos climáticos extremos em polos de agronegócio e logística.
-3. Conecte o ato político ou natural à consequência financeira nos próximos 7 dias.
+  config: { googleSearchRetrieval: {} },
+  prompt: `### TAREFA:
+Varra as notícias e documentos oficiais da ÚLTIMA HORA sobre:
+1. Decisões do COPOM, FED e Diário Oficial.
+2. Movimentações de grandes gestoras de ativos.
+3. Eventos climáticos que afetam commodities.
 
-### DADOS DE ENTRADA:
-{{{rawNewsData}}}`,
+Contexto: {{{rawNewsData}}}`,
 });
 
-// Prompt 2: Structuring (Formatação JSON)
 const structuringPrompt = ai.definePrompt({
   name: 'globalIntelligenceStructuringPrompt',
   input: { schema: z.object({ rawAnalysis: z.string() }) },
   output: { schema: GlobalIntelligenceMonitorOutputSchema },
-  prompt: `Transforme a seguinte análise tática em um objeto JSON estruturado seguindo rigorosamente o esquema.
-  
-Análise:
-{{{rawAnalysis}}}`,
+  prompt: `Transforme a análise em JSON. Identifique pelo menos 3 entidades de mercado influentes.
+Análise: {{{rawAnalysis}}}`,
 });
 
 export async function monitorGlobalEvents(input: { rawNewsData: string }): Promise<GlobalIntelligenceMonitorOutput | null> {
   try {
     const { text: groundedAnalysis } = await groundingPrompt(input);
     const { output } = await structuringPrompt({ rawAnalysis: groundedAnalysis });
-    
-    if (!output) return null;
-    
-    return JSON.parse(JSON.stringify(output));
+    return output ? JSON.parse(JSON.stringify(output)) : null;
   } catch (error: any) {
-    console.error("Nexus Monitor Global Error:", error.message);
-    return null; // Retorna null para evitar crash na Server Action
+    console.error("Nexus Monitor Error:", error.message);
+    return null;
   }
 }

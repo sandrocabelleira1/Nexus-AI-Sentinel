@@ -1,4 +1,3 @@
-
 export type AssetType = 'Ação' | 'Criptomoeda' | 'Fundo Imobiliário' | 'Commodity' | 'Moeda';
 
 export interface UserAsset {
@@ -32,6 +31,7 @@ export interface MarketEntity {
   influenceScore: number;
   lastAction: string;
   currentBalanceUsd: number;
+  updatedAt: string;
 }
 
 export interface AffectedAssetDetail {
@@ -57,9 +57,7 @@ export interface GlobalIntelligenceAlert {
   affectedAssetTickerSymbols: string[];
   affectedAssetsDetails: AffectedAssetDetail[];
   essentialText: string;
-  essentialGlossaryTerms: string[];
-  fullTechnicalAnalysis: string;
-  fullLocationRiskAnalysis: string;
+  detectedEntities?: MarketEntity[];
 }
 
 export interface AutonomousInsight {
@@ -86,4 +84,9 @@ export interface MarketPrice {
   category?: 'crypto' | 'stocks' | 'fiis' | 'index';
   region?: string;
   exchange?: string;
+  logo?: string;
+  dividendYield?: number;
+  peRatio?: number;
+  pvpRatio?: number;
+  healthStatus?: string;
 }
