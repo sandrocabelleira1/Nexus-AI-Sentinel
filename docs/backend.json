@@ -89,6 +89,17 @@
         },
         "timestamp": { "type": "string", "format": "date-time" }
       }
+    },
+    "MarketPrice": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "ticker": { "type": "string" },
+        "price": { "type": "number" },
+        "change24h": { "type": "number" },
+        "category": { "type": "string", "enum": ["crypto", "stocks", "fiis", "index"] },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
     }
   },
   "auth": {
@@ -136,6 +147,13 @@
         "definition": {
           "entityName": "AutonomousInsight",
           "description": "AI-detected whispers."
+        }
+      },
+      {
+        "path": "/market_prices/{ticker}",
+        "definition": {
+          "entityName": "MarketPrice",
+          "description": "Real-time asset prices tracked by Nexus."
         }
       }
     ]

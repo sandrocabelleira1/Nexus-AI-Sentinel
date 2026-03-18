@@ -29,8 +29,8 @@ import { AssistantChat } from "@/components/ai/assistant-chat";
 import { Badge } from "@/components/ui/badge";
 import { PortfolioView } from "@/components/portfolio/portfolio-view";
 import { MarketExplorer } from "@/components/market/market-explorer";
-import { useCollection, useFirestore, useMemoFirebase, useUser, useAuth, initiateAnonymousSignIn, addDocumentNonBlocking } from "@/firebase";
-import { collection, query, orderBy, limit } from "firebase/firestore";
+import { useCollection, useFirestore, useMemoFirebase, useUser, useAuth, initiateAnonymousSignIn, addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase";
+import { collection, query, orderBy, limit, doc } from "firebase/firestore";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { monitorGlobalEvents } from "@/ai/flows/global-intelligence-monitor";
@@ -71,10 +71,22 @@ export default function NexusDashboard() {
     return query(collection(firestore, "market_entities"), orderBy("influenceScore", "desc"), limit(5));
   }, [firestore]);
 
+  const pricesQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, "market_prices"), orderBy("ticker", "asc"));
+  }, [firestore]);
+
+  const userAssetsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return collection(firestore, "users", user.uid, "assets");
+  }, [firestore, user]);
+
   const { data: globalAlerts, isLoading: isLoadingAlerts } = useCollection<GlobalIntelligenceAlert>(alertsQuery);
   const { data: whispers } = useCollection<AutonomousInsight>(whispersQuery);
   const { data: whaleTransactions } = useCollection<WhaleTransaction>(whalesQuery);
   const { data: marketEntities } = useCollection<MarketEntity>(entitiesQuery);
+  const { data: marketPrices } = useCollection<MarketPrice>(pricesQuery);
+  const { data: userAssetsData } = useCollection<UserAsset>(userAssetsQuery);
   
   const latestAlert = globalAlerts?.[0];
   const latestWhisper = whispers?.[0];
@@ -125,22 +137,8 @@ export default function NexusDashboard() {
           ...geopoliticalResult,
           createdAt: new Date().toISOString()
         });
-      } else if (!latestAlert) {
-        // Fallback para não ficar vazio se for a primeira vez
-        addDocumentNonBlocking(collection(firestore, "global_intelligence_alerts"), {
-          id: 'initial',
-          title: "Nexus Sentinel Online",
-          eventOrigin: "Tech",
-          causalityExplanation: "A unidade de inteligência foi inicializada. Monitorando canais globais.",
-          priority: 3,
-          marketAction: "WATCH",
-          riskLevel: "Moderado",
-          affectedAssetTickerSymbols: ["BTC", "IBOV"],
-          essentialText: "Sentinela ativa. Aguardando anomalias geopolíticas críticas.",
-          createdAt: new Date().toISOString()
-        });
       }
-      
+
       if (whispersResult?.detected_whispers) {
         whispersResult.detected_whispers.forEach(w => {
           addDocumentNonBlocking(collection(firestore, "autonomous_insights"), {
@@ -160,13 +158,28 @@ export default function NexusDashboard() {
         });
       }
 
+      // Initialize default prices if empty or during scan update
+      const defaultAssets: MarketPrice[] = [
+        { id: 'BTC', ticker: 'BTC', price: 98450.25, change24h: 3.45, category: 'crypto', updatedAt: new Date().toISOString() },
+        { id: 'ETH', ticker: 'ETH', price: 3250.12, change24h: -1.20, category: 'crypto', updatedAt: new Date().toISOString() },
+        { id: 'SOL', ticker: 'SOL', price: 185.44, change24h: 8.12, category: 'crypto', updatedAt: new Date().toISOString() },
+        { id: 'VALE3', ticker: 'VALE3', price: 62.45, change24h: 0.54, category: 'stocks', updatedAt: new Date().toISOString() },
+        { id: 'PETR4', ticker: 'PETR4', price: 38.12, change24h: -2.31, category: 'stocks', updatedAt: new Date().toISOString() },
+        { id: 'HGLG11', ticker: 'HGLG11', price: 164.20, change24h: 0.15, category: 'fiis', updatedAt: new Date().toISOString() },
+        { id: 'IBOV', ticker: 'IBOV', price: 128450, change24h: 0.87, category: 'index', updatedAt: new Date().toISOString() },
+      ];
+
+      defaultAssets.forEach(asset => {
+        setDocumentNonBlocking(doc(firestore, "market_prices", asset.ticker), asset, { merge: true });
+      });
+
       setLastAutoScan(new Date());
     } catch (e) { 
       console.error("Global Scan Error:", e); 
     } finally { 
       setIsScanning(false); 
     }
-  }, [isScanning, firestore, latestAlert]);
+  }, [isScanning, firestore]);
 
   useEffect(() => {
     if (user && !isUserLoading) {
@@ -184,6 +197,15 @@ export default function NexusDashboard() {
   const handleOpenChange = (open: boolean) => {
     setIsChatOpen(open);
     if (!open) setChatInitialQuery(null);
+  };
+
+  const handleUpdateAsset = (id: string, newQty: number, newVal: number) => {
+    if (!firestore || !user) return;
+    setDocumentNonBlocking(doc(firestore, "users", user.uid, "assets", id), {
+      quantity: newQty,
+      investedValue: newVal,
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
   };
 
   if (isUserLoading || isLoadingAlerts) {
@@ -329,12 +351,11 @@ export default function NexusDashboard() {
           </div>
         )}
 
-        {activeTab === 'market' && <MarketExplorer prices={[]} latestAlert={latestAlert} />}
-        {activeTab === 'portfolio' && <PortfolioView assets={[]} onUpdateAsset={() => {}} />}
+        {activeTab === 'market' && <MarketExplorer prices={marketPrices || []} latestAlert={latestAlert} />}
+        {activeTab === 'portfolio' && <PortfolioView assets={userAssetsData || []} onUpdateAsset={handleUpdateAsset} />}
       </main>
 
-      <AssistantChat assets={[]} displayMode={'Essencial'} externalOpen={isChatOpen} onOpenChange={handleOpenChange} initialQuery={chatInitialQuery} latestAlert={latestAlert} />
+      <AssistantChat assets={userAssetsData || []} displayMode={'Essencial'} externalOpen={isChatOpen} onOpenChange={handleOpenChange} initialQuery={chatInitialQuery} latestAlert={latestAlert} />
     </div>
   );
 }
-
