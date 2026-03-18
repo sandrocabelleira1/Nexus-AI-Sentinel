@@ -1,7 +1,7 @@
 'use server';
 /**
  * @fileOverview Nexus Global Market Data Engine.
- * Otimizado para Brapi Pro com Logotipos e Fundamentos.
+ * Otimizado para Brapi Pro com Logotipos e Fundamentos, incluindo FIIs.
  */
 
 import { ai } from '@/ai/genkit';
@@ -26,7 +26,12 @@ const MarketDataOutputSchema = z.object({
 
 export type MarketDataOutput = z.infer<typeof MarketDataOutputSchema>;
 
-const PRIORITY_TICKERS = ["PETR4", "VALE3", "ITUB4", "BBDC4", "ABEV3", "BBAS3", "WEGE3", "AAPL", "MSFT", "GOOGL", "AMZN", "BTC", "ETH"];
+const PRIORITY_TICKERS = [
+  "PETR4", "VALE3", "ITUB4", "BBDC4", "ABEV3", "BBAS3", "WEGE3", "MGLU3", "RENT3", "B3SA3", // Ações B3
+  "HGLG11", "MXRF11", "XPLG11", "KNRI11", "VISC11", "BTLG11", "XPML11", "HCTR11", // FIIs B3
+  "AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "NVDA", "META", // Stocks US
+  "BTC", "ETH", "SOL", "BNB", "ADA", "XRP", "DOT" // Crypto
+];
 
 const fetchBrapiDataTool = ai.defineTool(
   {
@@ -51,7 +56,11 @@ const marketDataPrompt = ai.definePrompt({
   tools: [fetchBrapiDataTool],
   input: { schema: z.object({ tickers: z.array(z.string()) }) },
   system: `Você é o Sentinela de Mercados. Use a Brapi para obter dados reais.
-Avalie a saúde: Empresa Saudável se P/L < 15 e Margens altas. Risco se endividamento alto.`,
+Identifique corretamente a categoria: 
+- Termina com 11 e é da B3? categoria: 'fiis'.
+- É uma cripto (BTC, ETH, etc)? categoria: 'crypto'.
+- É uma empresa listada (VALE3, AAPL)? categoria: 'stocks'.
+Avalie a saúde: Empresa Saudável se P/L < 15 e Margens altas. FIIs são saudáveis se P/VP próximo de 1 e Yield estável.`,
   prompt: `Busque dados completos para: {{#each tickers}}{{{this}}}, {{/each}}`,
 });
 

@@ -23,7 +23,8 @@ import {
   Clock,
   MapPin,
   Heart,
-  Activity
+  Activity,
+  Building2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -121,7 +122,7 @@ export function MarketExplorer({ prices, latestAlert }: MarketExplorerProps) {
           <div className="relative flex-1 group">
             <Search className="absolute left-8 top-1/2 -translate-y-1/2 h-6 w-6 text-primary group-focus-within:led-text-blue transition-all" />
             <Input 
-              placeholder="Pesquisar Ticker Global (AAPL, VALE3, BTC)..."
+              placeholder="Pesquisar Ticker Global (AAPL, VALE3, BTC, HGLG11)..."
               className="h-20 pl-20 bg-[#080D18]/95 border-white/10 rounded-[1.5rem] text-xl font-bold focus-visible:ring-primary shadow-2xl"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -133,6 +134,7 @@ export function MarketExplorer({ prices, latestAlert }: MarketExplorerProps) {
               {[
                 { id: 'all', label: 'TODOS', icon: Globe },
                 { id: 'stocks', label: 'AÇÕES', icon: TrendingUp },
+                { id: 'fiis', label: 'FIIs', icon: Building2 },
                 { id: 'crypto', label: 'CRIPTO', icon: Zap }
               ].map((btn) => (
                 <button
@@ -197,7 +199,7 @@ export function MarketExplorer({ prices, latestAlert }: MarketExplorerProps) {
                         <img src={price.logo} alt={price.ticker} className="w-14 h-14 rounded-2xl bg-white p-2 border border-white/10 shadow-sm object-contain" />
                       ) : (
                         <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 text-primary">
-                          <TrendingUp className="h-6 w-6" />
+                          {price.category === 'fiis' ? <Building2 className="h-6 w-6" /> : <TrendingUp className="h-6 w-6" />}
                         </div>
                       )}
                       <div>
@@ -235,8 +237,12 @@ export function MarketExplorer({ prices, latestAlert }: MarketExplorerProps) {
                         <span className="text-white font-bold text-xs">{(price.dividendYield || 0).toFixed(2)}%</span>
                       </div>
                       <div className="space-y-1">
-                        <span className="text-[8px] text-white/40 uppercase font-bold tracking-widest block">P/L</span>
-                        <span className="text-white font-bold text-xs">{price.peRatio || 'N/A'}</span>
+                        <span className="text-[8px] text-white/40 uppercase font-bold tracking-widest block">
+                          {price.category === 'fiis' ? 'P/VP' : 'P/L'}
+                        </span>
+                        <span className="text-white font-bold text-xs">
+                          {price.category === 'fiis' ? (price.pvpRatio || 'N/A') : (price.peRatio || 'N/A')}
+                        </span>
                       </div>
                     </div>
                     <Badge variant="outline" className={cn("w-full justify-center text-[9px] font-bold uppercase", (price.peRatio || 0) < 15 ? "border-emerald-500/30 text-emerald-400" : "border-white/10 text-white/40")}>
