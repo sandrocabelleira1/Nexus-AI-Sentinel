@@ -1,7 +1,7 @@
 'use server';
 /**
  * @fileOverview Nexus Global Market Data Engine.
- * Expandido para monitoramento massivo de FIIs v3.0 com integração Clube FII.
+ * Monitoramento massivo de FIIs v3.0 com extração rigorosa de dados do Clube FII.
  */
 
 import { ai } from '@/ai/genkit';
@@ -21,7 +21,7 @@ const MarketDataOutputSchema = z.object({
     peRatio: z.number().optional(),
     pvpRatio: z.number().optional(),
     healthStatus: z.string().optional(),
-    // FII v3.0
+    // FII v3.0 - Extração Obrigatória
     fiiType: z.enum(['Papel', 'Tijolo', 'Agro', 'Misto']).optional(),
     dividendAmount: z.number().optional(),
     dataCom: z.string().optional(),
@@ -47,7 +47,7 @@ const PRIORITY_TICKERS = [
 const fetchBrapiDataTool = ai.defineTool(
   {
     name: 'fetchBrapiData',
-    description: 'Busca cotações, logos e fundamentos na API Brapi Pro.',
+    description: 'Busca cotações e fundamentos na API Brapi.',
     inputSchema: z.object({ tickers: z.array(z.string()) }),
     outputSchema: z.any(),
   },
@@ -70,21 +70,25 @@ const marketDataPrompt = ai.definePrompt({
     googleSearchRetrieval: {} 
   },
   system: `Você é o Sentinela de Mercados Globais e Especialista em FIIs v3.0. 
-### MISSÃO FII v3.0:
-1. Use obrigatoriamente o site CLUBEFII.COM.BR como fonte primária para extrair fundamentos de FIIs brasileiros.
-2. Identifique o tipo de fundo (Papel, Tijolo, Agro, Misto).
-3. Extraia P/VP, Vacância Física e Dividendos (Valor, Data Com e Data de Pagamento).
-4. Gere o "Veredito Nexus": Uma recomendação técnica curta indicando se é COMPRA baseada em P/VP < 0.95 e Vacância < 10%.`,
-  prompt: `Varredura Estratégica: Busque dados em tempo real para: {{#each tickers}}{{{this}}}, {{/each}}. 
-Consulte o Clube FII para validar as métricas de dividendos e vacância física de cada fundo imobiliário listado.`,
+### MISSÃO DE EXTRAÇÃO RIGOROSA:
+1. Para cada ticker de FII listado, você DEVE encontrar os seguintes dados reais no site CLUBEFII.COM.BR:
+   - Valor do último dividendo pago (em R$).
+   - Data Com e Data de Pagamento.
+   - Vacância Física (%).
+   - P/VP atual.
+2. Se os dados não estiverem disponíveis na ferramenta de cotação, use a pesquisa na web para capturar os valores mais recentes do Clube FII.
+3. Não retorne 0 se a informação puder ser encontrada. Procure por "rendimento anunciado" ou "dividendos [TICKER]".`,
+  prompt: `Execute varredura profunda para: {{#each tickers}}{{{this}}}, {{/each}}. 
+Priorize capturar os fundamentos reais de dividendos e vacância para os fundos imobiliários usando o Clube FII.`,
 });
 
 const structurePrompt = ai.definePrompt({
   name: 'marketStructurePrompt',
   input: { schema: z.object({ rawData: z.string() }) },
   output: { schema: MarketDataOutputSchema },
-  prompt: `Converta a análise tática para JSON rigoroso.
-Para FIIs, preencha todos os campos v3.0 baseados na pesquisa do Clube FII.
+  prompt: `Converta a análise técnica para JSON. 
+Certifique-se de que os campos dividendAmount, dataCom, paymentDate e vacancyRate para FIIs estejam preenchidos com os valores reais encontrados na análise.
+
 Dados: {{{rawData}}}`,
 });
 

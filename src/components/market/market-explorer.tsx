@@ -9,21 +9,15 @@ import { Button } from "@/components/ui/button";
 import { 
   Search, 
   TrendingUp, 
-  TrendingDown, 
   Globe, 
-  Zap, 
-  Landmark, 
-  RefreshCw,
-  ArrowUpRight,
-  ShieldCheck,
-  Activity,
-  Building2,
-  CalendarDays,
-  Coins,
-  Warehouse,
-  CheckCircle2,
-  AlertTriangle,
-  ChevronRight
+  Activity, 
+  Building2, 
+  CalendarDays, 
+  Warehouse, 
+  CheckCircle2, 
+  Coins, 
+  ChevronRight,
+  Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -33,40 +27,9 @@ interface MarketExplorerProps {
   onAnalyze?: (context: string) => void;
 }
 
-const EXCHANGES_CONFIG: Record<string, { name: string, city: string, open: string, close: string, timezone: string }> = {
-  'NYSE': { name: 'NYSE', city: 'Nova Iorque', open: '09:30', close: '16:00', timezone: 'America/New_York' },
-  'NASDAQ': { name: 'NASDAQ', city: 'Nova Iorque', open: '09:30', close: '16:00', timezone: 'America/New_York' },
-  'B3': { name: 'B3', city: 'São Paulo', open: '10:00', close: '18:00', timezone: 'America/Sao_Paulo' },
-  'LSE': { name: 'LSE', city: 'Londres', open: '08:00', close: '16:30', timezone: 'Europe/London' },
-  'TSE': { name: 'TSE', city: 'Tóquio', open: '09:00', close: '15:00', timezone: 'Asia/Tokyo' },
-};
-
 export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplorerProps) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<'all' | 'crypto' | 'stocks' | 'fiis'>('all');
-  const [currentTime, setCurrentTime] = useState(new Date());
-
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const getMarketStatus = (exchangeId: string) => {
-    const config = EXCHANGES_CONFIG[exchangeId];
-    if (!config) return 'Aberto';
-    const localTimeStr = currentTime.toLocaleString("en-US", { timeZone: config.timezone });
-    const localDate = new Date(localTimeStr);
-    const day = localDate.getDay();
-    if (day === 0 || day === 6) return 'Fechado';
-    const hours = localDate.getHours();
-    const minutes = localDate.getMinutes();
-    const timeInMinutes = hours * 60 + minutes;
-    const [openH, openM] = config.open.split(':').map(Number);
-    const [closeH, closeM] = config.close.split(':').map(Number);
-    const openTime = openH * 60 + openM;
-    const closeTime = closeH * 60 + closeM;
-    return (timeInMinutes >= openTime && timeInMinutes < closeTime) ? 'Aberto' : 'Fechado';
-  };
 
   const filteredPrices = useMemo(() => {
     return prices.filter(p => {
@@ -87,7 +50,7 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
             </div>
             <h2 className="text-5xl font-headline font-bold text-white tracking-tighter led-text-blue">Terminal Global Pro</h2>
           </div>
-          <p className="text-white/40 font-medium text-lg max-w-2xl">Monitoramento massivo v3.0: FIIs, Ações e Cripto com inteligência de dividendos.</p>
+          <p className="text-white/40 font-medium text-lg max-w-2xl">Monitoramento massivo v3.0: FIIs, Ações e Cripto com inteligência de dividendos do Clube FII.</p>
         </div>
 
         <div className="flex items-center gap-6 bg-[#080D18]/90 border border-white/10 p-6 rounded-[2rem] shadow-2xl">
@@ -118,7 +81,7 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
             { id: 'all', label: 'TODOS', icon: Globe },
             { id: 'stocks', label: 'AÇÕES', icon: TrendingUp },
             { id: 'fiis', label: 'FIIs', icon: Building2 },
-            { id: 'crypto', label: 'CRIPTO', icon: Zap }
+            { id: 'crypto', label: 'CRIPTO', icon: Building2 }
           ].map((btn) => (
             <button
               key={btn.id}
@@ -139,6 +102,7 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
           const isUp = price.change24h > 0;
           const isFii = price.category === 'fiis';
           const isBuySignal = isFii && (price.pvpRatio || 1) < 0.95 && (price.vacancyRate || 0) < 10;
+          const hasData = isFii ? (price.dividendAmount !== undefined && price.dividendAmount > 0) : true;
           
           return (
             <Card key={price.ticker} className={cn(
@@ -185,46 +149,55 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
 
                 {isFii ? (
                   <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-1">
-                        <div className="flex items-center gap-2 text-primary">
-                          <Coins className="h-3 w-3" />
-                          <span className="text-[8px] font-bold uppercase tracking-widest">Dividend Tracker</span>
-                        </div>
-                        <div className="text-xl font-bold text-white">
-                          R$ {(price.dividendAmount || 0).toFixed(2)}
-                        </div>
-                        <span className="text-[9px] text-emerald-400 font-bold">{(price.dividendYield || 0).toFixed(2)}% AM</span>
+                    {!hasData ? (
+                      <div className="flex items-center gap-3 p-4 bg-white/5 border border-dashed border-white/10 rounded-2xl animate-pulse">
+                        <Loader2 className="h-4 w-4 text-primary animate-spin" />
+                        <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Sincronizando Clube FII...</span>
                       </div>
-                      <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-1">
-                        <div className="flex items-center gap-2 text-primary">
-                          <Warehouse className="h-3 w-3" />
-                          <span className="text-[8px] font-bold uppercase tracking-widest">Vacância Física</span>
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-1">
+                            <div className="flex items-center gap-2 text-primary">
+                              <Coins className="h-3 w-3" />
+                              <span className="text-[8px] font-bold uppercase tracking-widest">Dividend Tracker</span>
+                            </div>
+                            <div className="text-xl font-bold text-white">
+                              R$ {(price.dividendAmount || 0).toFixed(2)}
+                            </div>
+                            <span className="text-[9px] text-emerald-400 font-bold">{(price.dividendYield || 0).toFixed(2)}% AM</span>
+                          </div>
+                          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-1">
+                            <div className="flex items-center gap-2 text-primary">
+                              <Warehouse className="h-3 w-3" />
+                              <span className="text-[8px] font-bold uppercase tracking-widest">Vacância Física</span>
+                            </div>
+                            <div className="text-xl font-bold text-white">
+                              {(price.vacancyRate || 0).toFixed(1)}%
+                            </div>
+                            <span className="text-[9px] text-white/40 font-bold">{(price.vacancyRate || 0) < 10 ? 'ESTÁVEL' : 'ALTA'}</span>
+                          </div>
                         </div>
-                        <div className="text-xl font-bold text-white">
-                          {(price.vacancyRate || 0).toFixed(1)}%
-                        </div>
-                        <span className="text-[9px] text-white/40 font-bold">{(price.vacancyRate || 0) < 10 ? 'ESTÁVEL' : 'RISCO'}</span>
-                      </div>
-                    </div>
 
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between">
-                      <div className="flex flex-col">
-                        <span className="text-[8px] text-white/40 font-bold uppercase">Data Com</span>
-                        <div className="flex items-center gap-1.5">
-                          <CalendarDays className="h-3 w-3 text-primary" />
-                          <span className="text-xs text-white font-bold">{price.dataCom || '00/00'}</span>
+                        <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between">
+                          <div className="flex flex-col">
+                            <span className="text-[8px] text-white/40 font-bold uppercase">Data Com</span>
+                            <div className="flex items-center gap-1.5">
+                              <CalendarDays className="h-3 w-3 text-primary" />
+                              <span className="text-xs text-white font-bold">{price.dataCom || 'N/A'}</span>
+                            </div>
+                          </div>
+                          <div className="h-8 w-px bg-white/10" />
+                          <div className="flex flex-col text-right">
+                            <span className="text-[8px] text-white/40 font-bold uppercase">Pagamento</span>
+                            <div className="flex items-center gap-1.5 justify-end">
+                              <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                              <span className="text-xs text-white font-bold">{price.paymentDate || 'N/A'}</span>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                      <div className="h-8 w-px bg-white/10" />
-                      <div className="flex flex-col text-right">
-                        <span className="text-[8px] text-white/40 font-bold uppercase">Pagamento</span>
-                        <div className="flex items-center gap-1.5 justify-end">
-                          <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-                          <span className="text-xs text-white font-bold">{price.paymentDate || '00/00'}</span>
-                        </div>
-                      </div>
-                    </div>
+                      </>
+                    )}
 
                     {price.nexusVerdict && (
                       <div className="p-4 bg-primary/10 border border-primary/20 rounded-2xl">
@@ -238,7 +211,7 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
                   <div className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4">
                     <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-primary">
                       <span>Fundamentos Neurais</span>
-                      <ShieldCheck className="h-4 w-4" />
+                      <Activity className="h-4 w-4" />
                     </div>
                     <div className="grid grid-cols-2 gap-8">
                       <div className="space-y-1">
@@ -256,7 +229,7 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
               
               <div className="p-6 pt-0 mt-auto">
                 <Button 
-                  onClick={() => onAnalyze?.(`Execute comando Nexus de Análise 360 para o ativo ${price.ticker}. Verifique P/VP, Vacância, Dividendos e projete o elo de causalidade no cenário global.`)}
+                  onClick={() => onAnalyze?.(`Execute comando Nexus de Análise 360 para o ativo ${price.ticker}. Verifique P/VP, Vacância, Dividendos no Clube FII e projete o elo de causalidade.`)}
                   className="w-full bg-white/5 hover:bg-white/10 border-white/10 text-white font-bold text-xs h-12 rounded-xl group/btn"
                 >
                   EXECUTAR ANÁLISE 360°
