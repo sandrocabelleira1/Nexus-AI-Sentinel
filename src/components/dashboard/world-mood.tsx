@@ -1,13 +1,14 @@
 
 "use client"
 
-import { Globe, Activity, ShieldCheck, Target } from "lucide-react";
+import { Globe, Activity, Target, Brain, Zap, Gauge } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
 import { GlobalIntelligenceAlert, AutonomousInsight } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 /**
- * @fileOverview Componente WorldMood dinâmico.
- * Reflete o estado real da consciência do Nexus baseado em alertas e rumores.
+ * @fileOverview Neural Sphere (Sentiment Index)
+ * O "cérebro" visual que processa Humor Global e Fluxo de Capital.
  */
 
 interface WorldMoodProps {
@@ -16,106 +17,66 @@ interface WorldMoodProps {
 }
 
 export function WorldMood({ latestAlert, latestWhisper }: WorldMoodProps) {
-  const [mood, setMood] = useState({ score: 74, label: 'OPORTUNISTA' });
+  const [mood, setMood] = useState({ score: 77, label: 'OPORTUNISTA' });
   const [mounted, setMounted] = useState(false);
-  const [latency, setLatency] = useState(12);
 
   useEffect(() => {
     setMounted(true);
     const interval = setInterval(() => {
       setMood(prev => {
-        const delta = (Math.random() * 4 - 2);
+        const delta = (Math.random() * 2 - 1);
         const newScore = Math.min(100, Math.max(0, prev.score + delta));
         let label = 'ESTÁVEL';
-        if (newScore > 80) label = 'EUFÓRICO';
+        if (newScore > 85) label = 'EUFORIA';
         else if (newScore > 65) label = 'OPORTUNISTA';
-        else if (newScore < 35) label = 'MEDO';
+        else if (newScore < 30) label = 'PÂNICO';
+        else if (newScore < 50) label = 'CAUTELA';
         return { score: newScore, label };
       });
-      // Simula flutuação de latência de processamento
-      setLatency(prev => Math.max(8, Math.min(25, prev + (Math.random() * 2 - 1))));
-    }, 5000);
+    }, 8000);
     return () => clearInterval(interval);
   }, []);
 
   const dynamicInsight = useMemo(() => {
-    if (latestAlert) {
-      return `Nexus detectou impacto tático em ${latestAlert.affectedAssetTickerSymbols?.[0] || 'ativos selecionados'} via ${latestAlert.eventOrigin}.`;
-    }
-    if (latestWhisper) {
-      return `Radar captou rumor sobre "${latestWhisper.topic}" com ${latestWhisper.foundation_score}% de fundamento detectado.`;
-    }
-    return "Nexus em vigilância silenciosa. Fluxo de capital global operando em zona de estabilidade.";
+    if (latestAlert) return `Elo de Causalidade ativo via ${latestAlert.eventOrigin}.`;
+    if (latestWhisper) return `Rumor "${latestWhisper.topic}" sob análise neural.`;
+    return "Neural Sphere em vigilância silenciosa. Sem anomalias críticas.";
   }, [latestAlert, latestWhisper]);
 
-  const dynamicConfidence = useMemo(() => {
-    if (latestWhisper) return (latestWhisper.foundation_score + (Math.random() * 2)).toFixed(1);
-    if (latestAlert) return (88 + (latestAlert.priority * 1.5)).toFixed(1);
-    return "94.2";
-  }, [latestAlert, latestWhisper]);
-
-  const radius = 100;
-  const stroke = 8;
+  const radius = 90;
+  const stroke = 6;
   const normalizedRadius = radius - stroke * 2;
   const circumference = normalizedRadius * 2 * Math.PI;
   const strokeDashoffset = circumference - (mood.score / 100) * circumference;
 
-  if (!mounted) return <div className="bg-[#080D18] border border-white/10 rounded-[2.5rem] p-10 h-full min-h-[500px] animate-pulse" />;
+  if (!mounted) return <div className="bg-[#080D18] rounded-[2.5rem] h-[450px] animate-pulse" />;
 
   return (
-    <div className="bg-[#080D18]/95 border border-white/10 rounded-[2.5rem] p-12 h-full flex flex-col items-center justify-between relative overflow-hidden group shadow-[0_0_50px_rgba(0,0,0,0.5)] transition-all duration-700 hover:border-primary/40">
-      {/* Laser Scan Line Effect */}
-      <div className="absolute top-0 left-0 w-full h-[2px] bg-primary/30 shadow-[0_0_15px_hsl(var(--primary))] animate-[bounce_4s_infinite] opacity-30 pointer-events-none" />
+    <div className="bg-[#080D18]/95 border border-white/10 rounded-[2.5rem] p-8 h-full flex flex-col items-center justify-between relative overflow-hidden group shadow-2xl transition-all duration-700 hover:border-primary/40">
+      <div className="absolute top-0 left-0 w-full h-[1px] bg-primary/20 shadow-[0_0_15px_hsl(var(--primary))] animate-[bounce_4s_infinite] opacity-30" />
       
-      {/* Header do Card */}
-      <div className="flex items-center justify-between w-full mb-10 z-10">
-        <div className="flex items-center gap-4">
-          <div className="p-2.5 rounded-xl border border-primary/50 bg-primary/20 led-glow-blue">
-            <Activity className="h-5 w-5 text-primary animate-pulse" />
+      <div className="flex items-center justify-between w-full mb-6 z-10">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl border border-primary/50 bg-primary/10 led-glow-blue">
+            <Brain className="h-4 w-4 text-primary animate-pulse" />
           </div>
           <div>
-            <span className="text-[12px] font-headline font-bold uppercase tracking-[0.4em] text-primary/90 led-text-blue block">
-              SENTIMENT INDEX
+            <span className="text-[10px] font-headline font-bold uppercase tracking-[0.3em] text-primary block led-text-blue">
+              NEURAL SPHERE
             </span>
-            <span className="text-[9px] text-muted-foreground font-bold tracking-[0.2em] uppercase">Global Risk Matrix</span>
+            <span className="text-[8px] text-muted-foreground font-bold tracking-[0.1em] uppercase">Sentiment Index</span>
           </div>
         </div>
-        <Target className="h-5 w-5 text-emerald-500/40 animate-spin-slow" />
+        <Gauge className="h-4 w-4 text-emerald-500/30" />
       </div>
       
-      {/* Medidor Radial Central */}
-      <div className="relative flex items-center justify-center py-8 group-hover:scale-110 transition-transform duration-1000">
-        <div className="absolute inset-0 border border-primary/10 rounded-full animate-scan" style={{ borderStyle: 'dashed', borderWidth: '2px', margin: '-15px' }} />
-        <div className="absolute inset-0 border border-accent/5 rounded-full animate-scan" style={{ borderStyle: 'dotted', borderWidth: '1px', margin: '-30px', animationDirection: 'reverse', animationDuration: '25s' }} />
+      <div className="relative flex items-center justify-center py-4 group-hover:scale-105 transition-transform duration-1000">
+        <div className="absolute inset-0 border border-primary/5 rounded-full animate-scan" style={{ borderStyle: 'dashed', borderWidth: '1px', margin: '-10px' }} />
         
-        <svg
-          height={radius * 2}
-          width={radius * 2}
-          className="transform -rotate-90 drop-shadow-[0_0_35px_rgba(37,99,235,0.6)]"
-        >
-          <defs>
-            <linearGradient id="nexusGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="hsl(var(--primary))" />
-              <stop offset="60%" stopColor="hsl(var(--primary))" />
-              <stop offset="100%" stopColor="hsl(var(--accent))" />
-            </linearGradient>
-            <filter id="ledNeonGlow">
-              <feGaussianBlur stdDeviation="3.5" result="blur"/>
-              <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-            </filter>
-          </defs>
-
+        <svg height={radius * 2} width={radius * 2} className="transform -rotate-90 drop-shadow-[0_0_25px_rgba(37,99,235,0.4)]">
+          <circle stroke="rgba(255,255,255,0.05)" fill="transparent" strokeWidth={stroke} r={normalizedRadius} cx={radius} cy={radius} />
           <circle
-            stroke="rgba(255,255,255,0.05)"
-            fill="transparent"
-            strokeWidth={stroke}
-            r={normalizedRadius}
-            cx={radius}
-            cy={radius}
-          />
-          
-          <circle
-            stroke="url(#nexusGradient)"
+            stroke="hsl(var(--primary))"
             fill="transparent"
             strokeWidth={stroke}
             strokeDasharray={circumference + ' ' + circumference}
@@ -124,54 +85,49 @@ export function WorldMood({ latestAlert, latestWhisper }: WorldMoodProps) {
             r={normalizedRadius}
             cx={radius}
             cy={radius}
-            filter="url(#ledNeonGlow)"
             className="transition-all duration-1000 ease-in-out"
           />
         </svg>
         
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
           <div className="flex items-start">
-            <span className="text-7xl font-headline font-bold text-white leading-none tracking-tighter led-text-blue animate-flicker">
+            <span className="text-5xl font-headline font-bold text-white leading-none tracking-tighter led-text-blue animate-flicker">
               {mood.score.toFixed(0)}
             </span>
-            <span className="text-primary font-bold text-sm mt-3 ml-1">%</span>
+            <span className="text-primary font-bold text-xs mt-2 ml-1">%</span>
           </div>
-          <div className="mt-4 px-5 py-1.5 rounded-full bg-primary/10 border border-primary/30 backdrop-blur-xl shadow-inner">
-            <span className="text-[11px] font-bold text-primary tracking-[0.3em] uppercase led-text-blue">
+          <div className="mt-3 px-4 py-1 rounded-full bg-primary/10 border border-primary/30 shadow-inner">
+            <span className="text-[9px] font-bold text-primary tracking-[0.2em] uppercase led-text-blue">
               {mood.label}
             </span>
           </div>
         </div>
       </div>
 
-      {/* Footer Info */}
-      <div className="mt-12 text-center z-10 space-y-4">
-        <div className="flex items-center justify-center gap-3">
-          <div className="h-1.5 w-1.5 rounded-full bg-primary animate-ping" />
-          <span className="text-[11px] text-muted-foreground font-bold tracking-[0.2em] uppercase">Análise Preditiva Ativa</span>
+      <div className="mt-8 text-center z-10 w-full space-y-4">
+        <div className="flex items-center justify-center gap-2">
+          <Zap className="h-3 w-3 text-primary animate-pulse" />
+          <span className="text-[9px] text-muted-foreground font-bold tracking-[0.2em] uppercase">Processando Ingestão Neural</span>
         </div>
-        <p className="text-[14px] text-white/80 leading-relaxed px-4 font-medium max-w-xs min-h-[48px]">
+        <p className="text-[12px] text-white/80 leading-relaxed font-medium min-h-[36px]">
           {dynamicInsight}
         </p>
-        <div className="pt-6 border-t border-white/5 w-full flex items-center justify-center gap-6">
-          <div className="flex flex-col items-center">
-            <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-widest">Confiança</span>
-            <span className="text-emerald-400 font-bold text-sm">{dynamicConfidence}%</span>
+        <div className="pt-4 border-t border-white/5 flex items-center justify-center gap-6">
+          <div className="text-center">
+            <span className="text-[8px] text-muted-foreground uppercase font-bold tracking-widest block">Humor NLP</span>
+            <span className="text-emerald-400 font-bold text-xs">Positivo</span>
           </div>
           <div className="h-6 w-px bg-white/10" />
-          <div className="flex flex-col items-center">
-            <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-widest">Latência</span>
-            <span className="text-primary font-bold text-sm">{latency.toFixed(0)}ms</span>
+          <div className="text-center">
+            <span className="text-[8px] text-muted-foreground uppercase font-bold tracking-widest block">Fluxo</span>
+            <span className="text-primary font-bold text-xs">Acumulação</span>
           </div>
         </div>
       </div>
 
-      <div className="absolute -bottom-32 -right-32 opacity-[0.06] animate-scan pointer-events-none group-hover:opacity-[0.12] transition-opacity duration-1000">
-        <Globe size={380} className="text-white" />
+      <div className="absolute -bottom-20 -right-20 opacity-[0.05] pointer-events-none">
+        <Globe size={240} className="text-white" />
       </div>
-      
-      <div className="absolute top-6 right-6 h-2 w-2 rounded-full bg-primary/50 shadow-[0_0_10px_rgba(37,99,235,0.8)] animate-pulse" />
-      <div className="absolute bottom-6 left-6 h-2 w-2 rounded-full bg-accent/40 shadow-[0_0_10px_rgba(249,115,22,0.8)] animate-pulse" />
     </div>
   );
 }

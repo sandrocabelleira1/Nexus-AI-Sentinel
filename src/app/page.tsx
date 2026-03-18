@@ -3,44 +3,26 @@
 
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { WorldMood } from "@/components/dashboard/world-mood";
-import { AssetType, DisplayMode, UserAsset, GlobalIntelligenceAlert, MarketPrice, AutonomousInsight } from "@/lib/types";
+import { WhaleFlow } from "@/components/dashboard/whale-flow";
+import { WarRoom } from "@/components/dashboard/war-room";
+import { AssetType, DisplayMode, UserAsset, GlobalIntelligenceAlert, MarketPrice, AutonomousInsight, WhaleTransaction, MarketEntity } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { 
   TrendingUp, 
-  TrendingDown, 
   Cpu, 
   Globe, 
   Wallet, 
   Zap, 
   ChevronRight,
-  Activity,
   ShieldCheck,
   Terminal,
   Plus,
-  Clock,
   Loader2,
   Scan,
-  Sparkles,
-  Info,
-  BarChart4,
-  MapPin,
-  MessageSquare,
-  ArrowUpRight,
-  ArrowDownRight,
-  Target,
-  RefreshCw,
-  AlertTriangle,
-  ShieldAlert,
-  CloudLightning,
-  Ship,
-  Search,
-  LayoutGrid,
-  Scale,
-  Gavel,
-  Landmark,
-  Eye,
   Radar,
-  Heart
+  Heart,
+  Waves,
+  LayoutGrid
 } from "lucide-react";
 import { AssistantChat } from "@/components/ai/assistant-chat";
 import { Badge } from "@/components/ui/badge";
@@ -66,39 +48,31 @@ export default function NexusDashboard() {
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
 
-  // Initial Auth
-  useEffect(() => {
-    if (!user && !isUserLoading) {
-      initiateAnonymousSignIn(auth);
-    }
-  }, [user, isUserLoading, auth]);
-
   // Real-time Listeners
   const alertsQuery = useMemoFirebase(() => {
-    if (!user) return null;
-    return query(
-      collection(firestore, "global_intelligence_alerts"),
-      orderBy("createdAt", "desc"),
-      limit(10)
-    );
-  }, [firestore, user]);
+    return query(collection(firestore, "global_intelligence_alerts"), orderBy("createdAt", "desc"), limit(10));
+  }, [firestore]);
 
   const whispersQuery = useMemoFirebase(() => {
-    if (!user) return null;
-    return query(
-      collection(firestore, "autonomous_insights"),
-      orderBy("timestamp", "desc"),
-      limit(10)
-    );
-  }, [firestore, user]);
+    return query(collection(firestore, "autonomous_insights"), orderBy("timestamp", "desc"), limit(10));
+  }, [firestore]);
+
+  const whalesQuery = useMemoFirebase(() => {
+    return query(collection(firestore, "whale_transactions"), orderBy("timestamp", "desc"), limit(10));
+  }, [firestore]);
+
+  const entitiesQuery = useMemoFirebase(() => {
+    return query(collection(firestore, "market_entities"), orderBy("influenceScore", "desc"), limit(5));
+  }, [firestore]);
 
   const pricesQuery = useMemoFirebase(() => {
-    if (!user) return null;
     return query(collection(firestore, "market_prices"));
-  }, [firestore, user]);
+  }, [firestore]);
 
   const { data: globalAlerts } = useCollection<GlobalIntelligenceAlert>(alertsQuery);
   const { data: whispers } = useCollection<AutonomousInsight>(whispersQuery);
+  const { data: whaleTransactions } = useCollection<WhaleTransaction>(whalesQuery);
+  const { data: marketEntities } = useCollection<MarketEntity>(entitiesQuery);
   const { data: livePrices } = useCollection<MarketPrice>(pricesQuery);
   
   const latestAlert = globalAlerts?.[0];
@@ -106,14 +80,10 @@ export default function NexusDashboard() {
 
   const priceMap = useMemo(() => {
     const map: Record<string, MarketPrice> = {};
-    livePrices?.forEach(p => { 
-      const ticker = (p.ticker || "").toUpperCase().trim();
-      if (ticker) map[ticker] = p; 
-    });
+    livePrices?.forEach(p => { map[p.ticker.toUpperCase()] = p; });
     return map;
   }, [livePrices]);
 
-  // Unified Live Feed Logic
   const unifiedRadarFeed = useMemo(() => {
     const alerts = (globalAlerts || []).map(a => ({
       id: a.id,
@@ -123,10 +93,7 @@ export default function NexusDashboard() {
       priority: a.priority,
       origin: a.eventOrigin,
       summary: a.essentialText,
-      fullText: a.causalityExplanation,
-      action: a.marketAction
     }));
-
     const rumors = (whispers || []).map(w => ({
       id: w.id,
       type: 'WHISPER' as const,
@@ -135,126 +102,54 @@ export default function NexusDashboard() {
       priority: w.nexus_priority,
       score: w.foundation_score,
       summary: w.market_impact,
-      scenarios: w.scenarios,
-      credibility: w.source_credibility
     }));
-
-    return [...alerts, ...rumors].sort((a, b) => 
-      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    );
+    return [...alerts, ...rumors].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }, [globalAlerts, whispers]);
 
-  // Sync Logic
-  const syncLivePrices = useCallback(async () => {
-    if (!user) return;
-    
-    const savePrice = (ticker: string, data: Partial<MarketPrice>) => {
-      const cleanTicker = ticker.toUpperCase().replace('.SA', '').trim();
-      setDocumentNonBlocking(doc(firestore, "market_prices", cleanTicker), {
-        ticker: cleanTicker,
-        updatedAt: new Date().toISOString(),
-        ...data
-      }, { merge: true });
-    };
-
-    try {
-      const twelveDataKey = '1dfd3b0de4ee45beb09371dee7fc399f';
-      const globalSymbols = 'AAPL,MSFT,GOOGL,AMZN,TSLA,META,NVDA,BTC/USD,ETH/USD,SPY,QQQ';
-      
-      fetch(`https://api.twelvedata.com/quote?symbol=${globalSymbols}&apikey=${twelveDataKey}`)
-        .then(r => r.json())
-        .then(data => {
-          Object.keys(data).forEach(symbol => {
-            const item = data[symbol];
-            if (item && item.price) {
-              const ticker = symbol.split('/')[0];
-              savePrice(ticker, {
-                price: parseFloat(item.price),
-                change24h: parseFloat(item.percent_change || 0),
-                category: ticker === 'BTC' || ticker === 'ETH' ? 'crypto' : 'stocks'
-              });
-            }
-          });
-        }).catch(() => {});
-
-      const b3Token = '2rb5157StMMfsE1ft1ErSq';
-      const b3Tickers = ['PETR4', 'VALE3', 'ITUB4', 'HGLG11', 'VGIA11', 'MXRF11', 'AGRO3', 'SLCE3'];
-      b3Tickers.forEach(t => {
-        fetch(`https://brapi.dev/api/quote/${t}?token=${b3Token}`)
-          .then(r => r.json())
-          .then(data => {
-            if (data.results?.[0]) {
-              const item = data.results[0];
-              savePrice(t, {
-                price: item.regularMarketPrice,
-                change24h: item.regularMarketChangePercent,
-                category: t.endsWith('11') ? 'fiis' : 'stocks'
-              });
-            }
-          }).catch(() => {});
-      });
-    } catch (error) {
-      console.error("Nexus Sync Engine Failure:", error);
-    }
-  }, [user, firestore]);
+  // Initial Auth
+  useEffect(() => {
+    if (!user && !isUserLoading) initiateAnonymousSignIn(auth);
+  }, [user, isUserLoading, auth]);
 
   const triggerGlobalScan = useCallback(async () => {
-    if (!user || isScanning) return;
+    if (isScanning) return;
     setIsScanning(true);
-    
     try {
-      await syncLivePrices();
-
       const [geopoliticalResult, whispersResult] = await Promise.all([
-        monitorGlobalEvents({ rawNewsData: "Varredura estratégica global autônoma focada em ativos brasileiros e tecnologia." }),
+        monitorGlobalEvents({ rawNewsData: "Varredura 360: Foco em Whale Flows e Geopolítica Institucional." }),
         runAutonomousWhisperScan()
       ]);
-
       if (geopoliticalResult) {
         addDocumentNonBlocking(collection(firestore, "global_intelligence_alerts"), {
           ...geopoliticalResult,
           createdAt: new Date().toISOString()
         });
       }
-
-      if (whispersResult && whispersResult.detected_whispers) {
-        whispersResult.detected_whispers.forEach(whisper => {
+      if (whispersResult?.detected_whispers) {
+        whispersResult.detected_whispers.forEach(w => {
           addDocumentNonBlocking(collection(firestore, "autonomous_insights"), {
-            ...whisper,
+            ...w,
             timestamp: new Date().toISOString()
           });
         });
       }
       setLastAutoScan(new Date());
-    } catch (error) {
-      console.error("Erro na varredura global:", error);
-    } finally {
-      setIsScanning(false);
-    }
-  }, [user, isScanning, firestore, syncLivePrices]);
+    } catch (e) { console.error(e); } finally { setIsScanning(false); }
+  }, [isScanning, firestore]);
 
   useEffect(() => {
     if (user && !isUserLoading) {
       triggerGlobalScan();
-      const priceInterval = setInterval(syncLivePrices, 60000); 
-      const aiScanInterval = setInterval(triggerGlobalScan, 900000); 
-      return () => {
-        clearInterval(priceInterval);
-        clearInterval(aiScanInterval);
-      };
+      const interval = setInterval(triggerGlobalScan, 900000);
+      return () => clearInterval(interval);
     }
-  }, [user, isUserLoading, triggerGlobalScan, syncLivePrices]);
-
-  const discussWithNexus = (alertTitle: string) => {
-    setChatInitialQuery(`Nexus, baseado em "${alertTitle}", qual a melhor estratégia de proteção agora?`);
-    setIsChatOpen(true);
-  };
+  }, [user, isUserLoading, triggerGlobalScan]);
 
   if (isUserLoading) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center space-y-4">
         <Loader2 className="h-12 w-12 text-primary animate-spin" />
-        <p className="text-primary font-headline font-bold animate-pulse uppercase tracking-widest">NEXUS SENTINEL v3.0 ACTIVE</p>
+        <p className="text-primary font-headline font-bold animate-pulse uppercase tracking-[0.5em]">Nexus Unit Initialization</p>
       </div>
     );
   }
@@ -271,7 +166,7 @@ export default function NexusDashboard() {
           <div>
             <h1 className="font-headline font-bold text-2xl led-text-blue">NEXUS AI</h1>
             <div className="flex items-center gap-2">
-              <span className="text-[9px] text-primary font-bold uppercase tracking-[0.4em] opacity-80">Autonomous Sentinel v3.0</span>
+              <span className="text-[9px] text-primary font-bold uppercase tracking-[0.4em] opacity-80">Autonomous Intel Unit</span>
               <div className="flex items-center gap-1">
                 <Heart className="h-2 w-2 text-rose-500 fill-rose-500 animate-pulse" />
                 <span className="text-[8px] text-emerald-400 font-bold uppercase tracking-widest">PULSE ACTIVE</span>
@@ -288,200 +183,109 @@ export default function NexusDashboard() {
 
         <div className="flex items-center gap-4">
           <div className="hidden xl:flex flex-col items-end mr-4">
-            <span className="text-[8px] text-muted-foreground font-bold uppercase tracking-widest">Última Varredura</span>
+            <span className="text-[8px] text-muted-foreground font-bold uppercase tracking-widest">Sentinela v3.6</span>
             <span className="text-[10px] text-white font-bold">{formatDistanceToNow(lastAutoScan, { addSuffix: true, locale: ptBR })}</span>
           </div>
           <Button variant="ghost" size="sm" onClick={triggerGlobalScan} disabled={isScanning} className="rounded-xl bg-accent/10 border border-accent/30 text-accent text-[10px] font-bold uppercase px-6 h-10 hover:bg-accent/20">
             {isScanning ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Radar className="h-3 w-3 mr-2" />} VARREDURA 360°
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setDisplayMode(displayMode === 'Essencial' ? 'Completo' : 'Essencial')} className="rounded-xl bg-white/5 border border-white/10 text-[10px] font-bold uppercase px-6 h-10">
-            MODO: <span className="text-primary ml-1">{displayMode}</span>
-          </Button>
         </div>
       </header>
 
-      <main className="max-w-[1700px] mx-auto px-8 py-10 space-y-10 relative z-10">
+      <main className="max-w-[1800px] mx-auto px-8 py-10 space-y-10 relative z-10">
         {activeTab === 'dashboard' && (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[
-                { ticker: 'IBOV', label: 'IBOVESPA' },
-                { ticker: 'HGLG11', label: 'HGLG LOGÍSTICA' },
-                { ticker: 'BTC', label: 'BITCOIN' },
-                { ticker: 'NVDA', label: 'NVIDIA' },
-              ].map((m, i) => {
-                const liveData = priceMap[m.ticker.toUpperCase()];
-                const value = liveData ? (m.ticker === 'BTC' || m.ticker === 'NVDA' ? `US$ ${liveData.price.toLocaleString()}` : `R$ ${liveData.price.toLocaleString()}`) : '---';
-                const change = liveData ? `${liveData.change24h > 0 ? '+' : ''}${liveData.change24h.toFixed(2)}%` : '---';
-                const isUp = liveData ? liveData.change24h > 0 : true;
-                return (
-                  <div key={i} className="bg-[#080D18]/90 border border-white/10 rounded-3xl p-7 transition-all hover:border-primary/40 group shadow-2xl relative overflow-hidden">
-                    <p className="text-[10px] font-headline font-bold text-muted-foreground uppercase tracking-[0.3em] mb-4">{m.label}</p>
-                    <div className="flex items-end justify-between">
-                      <h3 className="text-3xl font-headline font-bold text-white led-text-blue">{value}</h3>
-                      <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[12px] font-bold ${isUp ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
-                        {isUp ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />} {change}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* Esquerda: Neural Sphere & War Room */}
+            <div className="lg:col-span-3 space-y-8">
+              <WorldMood latestAlert={latestAlert} latestWhisper={latestWhisper} />
+              <WarRoom entities={marketEntities || []} />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-              <div className="lg:col-span-3">
-                <WorldMood latestAlert={latestAlert} latestWhisper={latestWhisper} />
-              </div>
-
-              <div className="lg:col-span-6">
-                <div className="bg-[#080D18]/95 border border-white/10 rounded-[3.5rem] p-12 h-full min-h-[550px] relative overflow-hidden flex flex-col justify-center shadow-2xl transition-all hover:border-accent/40">
-                  {isScanning ? (
-                    <div className="flex flex-col items-center justify-center space-y-6 py-20 z-10">
-                      <div className="relative h-24 w-24">
-                        <div className="absolute inset-0 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-                        <Radar className="absolute inset-0 m-auto h-8 w-8 text-primary animate-pulse" />
-                      </div>
-                      <p className="text-primary font-headline font-bold text-xl led-text-blue uppercase">Nexus caçando sussurros globais...</p>
+            {/* Centro: Sentinela Principal */}
+            <div className="lg:col-span-6 space-y-8">
+              <div className="bg-[#080D18]/95 border border-white/10 rounded-[3.5rem] p-12 h-full min-h-[600px] relative overflow-hidden flex flex-col justify-center shadow-2xl transition-all hover:border-primary/40">
+                {isScanning ? (
+                  <div className="flex flex-col items-center justify-center space-y-6 py-20 z-10">
+                    <div className="relative h-24 w-24">
+                      <div className="absolute inset-0 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                      <Radar className="absolute inset-0 m-auto h-8 w-8 text-primary animate-pulse" />
                     </div>
-                  ) : latestAlert ? (
-                    <div className="space-y-8 z-10 animate-in fade-in duration-700">
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-4">
-                          <Badge className={`${latestAlert.marketAction === 'SELL' ? 'bg-rose-500' : 'bg-accent'} text-white font-bold px-5 py-2 rounded-xl`}>
-                            {latestAlert.marketAction} IMEDIATA
-                          </Badge>
-                          <Badge variant="outline" className="text-primary border-primary/30 gap-1.5 px-3 py-1 uppercase font-bold text-[10px]">
-                            <Radar className="h-3 w-3" /> ELO DE CAUSALIDADE
-                          </Badge>
-                          <span className="text-[10px] text-muted-foreground font-bold">{formatDistanceToNow(new Date(latestAlert.createdAt), { addSuffix: true, locale: ptBR })}</span>
-                        </div>
-                        <h2 className="text-5xl font-headline font-bold text-white leading-tight tracking-tight">{latestAlert.title}</h2>
-                      </div>
-
-                      <div className="relative">
-                        <div className="absolute -left-6 top-0 bottom-0 w-1 bg-accent/50 rounded-full" />
-                        <div className="space-y-4 pl-4">
-                           <p className="text-xl font-medium italic text-white/95 leading-relaxed">
-                             "{displayMode === 'Essencial' ? latestAlert.essentialText : latestAlert.causalityExplanation}"
-                           </p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                         <h4 className="text-[10px] font-headline font-bold text-accent uppercase tracking-[0.3em] flex items-center gap-2">
-                            <Target className="h-3 w-3" /> RADAR TÁTICO: ATIVOS EM RISCO
-                         </h4>
-                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {latestAlert.affectedAssetsDetails?.slice(0, 4).map((asset, i) => (
-                              <div key={i} className="glass-panel border-white/5 rounded-2xl p-4 flex items-center justify-between hover:bg-white/5 transition-all">
-                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 rounded-xl bg-primary/10 text-primary font-bold text-xs">{asset.ticker}</div>
-                                    <div className="flex flex-col">
-                                       <span className="text-xs font-bold text-white">{asset.name}</span>
-                                       <span className={`text-[10px] font-bold ${asset.impactType === 'Positivo' ? 'text-emerald-400' : 'text-rose-400'}`}>Impacto {asset.impactType}</span>
-                                    </div>
-                                 </div>
-                                 <div className="text-right">
-                                    <div className={`text-sm font-bold ${asset.impactType === 'Positivo' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                       {asset.expectedGainPercentage}
-                                    </div>
-                                 </div>
-                              </div>
-                            ))}
-                         </div>
-                      </div>
-
-                      <div className="flex items-center gap-8 pt-4">
-                        <Button onClick={() => discussWithNexus(latestAlert.title)} className="bg-primary hover:bg-primary/90 text-white rounded-2xl px-12 h-16 font-bold text-xl shadow-lg">
-                          DETALHAR ESTRATÉGIA <ChevronRight className="ml-2 h-6 w-6" />
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-20 flex flex-col items-center">
-                      <Terminal className="h-12 w-12 text-muted-foreground opacity-20 mb-6" />
-                      <p className="text-white/60 text-xl font-medium italic mb-8">Nenhum "Cisne Negro" detectado.</p>
-                      <Button onClick={triggerGlobalScan} className="bg-accent hover:bg-accent/90 h-14 px-10 rounded-2xl gap-3 font-bold"><Scan className="h-5 w-5" /> SOLICITAR VARREDURA ESTRATÉGICA</Button>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="lg:col-span-3">
-                <div className="bg-[#080D18]/90 border border-white/10 rounded-[3rem] p-10 space-y-8 h-full shadow-2xl flex flex-col">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-headline font-bold uppercase tracking-[0.4em] text-primary">NEXUS LIVE RADAR</h3>
-                    <div className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
+                    <p className="text-primary font-headline font-bold text-xl led-text-blue uppercase tracking-widest">Processando Ciclo Neural...</p>
                   </div>
-                  
-                  <ScrollArea className="flex-1 pr-2">
-                    <div className="space-y-6">
-                      {unifiedRadarFeed.length > 0 ? (
-                        unifiedRadarFeed.map((item, idx) => (
-                          <div key={idx} className={`p-6 rounded-3xl border transition-all hover:bg-white/5 ${item.type === 'ALERT' ? 'bg-primary/5 border-primary/20' : 'bg-white/5 border-white/10'}`}>
-                            <div className="flex items-center justify-between mb-3">
-                              <Badge variant="outline" className={`text-[8px] font-bold uppercase ${item.type === 'ALERT' ? 'border-accent text-accent' : 'border-primary/30 text-primary'}`}>
-                                {item.type === 'ALERT' ? `${item.origin} ALERT` : `RUMOR: ${item.score}% FUND.`}
-                              </Badge>
-                              <span className="text-[9px] text-muted-foreground font-bold">{formatDistanceToNow(new Date(item.timestamp), { locale: ptBR })}</span>
-                            </div>
-                            
-                            <h4 className="text-sm font-bold text-white/90 leading-tight mb-3">{item.title}</h4>
-                            
-                            {item.type === 'WHISPER' && item.scenarios && (
-                              <div className="grid grid-cols-3 gap-2 mb-3">
-                                 <div className="flex flex-col items-center p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                                    <span className="text-[7px] text-emerald-400 font-bold uppercase">Otimista</span>
-                                    <span className="text-[9px] text-white font-bold">{item.scenarios.optimistic.prob}</span>
-                                 </div>
-                                 <div className="flex flex-col items-center p-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                                    <span className="text-[7px] text-blue-400 font-bold uppercase">Base</span>
-                                    <span className="text-[9px] text-white font-bold">{item.scenarios.baseline.prob}</span>
-                                 </div>
-                                 <div className="flex flex-col items-center p-2 rounded-lg bg-rose-500/10 border border-rose-500/20">
-                                    <span className="text-[7px] text-rose-400 font-bold uppercase">Risco</span>
-                                    <span className="text-[9px] text-white font-bold">{item.scenarios.risk.prob}</span>
-                                 </div>
-                              </div>
-                            )}
-
-                            <p className="text-[10px] text-white/70 leading-relaxed line-clamp-3">
-                               {item.summary}
-                            </p>
-
-                            {item.type === 'ALERT' && (
-                              <Button variant="ghost" size="sm" onClick={() => discussWithNexus(item.title)} className="w-full mt-4 h-8 bg-primary/10 hover:bg-primary/20 text-primary text-[8px] font-bold uppercase tracking-widest rounded-xl">
-                                Detalhar Impacto <ChevronRight className="ml-1 h-3 w-3" />
-                              </Button>
-                            )}
+                ) : latestAlert ? (
+                  <div className="space-y-8 z-10 animate-in fade-in duration-700">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-4">
+                        <Badge className={`${latestAlert.marketAction === 'SELL' ? 'bg-rose-500' : 'bg-accent'} text-white font-bold px-5 py-2 rounded-xl`}>
+                          ORDEM: {latestAlert.marketAction}
+                        </Badge>
+                        <Badge variant="outline" className="text-primary border-primary/30 gap-1.5 px-3 py-1 uppercase font-bold text-[10px]">
+                          ELO DE CAUSALIDADE DETECTADO
+                        </Badge>
+                      </div>
+                      <h2 className="text-6xl font-headline font-bold text-white leading-tight tracking-tighter">{latestAlert.title}</h2>
+                    </div>
+                    <p className="text-2xl font-medium italic text-white/90 leading-relaxed border-l-4 border-accent pl-6">
+                      "{latestAlert.essentialText}"
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {latestAlert.affectedAssetsDetails?.slice(0, 4).map((asset, i) => (
+                        <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-5 flex items-center justify-between hover:border-primary/40 transition-all">
+                          <div>
+                            <span className="text-xs font-bold text-primary block mb-1">{asset.ticker}</span>
+                            <span className="text-sm font-bold text-white">{asset.name}</span>
                           </div>
-                        ))
-                      ) : (
-                        <div className="h-40 flex flex-col items-center justify-center opacity-20 space-y-4 text-center">
-                          <Eye className="h-10 w-10" />
-                          <span className="text-[10px] font-bold uppercase tracking-widest">Nexus em vigilância silenciosa...</span>
+                          <div className={cn("text-sm font-bold", asset.impactType === 'Positivo' ? 'text-emerald-400' : 'text-rose-400')}>
+                            {asset.expectedGainPercentage}
+                          </div>
                         </div>
-                      )}
+                      ))}
                     </div>
-                  </ScrollArea>
-                </div>
+                    <Button onClick={() => setIsChatOpen(true)} className="bg-primary hover:bg-primary/90 text-white rounded-2xl px-12 h-16 font-bold text-xl shadow-lg w-full sm:w-auto">
+                      ANALISAR ESTRATÉGIA <ChevronRight className="ml-2 h-6 w-6" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="text-center py-20 flex flex-col items-center">
+                    <Terminal className="h-12 w-12 text-muted-foreground opacity-20 mb-6" />
+                    <p className="text-white/60 text-xl font-medium italic mb-8">Nenhum "Cisne Negro" no radar imediato.</p>
+                    <Button onClick={triggerGlobalScan} className="bg-accent hover:bg-accent/90 h-14 px-10 rounded-2xl gap-3 font-bold"><Scan className="h-5 w-5" /> FORÇAR VARREDURA GLOBAL</Button>
+                  </div>
+                )}
               </div>
             </div>
-          </>
+
+            {/* Direita: Whale Flow & Whisper Radar */}
+            <div className="lg:col-span-3 space-y-8">
+              <WhaleFlow transactions={whaleTransactions || []} />
+              <div className="bg-[#080D18]/90 border border-white/10 rounded-[2.5rem] p-8 h-[400px] flex flex-col">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xs font-headline font-bold uppercase tracking-[0.4em] text-primary">WHISPER RADAR</h3>
+                  <div className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
+                </div>
+                <ScrollArea className="flex-1 pr-4">
+                  <div className="space-y-6">
+                    {unifiedRadarFeed.map((item, idx) => (
+                      <div key={idx} className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-primary/30 transition-all cursor-pointer">
+                        <div className="flex items-center justify-between mb-2">
+                          <Badge variant="outline" className="text-[8px] border-primary/20 text-primary">
+                            {item.type === 'WHISPER' ? `SUSSURRO: ${item.score}%` : 'ALERTA GLOBAL'}
+                          </Badge>
+                          <span className="text-[9px] text-white/40">{formatDistanceToNow(new Date(item.timestamp), { locale: ptBR })}</span>
+                        </div>
+                        <h4 className="text-xs font-bold text-white/90 mb-2">{item.title}</h4>
+                        <p className="text-[10px] text-white/60 line-clamp-2">{item.summary}</p>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+            </div>
+          </div>
         )}
 
         {activeTab === 'market' && <MarketExplorer prices={livePrices || []} latestAlert={latestAlert} />}
-        {activeTab === 'portfolio' && (
-          <div className="animate-in fade-in slide-in-from-bottom-5 duration-500">
-             <div className="flex items-center justify-between mb-10">
-              <div className="space-y-2">
-                <h2 className="text-5xl font-headline font-bold text-white tracking-tight">Sua Wallet</h2>
-                <p className="text-muted-foreground font-medium text-lg">Proteção de capital baseada em previsões globais e sussurros de mercado.</p>
-              </div>
-            </div>
-            <PortfolioView assets={[]} onUpdateAsset={() => {}} />
-          </div>
-        )}
+        {activeTab === 'portfolio' && <PortfolioView assets={[]} onUpdateAsset={() => {}} />}
       </main>
 
       <AssistantChat assets={[]} displayMode={displayMode} externalOpen={isChatOpen} onOpenChange={setIsChatOpen} initialQuery={chatInitialQuery} latestAlert={latestAlert} />

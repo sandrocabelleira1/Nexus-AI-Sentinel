@@ -13,6 +13,27 @@ export interface UserAsset {
 
 export type DisplayMode = 'Essencial' | 'Completo';
 
+export interface WhaleTransaction {
+  id: string;
+  blockchain: string;
+  symbol: string;
+  amount: number;
+  amountUsd: number;
+  fromAddress: string;
+  toAddress: string;
+  transactionType: 'exchange_deposit' | 'exchange_withdrawal' | 'wallet_transfer';
+  timestamp: string;
+}
+
+export interface MarketEntity {
+  id: string;
+  name: string;
+  type: 'Government' | 'Institution' | 'Exchange' | 'Whale';
+  influenceScore: number;
+  lastAction: string;
+  currentBalanceUsd: number;
+}
+
 export interface AffectedAssetDetail {
   ticker: string;
   name: string;
@@ -24,21 +45,12 @@ export interface AffectedAssetDetail {
   longTermOutlook: string;
 }
 
-export interface GeopoliticalCausality {
-  event: string;
-  identification: string;
-  mapping: string[];
-  simulation: string;
-  prediction: string;
-}
-
 export interface GlobalIntelligenceAlert {
   id: string;
   createdAt: string;
   title: string;
   eventOrigin: 'Geopolítica' | 'Governo' | 'Natureza' | 'Tech' | 'Mercado';
   causalityExplanation: string;
-  causalityLink?: GeopoliticalCausality;
   priority: number;
   marketAction: 'BUY' | 'SELL' | 'HOLD' | 'WATCH';
   riskLevel: 'Conservador' | 'Moderado' | 'Agressivo' | 'Crítico';
@@ -72,6 +84,4 @@ export interface MarketPrice {
   change24h: number;
   updatedAt: string;
   category?: 'crypto' | 'stocks' | 'fiis' | 'index';
-  aiRecommendation?: 'BUY' | 'SELL' | 'HOLD' | 'WATCH';
-  aiReason?: string;
 }
