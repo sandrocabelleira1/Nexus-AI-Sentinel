@@ -36,6 +36,7 @@ import { ptBR } from "date-fns/locale";
 import { monitorGlobalEvents } from "@/ai/flows/global-intelligence-monitor";
 import { runAutonomousWhisperScan } from "@/ai/flows/autonomous-whisper-engine";
 import { runWhaleDiscovery } from "@/ai/flows/whale-discovery";
+import { fetchGlobalMarketData } from "@/ai/flows/global-market-data-engine";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
@@ -125,12 +126,14 @@ export default function NexusDashboard() {
       const results = await Promise.allSettled([
         monitorGlobalEvents({ rawNewsData: "Varredura 360: Foco em Whale Flows e Geopolítica Institucional." }),
         runAutonomousWhisperScan(),
-        runWhaleDiscovery()
+        runWhaleDiscovery(),
+        fetchGlobalMarketData()
       ]);
 
       const geopoliticalResult = results[0].status === 'fulfilled' ? results[0].value : null;
       const whispersResult = results[1].status === 'fulfilled' ? results[1].value : null;
       const whalesResult = results[2].status === 'fulfilled' ? results[2].value : null;
+      const marketDataResult = results[3].status === 'fulfilled' ? results[3].value : null;
 
       if (geopoliticalResult) {
         addDocumentNonBlocking(collection(firestore, "global_intelligence_alerts"), {
@@ -158,20 +161,15 @@ export default function NexusDashboard() {
         });
       }
 
-      // Initialize default prices if empty or during scan update
-      const defaultAssets: MarketPrice[] = [
-        { id: 'BTC', ticker: 'BTC', price: 98450.25, change24h: 3.45, category: 'crypto', updatedAt: new Date().toISOString() },
-        { id: 'ETH', ticker: 'ETH', price: 3250.12, change24h: -1.20, category: 'crypto', updatedAt: new Date().toISOString() },
-        { id: 'SOL', ticker: 'SOL', price: 185.44, change24h: 8.12, category: 'crypto', updatedAt: new Date().toISOString() },
-        { id: 'VALE3', ticker: 'VALE3', price: 62.45, change24h: 0.54, category: 'stocks', updatedAt: new Date().toISOString() },
-        { id: 'PETR4', ticker: 'PETR4', price: 38.12, change24h: -2.31, category: 'stocks', updatedAt: new Date().toISOString() },
-        { id: 'HGLG11', ticker: 'HGLG11', price: 164.20, change24h: 0.15, category: 'fiis', updatedAt: new Date().toISOString() },
-        { id: 'IBOV', ticker: 'IBOV', price: 128450, change24h: 0.87, category: 'index', updatedAt: new Date().toISOString() },
-      ];
-
-      defaultAssets.forEach(asset => {
-        setDocumentNonBlocking(doc(firestore, "market_prices", asset.ticker), asset, { merge: true });
-      });
+      if (marketDataResult?.assets) {
+        marketDataResult.assets.forEach(asset => {
+          setDocumentNonBlocking(doc(firestore, "market_prices", asset.ticker), {
+            ...asset,
+            id: asset.ticker,
+            updatedAt: new Date().toISOString()
+          }, { merge: true });
+        });
+      }
 
       setLastAutoScan(new Date());
     } catch (e) { 

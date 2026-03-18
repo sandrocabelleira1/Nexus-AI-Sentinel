@@ -84,4 +84,5 @@ export interface MarketPrice {
   change24h: number;
   updatedAt: string;
   category?: 'crypto' | 'stocks' | 'fiis' | 'index';
+  region?: 'Brazil' | 'USA' | 'Global';
 }
