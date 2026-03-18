@@ -1,15 +1,43 @@
 
 "use client"
 
-import { UserAsset } from "@/lib/types";
+import { useState } from "react";
+import { UserAsset, AssetType } from "@/lib/types";
 import { AssetCard } from "./asset-card";
 import { 
   TrendingUp, 
   ShieldAlert, 
   PieChart, 
   ArrowUpRight,
-  Target
+  Target,
+  Plus,
+  Building2,
+  Wallet,
+  Coins,
+  Boxes,
+  Loader2
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useFirestore, useUser, addDocumentNonBlocking } from "@/firebase";
+import { collection } from "firebase/firestore";
 
 interface PortfolioViewProps {
   assets: UserAsset[];
@@ -17,10 +45,178 @@ interface PortfolioViewProps {
 }
 
 export function PortfolioView({ assets, onUpdateAsset }: PortfolioViewProps) {
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const totalValue = assets.reduce((acc, curr) => acc + curr.investedValue, 0);
+
+  const firestore = useFirestore();
+  const { user } = useUser();
+
+  // New Asset State
+  const [formData, setFormData] = useState({
+    name: "",
+    ticker: "",
+    type: "Ação" as AssetType,
+    location: "",
+    investedValue: "",
+    quantity: ""
+  });
+
+  const handleAddAsset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!firestore || !user) return;
+
+    setIsSubmitting(true);
+    try {
+      const assetData = {
+        name: formData.name,
+        ticker: formData.ticker.toUpperCase(),
+        type: formData.type,
+        location: formData.location,
+        investedValue: Number(formData.investedValue),
+        quantity: Number(formData.quantity),
+        userId: user.uid,
+        createdAt: new Date().toISOString(),
+        riskLevel: 'Moderado' // Default risk for new assets
+      };
+
+      await addDocumentNonBlocking(collection(firestore, "users", user.uid, "assets"), assetData);
+      
+      setIsAddOpen(false);
+      setFormData({
+        name: "",
+        ticker: "",
+        type: "Ação",
+        location: "",
+        investedValue: "",
+        quantity: ""
+      });
+    } catch (error) {
+      console.error("Erro ao adicionar ativo:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="space-y-8 md:space-y-10">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <h2 className="text-3xl md:text-4xl font-headline font-bold text-white tracking-tighter led-text-blue">Minha Wallet</h2>
+          <p className="text-white/40 text-sm font-medium uppercase tracking-widest mt-1">Custódia Geopolítica em Tempo Real</p>
+        </div>
+        
+        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+          <DialogTrigger asChild>
+            <Button className="h-14 px-8 rounded-2xl bg-primary text-background font-bold shadow-[0_0_30px_rgba(37,99,235,0.4)] hover:scale-105 transition-all flex items-center gap-3">
+              <Plus className="h-5 w-5" /> ADICIONAR ATIVO
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="glass-panel border-primary/30 sm:max-w-[500px] rounded-[2rem]">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-headline font-bold text-white flex items-center gap-3">
+                <Target className="h-6 w-6 text-primary" /> Novo Aporte Estratégico
+              </DialogTitle>
+              <DialogDescription className="text-white/40 font-medium">
+                O Nexus vinculará este ativo ao Radar Omnisciente v3.1.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleAddAsset} className="grid gap-6 py-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Nome do Ativo</Label>
+                  <Input 
+                    required
+                    placeholder="Ex: Petrobras"
+                    className="bg-white/5 border-white/10 text-white h-12"
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Ticker (Símbolo)</Label>
+                  <Input 
+                    required
+                    placeholder="Ex: PETR4"
+                    className="bg-white/5 border-white/10 text-white h-12"
+                    value={formData.ticker}
+                    onChange={(e) => setFormData({...formData, ticker: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Tipo</Label>
+                  <Select 
+                    value={formData.type} 
+                    onValueChange={(val: AssetType) => setFormData({...formData, type: val})}
+                  >
+                    <SelectTrigger className="bg-white/5 border-white/10 text-white h-12">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#080D18] border-white/10">
+                      <SelectItem value="Ação">Ação</SelectItem>
+                      <SelectItem value="Fundo Imobiliário">Fundo Imobiliário</SelectItem>
+                      <SelectItem value="Criptomoeda">Criptomoeda</SelectItem>
+                      <SelectItem value="Commodity">Commodity</SelectItem>
+                      <SelectItem value="Moeda">Moeda</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Custódia (Local)</Label>
+                  <Input 
+                    required
+                    placeholder="Ex: XP, Binance, B3"
+                    className="bg-white/5 border-white/10 text-white h-12"
+                    value={formData.location}
+                    onChange={(e) => setFormData({...formData, location: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Valor Investido (R$)</Label>
+                  <Input 
+                    required
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    className="bg-white/5 border-white/10 text-white h-12"
+                    value={formData.investedValue}
+                    onChange={(e) => setFormData({...formData, investedValue: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Quantidade</Label>
+                  <Input 
+                    required
+                    type="number"
+                    step="0.0001"
+                    placeholder="0.0000"
+                    className="bg-white/5 border-white/10 text-white h-12"
+                    value={formData.quantity}
+                    onChange={(e) => setFormData({...formData, quantity: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              <DialogFooter className="mt-4">
+                <Button 
+                  type="submit" 
+                  disabled={isSubmitting}
+                  className="w-full h-14 bg-primary text-background font-bold text-lg rounded-2xl shadow-[0_0_30px_rgba(37,99,235,0.4)]"
+                >
+                  {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : "REGISTRAR ATIVO NO NEXUS"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
       {/* Portfolio Summary Tiles */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
         <div className="bg-[#080D18]/90 border border-white/10 rounded-[1.5rem] md:rounded-[2rem] p-6 md:p-8 space-y-3 md:space-y-4 relative overflow-hidden group shadow-2xl">
@@ -63,15 +259,30 @@ export function PortfolioView({ assets, onUpdateAsset }: PortfolioViewProps) {
       </div>
 
       {/* Assets Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        {assets.map((asset) => (
-          <AssetCard 
-            key={asset.id} 
-            asset={asset} 
-            onUpdate={onUpdateAsset}
-          />
-        ))}
-      </div>
+      {assets.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+          {assets.map((asset) => (
+            <AssetCard 
+              key={asset.id} 
+              asset={asset} 
+              onUpdate={onUpdateAsset}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="py-20 flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-[3rem] bg-white/5 space-y-6">
+          <div className="p-6 bg-primary/10 rounded-full">
+            <Wallet className="h-12 w-12 text-primary opacity-40" />
+          </div>
+          <div className="text-center">
+            <p className="text-lg font-headline font-bold text-white/60">Sua Wallet está Vazia</p>
+            <p className="text-sm text-white/30 max-w-xs mx-auto mt-2">Registre seus primeiros ativos para ativar a Análise Preditiva do Nexus.</p>
+          </div>
+          <Button variant="outline" onClick={() => setIsAddOpen(true)} className="border-primary/40 text-primary hover:bg-primary/10">
+            CADASTRAR MEU PRIMEIRO ATIVO
+          </Button>
+        </div>
+      )}
 
       {/* Chart Section */}
       <div className="bg-[#080D18]/90 border border-white/10 rounded-[1.5rem] md:rounded-[3rem] p-6 md:p-10 relative overflow-hidden shadow-2xl">
