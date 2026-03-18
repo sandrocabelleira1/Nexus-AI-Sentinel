@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { WorldMood } from "@/components/dashboard/world-mood";
 import { WhaleFlow } from "@/components/dashboard/whale-flow";
 import { WarRoom } from "@/components/dashboard/war-room";
+import { WhispersRadar } from "@/components/dashboard/whispers-radar";
 import { UserAsset, GlobalIntelligenceAlert, MarketPrice, AutonomousInsight, WhaleTransaction, MarketEntity } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { 
@@ -126,7 +127,7 @@ export default function NexusDashboard() {
     setIsScanning(true);
     try {
       const results = await Promise.allSettled([
-        monitorGlobalEvents({ rawNewsData: "Varredura Crítica Global Massiva de FIIs v3.0, Ações e Cripto." }),
+        monitorGlobalEvents({ rawNewsData: "Varredura Crítica Global Massiva de FIIs v3.1, Ações e Cripto." }),
         runAutonomousWhisperScan(),
         runWhaleDiscovery(),
         fetchGlobalMarketData()
@@ -253,8 +254,11 @@ export default function NexusDashboard() {
         {activeTab === 'dashboard' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             <div className="lg:col-span-3 flex flex-col gap-8">
-              <div className="h-[850px]">
+              <div className="h-[400px]">
                 <WorldMood latestAlert={latestAlert} latestWhisper={latestWhisper} onAnalyze={handleDeepAnalysis} />
+              </div>
+              <div className="h-[400px]">
+                <WhispersRadar insights={whispers || []} onAnalyze={(ctx) => handleDeepAnalysis(ctx)} />
               </div>
             </div>
 
