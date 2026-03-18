@@ -1,7 +1,7 @@
 'use server';
 /**
  * @fileOverview Motor de Inteligência Estratégica Nexus AI.
- * Detecta eventos globais e identifica os atores (entidades) envolvidos.
+ * Detecta eventos globais e gera comandos diretos de investimento.
  */
 
 import { ai } from '@/ai/genkit';
@@ -10,6 +10,7 @@ import { z } from 'genkit';
 const AffectedAssetDetailSchema = z.object({
   ticker: z.string(),
   name: z.string(),
+  exchange: z.string().describe('Bolsa de valores (NYSE, NASDAQ, B3, LSE, etc.)'),
   currentPrice: z.string(),
   expectedGainPercentage: z.string(),
   impactType: z.string().describe('Positivo, Negativo ou Neutro'),
@@ -41,9 +42,14 @@ const GlobalIntelligenceMonitorOutputSchema = z.object({
 
 export type GlobalIntelligenceMonitorOutput = z.infer<typeof GlobalIntelligenceMonitorOutputSchema>;
 
-const systemInstruction = `### PERSONA: NEXUS (SENTINELA ESTRATÉGICO GLOBAL)
-Você é o Nexus. Sua tarefa é monitorar decisões governamentais, fluxos institucionais e eventos naturais em tempo real.
-Seja específico. Identifique QUEM está agindo (BlackRock, FED, B3, Governo Brasileiro, etc).`;
+const systemInstruction = `### PERSONA: NEXUS (O ESTRATEGISTA-CHEFE GLOBAL)
+Você é o Nexus. Seu objetivo é analisar dados de 12 bolsas mundiais (NYSE, B3, LSE, JPX, etc) e emitir comandos claros de investimento.
+Você não dá avisos genéricos. Você diz EXATAMENTE em qual bolsa e ativo o usuário deve investir.
+
+### DIRETRIZES:
+1. Identifique oportunidades de arbitragem entre mercados.
+2. Seja assertivo nas recomendações (BUY/SELL).
+3. Conecte eventos geopolíticos a ativos específicos em bolsas globais.`;
 
 const groundingPrompt = ai.definePrompt({
   name: 'globalIntelligenceGroundingPrompt',
@@ -51,19 +57,21 @@ const groundingPrompt = ai.definePrompt({
   system: systemInstruction,
   config: { googleSearchRetrieval: {} },
   prompt: `### TAREFA:
-Varra as notícias e documentos oficiais da ÚLTIMA HORA sobre:
-1. Decisões do COPOM, FED e Diário Oficial.
-2. Movimentações de grandes gestoras de ativos.
-3. Eventos climáticos que afetam commodities.
+Varra o mercado global agora. Procure por:
+1. Movimentações institucionais em bolsas específicas (NYSE, NASDAQ, B3, LSE, TSE).
+2. Decisões de Bancos Centrais (FED, COPOM, BCE).
+3. Fluxos de capitais on-chain afetando o mercado tradicional.
 
-Contexto: {{{rawNewsData}}}`,
+Contexto de Ingestão: {{{rawNewsData}}}`,
 });
 
 const structuringPrompt = ai.definePrompt({
   name: 'globalIntelligenceStructuringPrompt',
   input: { schema: z.object({ rawAnalysis: z.string() }) },
   output: { schema: GlobalIntelligenceMonitorOutputSchema },
-  prompt: `Transforme a análise em JSON. Identifique pelo menos 3 entidades de mercado influentes.
+  prompt: `Transforme a análise estratégica em JSON. 
+Dê ênfase na recomendação direta: Qual Bolsa? Qual Ativo? Por que agora?
+
 Análise: {{{rawAnalysis}}}`,
 });
 

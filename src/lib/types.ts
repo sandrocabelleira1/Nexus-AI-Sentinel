@@ -37,6 +37,7 @@ export interface MarketEntity {
 export interface AffectedAssetDetail {
   ticker: string;
   name: string;
+  exchange: string;
   currentPrice: string;
   expectedGainPercentage: string;
   impactType: 'Positivo' | 'Negativo' | 'Neutro';
