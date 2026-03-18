@@ -1,7 +1,7 @@
 'use server';
 /**
- * @fileOverview Nexus Global Market Data Engine v3.1.
- * Monitoramento massivo multi-fonte: Brapi + Clube FII + Binance + Web Intelligence.
+ * @fileOverview Nexus Global Market Data Engine v3.2.
+ * Monitoramento de alta precisão: Binance (Real-time) + Brapi + Google Intelligence.
  */
 
 import { ai } from '@/ai/genkit';
@@ -11,7 +11,7 @@ const MarketDataOutputSchema = z.object({
   assets: z.array(z.object({
     ticker: z.string(),
     name: z.string(),
-    price: z.number(),
+    price: z.number().describe('Preço final convertido para BRL'),
     change24h: z.number(),
     category: z.enum(['crypto', 'stocks', 'fiis', 'index']),
     region: z.string(),
@@ -21,27 +21,22 @@ const MarketDataOutputSchema = z.object({
     peRatio: z.number().optional(),
     pvpRatio: z.number().default(1),
     healthStatus: z.string().default('Estável'),
-    // FII v3.1 - Extração Omnisciente
     fiiType: z.enum(['Papel', 'Tijolo', 'Agro', 'Misto']).default('Misto'),
     dividendAmount: z.number().default(0),
     dataCom: z.string().default('Aguardando'),
     paymentDate: z.string().default('Aguardando'),
     vacancyRate: z.number().default(0),
-    nexusVerdict: z.string().default('Nexus está analisando os fundamentos táticos para este ativo.'),
+    nexusVerdict: z.string().default('Nexus consolidou os dados de mercado em tempo real.'),
   })),
 });
 
 export type MarketDataOutput = z.infer<typeof MarketDataOutputSchema>;
 
-const PRIORITY_TICKERS = [
-  // B3 FIIs v3.1
-  "HGLG11", "MXRF11", "XPLG11", "KNRI11", "VISC11", "BTLG11", "XPML11", "HCTR11", "IRDM11", "CPTS11", "RECR11", "VILG11", "KNCR11", "HGBS11",
-  // B3 TOP
-  "PETR4", "VALE3", "ITUB4", "BBDC4", "ABEV3", "BBAS3", "WEGE3", "MGLU3", "RENT3", "B3SA3",
-  // US TOP
-  "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA",
-  // CRYPTO TOP (Monitorados via Binance)
-  "BTC", "ETH", "SOL"
+const DEFAULT_TICKERS = [
+  "HGLG11", "MXRF11", "XPLG11", "KNRI11", "VISC11", "XPML11",
+  "PETR4", "VALE3", "ITUB4", "BBAS3", "WEGE3",
+  "AAPL", "MSFT", "NVDA",
+  "BTC", "ETH", "SOL", "BNB", "XRP", "DOT"
 ];
 
 const fetchBrapiDataTool = ai.defineTool(
@@ -72,7 +67,8 @@ const fetchBinancePriceTool = ai.defineTool(
   async (input) => {
     try {
       const response = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${input.symbol}`);
-      return await response.json();
+      const data = await response.json();
+      return { price: data.price, symbol: data.symbol };
     } catch (error) {
       return { error: "Erro Binance" };
     }
@@ -86,31 +82,42 @@ const marketDataPrompt = ai.definePrompt({
   config: { 
     googleSearchRetrieval: {} 
   },
-  system: `Você é o Sentinela Omnisciente do Nexus AI.
-### MISSÃO DE VARREDURA 360°:
-1. Para ativos B3 e US, use a ferramenta fetchBrapiData.
-2. Para CRIPTO (BTC, ETH, SOL), use obrigatoriamente a ferramenta fetchBinancePrice (use o par USDT, ex: BTCUSDT). Converta o valor para BRL (use cotação aproximada do USD via pesquisa se necessário).
-3. Use a pesquisa na web (Google Search) para enriquecer os dados com fontes de elite:
-   - CLUBEFII.COM.BR (Obrigatório para FIIs: Dividendos, Vacância, P/VP, Data Com).
-   - Portais de RI para notícias de última hora.
-4. Você DEVE retornar valores para TODOS os campos solicitados no output, mesmo que sejam 0 ou 'Aguardando'.`,
-  prompt: `Execute varredura profunda e omnisciente para: {{#each tickers}}{{{this}}}, {{/each}}. 
-Cruze dados da Binance para Cripto, Brapi para ações e Clube FII para fundos imobiliários. Garanta que a resposta contenha os fundamentos táticos completos e o preço mais recente.`,
+  system: `### PERSONA: SENTINELA OMNISCIENTE NEXUS v3.2
+Sua missão é extrair preços REAIS e ATUALIZADOS. 
+
+### PROTOCOLO CRIPTO (BINANCE):
+1. Para cada criptomoeda (BTC, ETH, SOL, XRP, DOT, BNB, etc), use a ferramenta 'fetchBinancePrice' com o par USDT (ex: BTCUSDT).
+2. **CRÍTICO**: Use o Google Search para obter a cotação ATUAL do Dólar (USD/BRL).
+3. Calcule o preço em BRL: (Preço Binance em USDT) * (Cotação USD/BRL). 
+4. Não invente valores. Se a Binance diz 65000 e o dólar é 5.00, o preço é 325000.
+
+### PROTOCOLO B3/US (BRAPI):
+1. Use 'fetchBrapiData' para ações e FIIs.
+2. Enriqueça com dados do Clube FII via Google Search para dividendos e vacância.
+
+### OUTPUT:
+Retorne a análise técnica detalhada para TODOS os tickers solicitados.`,
+  prompt: `Execute varredura profunda para os ativos: {{#each tickers}}{{{this}}}, {{/each}}. 
+Consolide os preços da Binance convertidos para BRL e os fundamentos da Brapi/Clube FII.`,
 });
 
 const structurePrompt = ai.definePrompt({
   name: 'marketStructurePrompt',
   input: { schema: z.object({ rawData: z.string() }) },
   output: { schema: MarketDataOutputSchema },
-  prompt: `Converta a análise tática para JSON. 
-Garanta que para Criptomoedas, a "exchange" seja marcada como "Binance".
+  prompt: `Converta os dados brutos de mercado para o formato JSON estruturado do Nexus. 
+Garanta que os preços sejam números (number) e reflitam o valor real em BRL.
 
-Dados brutos: {{{rawData}}}`,
+Dados: {{{rawData}}}`,
 });
 
-export async function fetchGlobalMarketData(): Promise<MarketDataOutput | null> {
+export async function fetchGlobalMarketData(customTickers?: string[]): Promise<MarketDataOutput | null> {
   try {
-    const { text: rawData } = await marketDataPrompt({ tickers: PRIORITY_TICKERS });
+    const tickersToFetch = customTickers && customTickers.length > 0 
+      ? [...new Set([...DEFAULT_TICKERS, ...customTickers])]
+      : DEFAULT_TICKERS;
+
+    const { text: rawData } = await marketDataPrompt({ tickers: tickersToFetch });
     const { output } = await structurePrompt({ rawData });
     return output ? JSON.parse(JSON.stringify(output)) : null;
   } catch (error: any) {

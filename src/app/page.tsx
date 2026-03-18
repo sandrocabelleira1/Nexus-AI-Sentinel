@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo, useEffect, useCallback } from "react";
@@ -133,11 +132,12 @@ export default function NexusDashboard() {
     if (isScanning || !firestore) return;
     setIsScanning(true);
     try {
+      const userTickers = userAssetsData?.map(a => a.ticker).filter(Boolean) as string[] || [];
       const results = await Promise.allSettled([
         monitorGlobalEvents({ rawNewsData: "Varredura Crítica Global Massiva de FIIs v3.1, Ações e Cripto." }),
         runAutonomousWhisperScan(),
         runWhaleDiscovery(),
-        fetchGlobalMarketData()
+        fetchGlobalMarketData(userTickers)
       ]);
 
       const geopoliticalResult = results[0].status === 'fulfilled' ? results[0].value : null;
@@ -185,7 +185,7 @@ export default function NexusDashboard() {
     } finally { 
       setIsScanning(false); 
     }
-  }, [isScanning, firestore]);
+  }, [isScanning, firestore, userAssetsData]);
 
   useEffect(() => {
     if (currentUser && !isLoadingUser) {
