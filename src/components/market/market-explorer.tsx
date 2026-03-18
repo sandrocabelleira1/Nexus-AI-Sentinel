@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 interface MarketExplorerProps {
   prices: MarketPrice[];
   latestAlert?: GlobalIntelligenceAlert | null;
+  onAnalyze?: (context: string) => void;
 }
 
 const EXCHANGES_CONFIG: Record<string, { name: string, city: string, open: string, close: string, timezone: string }> = {
@@ -40,7 +41,7 @@ const EXCHANGES_CONFIG: Record<string, { name: string, city: string, open: strin
   'TSE': { name: 'TSE', city: 'Tóquio', open: '09:00', close: '15:00', timezone: 'Asia/Tokyo' },
 };
 
-export function MarketExplorer({ prices, latestAlert }: MarketExplorerProps) {
+export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplorerProps) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<'all' | 'crypto' | 'stocks' | 'fiis'>('all');
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -254,7 +255,10 @@ export function MarketExplorer({ prices, latestAlert }: MarketExplorerProps) {
               </CardContent>
               
               <div className="p-6 pt-0 mt-auto">
-                <Button className="w-full bg-white/5 hover:bg-white/10 border-white/10 text-white font-bold text-xs h-12 rounded-xl group/btn">
+                <Button 
+                  onClick={() => onAnalyze?.(`Execute comando Nexus de Análise 360 para o ativo ${price.ticker}. Verifique P/VP, Vacância, Dividendos e projete o elo de causalidade no cenário global.`)}
+                  className="w-full bg-white/5 hover:bg-white/10 border-white/10 text-white font-bold text-xs h-12 rounded-xl group/btn"
+                >
                   EXECUTAR ANÁLISE 360°
                   <ChevronRight className="ml-2 h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
                 </Button>

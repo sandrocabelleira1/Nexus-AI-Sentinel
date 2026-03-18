@@ -188,7 +188,7 @@ export default function NexusDashboard() {
   }, [currentUser, isLoadingUser, triggerGlobalScan]);
 
   const handleDeepAnalysis = (context: string) => {
-    setChatInitialQuery(`Comando Nexus sobre: ${context}. Execute projeção de ROI e análise de risco.`);
+    setChatInitialQuery(context);
     setIsChatOpen(true);
   };
 
@@ -290,7 +290,7 @@ export default function NexusDashboard() {
                       <ScrollArea className="flex-1 mt-6 h-[600px] px-8 pb-8 custom-scrollbar">
                         <div className="space-y-6 pr-4">
                           {globalAlerts?.map((alert, idx) => (
-                            <div key={alert.id} className="p-6 rounded-3xl bg-white/5 border border-white/10 hover:border-primary/30 transition-all cursor-pointer group" onClick={() => { handleDeepAnalysis(alert.title); setIsHistoryOpen(false); }}>
+                            <div key={alert.id} className="p-6 rounded-3xl bg-white/5 border border-white/10 hover:border-primary/30 transition-all cursor-pointer group" onClick={() => { handleDeepAnalysis(`Execute comando Nexus sobre: ${alert.title}. Projete o elo de causalidade global.`); setIsHistoryOpen(false); }}>
                               <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center gap-3">
                                   <Badge className={cn(
@@ -378,7 +378,7 @@ export default function NexusDashboard() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {latestAlert.affectedAssetsDetails?.slice(0, 4).map((asset, i) => (
-                            <div key={i} className="bg-white/5 border border-white/10 rounded-[2rem] p-6 hover:bg-white/10 transition-all cursor-pointer group/item" onClick={() => handleDeepAnalysis(`ROI ${asset.ticker}`)}>
+                            <div key={i} className="bg-white/5 border border-white/10 rounded-[2rem] p-6 hover:bg-white/10 transition-all cursor-pointer group/item" onClick={() => handleDeepAnalysis(`Comando Nexus: Execute análise 360 do ativo ${asset.ticker} (${asset.exchange}). Foco em ROI projetado e elo de causalidade.`)}>
                               <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center gap-3">
                                   {asset.ticker.includes('11') ? <Building2 className="h-5 w-5 text-primary" /> : <TrendingUp className="h-5 w-5 text-primary" />}
@@ -395,7 +395,7 @@ export default function NexusDashboard() {
                         </div>
 
                         <Button 
-                          onClick={() => handleDeepAnalysis(latestAlert.title)} 
+                          onClick={() => handleDeepAnalysis(`Execute comando Nexus de análise massiva sobre: ${latestAlert.title}.`)} 
                           className={cn(
                             "w-full h-20 rounded-[2rem] font-bold text-xl transition-all group/btn flex items-center justify-center gap-4",
                             hasCriticalRisk ? "bg-rose-600 hover:bg-rose-700 shadow-[0_0_40px_rgba(225,29,72,0.3)]" : "bg-primary hover:bg-primary/90 shadow-[0_0_40px_rgba(37,99,235,0.3)]"
@@ -419,16 +419,16 @@ export default function NexusDashboard() {
 
             <div className="lg:col-span-3 flex flex-col gap-8">
               <div className="h-[400px]">
-                <WhaleFlow transactions={whaleTransactions || []} onAnalyze={handleDeepAnalysis} />
+                <WhaleFlow transactions={whaleTransactions || []} onAnalyze={(ctx) => handleDeepAnalysis(`Analise o movimento da baleia: ${ctx}`)} />
               </div>
               <div className="h-[400px]">
-                <WarRoom entities={marketEntities || []} onAnalyze={handleDeepAnalysis} />
+                <WarRoom entities={marketEntities || []} onAnalyze={(ctx) => handleDeepAnalysis(`Analise as ações táticas da entidade: ${ctx}`)} />
               </div>
             </div>
           </div>
         )}
 
-        {activeTab === 'market' && <MarketExplorer prices={marketPrices || []} latestAlert={latestAlert} />}
+        {activeTab === 'market' && <MarketExplorer prices={marketPrices || []} latestAlert={latestAlert} onAnalyze={handleDeepAnalysis} />}
         {activeTab === 'portfolio' && <PortfolioView assets={userAssetsData || []} onUpdateAsset={handleUpdateAsset} />}
       </main>
 
