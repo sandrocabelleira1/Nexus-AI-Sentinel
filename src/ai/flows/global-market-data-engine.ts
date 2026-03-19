@@ -1,8 +1,8 @@
 'use server';
 /**
- * @fileOverview Nexus Global Market Data Engine v3.5.
+ * @fileOverview Nexus Global Market Data Engine v3.6.
  * Monitoramento de alta precisão: Binance API Oficial (USD) + Brapi (BRL).
- * Agora inclui monitoramento de câmbio USD/BRL para consolidação de patrimônio.
+ * Garantia de extração USDBRL para consolidação de patrimônio.
  */
 
 import { ai } from '@/ai/genkit';
@@ -72,7 +72,7 @@ const fetchUSDBRLTool = ai.defineTool(
       const data = await response.json();
       return { price: parseFloat(data.USDBRL.bid), pair: "USD-BRL" };
     } catch (error) {
-      return { price: 5.0, pair: "USD-BRL" }; // Fallback seguro
+      return { price: 5.80, pair: "USD-BRL" }; // Fallback realista
     }
   }
 );
@@ -105,21 +105,22 @@ const marketDataPrompt = ai.definePrompt({
   name: 'marketDataPrompt',
   tools: [fetchBrapiDataTool, fetchBinancePriceTool, fetchUSDBRLTool],
   input: { schema: z.object({ tickers: z.array(z.string()) }) },
-  system: `### PERSONA: SENTINELA OMNISCIENTE NEXUS v3.5 (CONSOLIDAÇÃO CAMBIAL)
-Sua missão é extrair preços REAIS e o CÂMBIO atual para consolidação de portfólio.
+  system: `### PERSONA: SENTINELA OMNISCIENTE NEXUS v3.6 (CRITICAL SYNC)
+Sua missão é extrair preços REAIS e o CÂMBIO USDBRL para consolidação de portfólio.
 
 ### PROTOCOLO CRIPTO (BINANCE API):
 1. Use 'fetchBinancePrice' para cada cripto (par USDT).
-2. **PREÇO EM DÓLAR (USD)**. currency: "USD".
+2. O ticker no JSON final deve ser o símbolo base (ex: "BTC", não "BTCUSDT").
+3. PREÇO EM DÓLAR (USD). currency: "USD".
 
-### PROTOCOLO CÂMBIO:
-1. Use 'fetchUSDBRL' para obter a cotação do Dólar hoje.
-2. Adicione um ativo com ticker "USDBRL" à lista final para que o app saiba converter o patrimônio.
+### PROTOCOLO CÂMBIO (OBRIGATÓRIO):
+1. Use 'fetchUSDBRL' IMEDIATAMENTE.
+2. Adicione um ativo com ticker EXATO "USDBRL" à lista final. Esse dado é vital para o cálculo do patrimônio.
 
 ### PROTOCOLO B3:
 1. Use 'fetchBrapiData' para ativos brasileiros. currency: "BRL".`,
   prompt: `Execute varredura e extraia os preços para: {{#each tickers}}{{{this}}}, {{/each}}. 
-Inclua obrigatoriamente a cotação USDBRL.`,
+Certifique-se de incluir o ativo USDBRL com a cotação atual.`,
 });
 
 const structurePrompt = ai.definePrompt({
@@ -127,9 +128,9 @@ const structurePrompt = ai.definePrompt({
   input: { schema: z.object({ rawData: z.string() }) },
   output: { schema: MarketDataOutputSchema },
   prompt: `Converta para JSON estruturado. 
-Garanta que o ativo USDBRL esteja presente.
-Ativos Binance/US -> currency: "USD"
-Ativos B3 -> currency: "BRL"
+Garante que o ativo com ticker "USDBRL" esteja presente no array de assets.
+Ativos Cripto -> ticker simplificado (BTC, ETH, SOL), currency: "USD".
+Ativos B3 -> currency: "BRL".
 
 Dados brutos: {{{rawData}}}`,
 });

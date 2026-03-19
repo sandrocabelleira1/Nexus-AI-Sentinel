@@ -52,28 +52,35 @@ export function PortfolioView({ assets, marketPrices, onUpdateAsset }: Portfolio
 
   // Busca a cotação USDBRL para conversão no consolidado
   const usdRate = useMemo(() => {
-    const rateAsset = marketPrices.find(p => p.ticker === 'USDBRL');
-    return rateAsset ? rateAsset.price : 5.0; // Fallback para 5.0 se não encontrar
+    const rateAsset = marketPrices.find(p => p.ticker.toUpperCase() === 'USDBRL');
+    return rateAsset ? rateAsset.price : null; 
   }, [marketPrices]);
 
-  // Calcula patrimônio total com conversão cambial para ativos em USD
+  // Calcula patrimônio total com conversão cambial
   const { totalInvestedBRL, currentTotalValueBRL } = useMemo(() => {
+    const effectiveRate = usdRate || 5.80; // Fallback se não carregou ainda
+
     return assets.reduce((acc, curr) => {
-      const priceData = marketPrices.find(p => p.ticker === curr.ticker);
+      // Normalização de ticker para busca (BTCUSDT -> BTC)
+      const assetTicker = curr.ticker?.toUpperCase() || "";
+      const priceData = marketPrices.find(p => 
+        p.ticker.toUpperCase() === assetTicker || 
+        p.ticker.toUpperCase().replace('USDT', '') === assetTicker
+      );
       
-      // Determina se o ativo é nativo USD
-      const isUSDAsset = priceData?.currency === 'USD' || curr.type === 'Criptomoeda';
+      const isUSDAsset = curr.type === 'Criptomoeda' || (priceData?.currency === 'USD');
       
-      // Pega o preço atual (ou o investido se não tiver dado de mercado)
-      const rawCurrentPrice = priceData ? priceData.price : (curr.investedValue / (curr.quantity || 1));
+      // Se tiver dado de mercado, usa o preço. Senão, usa o custo médio como base.
+      const rawCurrentPrice = priceData && priceData.price > 0 
+        ? priceData.price 
+        : (curr.investedValue / (curr.quantity || 1));
       
-      // Valor da posição na moeda original
       const currentValOriginal = rawCurrentPrice * curr.quantity;
       const investedOriginal = curr.investedValue;
 
-      // Conversão para BRL se necessário
-      const currentValBRL = isUSDAsset ? currentValOriginal * usdRate : currentValOriginal;
-      const investedBRL = isUSDAsset ? investedOriginal * usdRate : investedOriginal;
+      // Conversão para BRL se necessário para o cálculo consolidado
+      const currentValBRL = isUSDAsset ? currentValOriginal * effectiveRate : currentValOriginal;
+      const investedBRL = isUSDAsset ? investedOriginal * effectiveRate : investedOriginal;
 
       return {
         totalInvestedBRL: acc.totalInvestedBRL + investedBRL,
@@ -88,7 +95,6 @@ export function PortfolioView({ assets, marketPrices, onUpdateAsset }: Portfolio
   const firestore = useFirestore();
   const { user } = useUser();
 
-  // New Asset State
   const [formData, setFormData] = useState({
     name: "",
     ticker: "",
@@ -106,14 +112,14 @@ export function PortfolioView({ assets, marketPrices, onUpdateAsset }: Portfolio
     try {
       const assetData = {
         name: formData.name,
-        ticker: formData.ticker.toUpperCase(),
+        ticker: formData.ticker.toUpperCase().trim(),
         type: formData.type,
         location: formData.location,
         investedValue: Number(formData.investedValue),
         quantity: Number(formData.quantity),
         userId: user.uid,
         createdAt: new Date().toISOString(),
-        riskLevel: 'Moderado' // Default risk for new assets
+        riskLevel: 'Moderado'
       };
 
       await addDocumentNonBlocking(collection(firestore, "users", user.uid, "assets"), assetData);
@@ -154,7 +160,7 @@ export function PortfolioView({ assets, marketPrices, onUpdateAsset }: Portfolio
                 <Target className="h-6 w-6 text-primary" /> Novo Aporte Estratégico
               </DialogTitle>
               <DialogDescription className="text-white/40 font-medium">
-                O Nexus vinculará este ativo ao Radar Omnisciente v3.5.
+                O Nexus vinculou este ativo ao Radar Omnisciente v3.6.
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleAddAsset} className="grid gap-6 py-6">
@@ -163,7 +169,7 @@ export function PortfolioView({ assets, marketPrices, onUpdateAsset }: Portfolio
                   <Label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Nome do Ativo</Label>
                   <Input 
                     required
-                    placeholder="Ex: Petrobras"
+                    placeholder="Ex: Bitcoin"
                     className="bg-white/5 border-white/10 text-white h-12"
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
@@ -173,7 +179,7 @@ export function PortfolioView({ assets, marketPrices, onUpdateAsset }: Portfolio
                   <Label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Ticker (Símbolo)</Label>
                   <Input 
                     required
-                    placeholder="Ex: PETR4"
+                    placeholder="Ex: BTC"
                     className="bg-white/5 border-white/10 text-white h-12"
                     value={formData.ticker}
                     onChange={(e) => setFormData({...formData, ticker: e.target.value})}
@@ -204,7 +210,7 @@ export function PortfolioView({ assets, marketPrices, onUpdateAsset }: Portfolio
                   <Label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Custódia (Local)</Label>
                   <Input 
                     required
-                    placeholder="Ex: XP, Binance, B3"
+                    placeholder="Ex: Binance, Ledger, XP"
                     className="bg-white/5 border-white/10 text-white h-12"
                     value={formData.location}
                     onChange={(e) => setFormData({...formData, location: e.target.value})}
@@ -214,7 +220,7 @@ export function PortfolioView({ assets, marketPrices, onUpdateAsset }: Portfolio
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Valor Investido (Na Moeda do Ativo)</Label>
+                  <Label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Valor Investido (USD ou BRL)</Label>
                   <Input 
                     required
                     type="number"
@@ -230,8 +236,8 @@ export function PortfolioView({ assets, marketPrices, onUpdateAsset }: Portfolio
                   <Input 
                     required
                     type="number"
-                    step="0.0001"
-                    placeholder="0.0000"
+                    step="0.00000001"
+                    placeholder="0.00000000"
                     className="bg-white/5 border-white/10 text-white h-12"
                     value={formData.quantity}
                     onChange={(e) => setFormData({...formData, quantity: e.target.value})}
@@ -253,7 +259,6 @@ export function PortfolioView({ assets, marketPrices, onUpdateAsset }: Portfolio
         </Dialog>
       </div>
 
-      {/* Portfolio Summary Tiles */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
         <div className="bg-[#080D18]/90 border border-white/10 rounded-[1.5rem] md:rounded-[2rem] p-6 md:p-8 space-y-3 md:space-y-4 relative overflow-hidden group shadow-2xl">
           <div className="absolute -top-10 -right-10 w-24 md:w-32 h-24 md:h-32 bg-primary/10 rounded-full blur-3xl" />
@@ -267,11 +272,12 @@ export function PortfolioView({ assets, marketPrices, onUpdateAsset }: Portfolio
             </h4>
             <div className={cn("flex items-center gap-1 text-xs md:text-sm font-bold", totalGainLoss >= 0 ? "text-emerald-400" : "text-rose-400")}>
               {totalGainLoss >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-              {totalGainLossPercentage.toFixed(2)}%
+              {Math.abs(totalGainLossPercentage).toFixed(2)}%
             </div>
           </div>
-          <div className="text-[9px] text-white/20 font-bold uppercase tracking-widest">
-            Câmbio Base: {usdRate.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+          <div className="text-[9px] text-white/20 font-bold uppercase tracking-widest flex items-center gap-2">
+            {!usdRate && <Loader2 className="h-2 w-2 animate-spin" />}
+            Câmbio Base: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(usdRate || 5.80)}
           </div>
         </div>
 
@@ -283,9 +289,9 @@ export function PortfolioView({ assets, marketPrices, onUpdateAsset }: Portfolio
           </div>
           <div className="flex items-center gap-3 md:gap-4">
             <div className="flex-1 h-1.5 md:h-2 bg-white/5 rounded-full overflow-hidden">
-              <div className="h-full bg-accent w-[65%]" />
+              <div className="h-full bg-accent w-[45%]" />
             </div>
-            <span className="text-white text-sm md:text-base font-bold">Moderado</span>
+            <span className="text-white text-sm md:text-base font-bold">Monitorado</span>
           </div>
         </div>
 
@@ -295,16 +301,19 @@ export function PortfolioView({ assets, marketPrices, onUpdateAsset }: Portfolio
             <Target className="h-4 w-4 md:h-5 md:w-5 text-primary animate-pulse" />
           </div>
           <p className="text-[11px] md:text-sm font-medium text-white/80 leading-relaxed">
-            Seu portfólio está <span className="text-emerald-400 font-bold">Otimizado</span> para os eventos geopolíticos das próximas 72h.
+            Seu patrimônio está sendo <span className="text-emerald-400 font-bold">Consolidado</span> com cotações reais da Binance e Dólar comercial.
           </p>
         </div>
       </div>
 
-      {/* Assets Grid */}
       {assets.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           {assets.map((asset) => {
-            const priceData = marketPrices.find(p => p.ticker === asset.ticker);
+            const assetTicker = asset.ticker?.toUpperCase() || "";
+            const priceData = marketPrices.find(p => 
+              p.ticker.toUpperCase() === assetTicker || 
+              p.ticker.toUpperCase().replace('USDT', '') === assetTicker
+            );
             return (
               <AssetCard 
                 key={asset.id} 
@@ -330,7 +339,6 @@ export function PortfolioView({ assets, marketPrices, onUpdateAsset }: Portfolio
         </div>
       )}
 
-      {/* Chart Section */}
       <div className="bg-[#080D18]/90 border border-white/10 rounded-[1.5rem] md:rounded-[3rem] p-6 md:p-10 relative overflow-hidden shadow-2xl">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 md:mb-8 gap-4">
           <h3 className="text-base md:text-lg font-headline font-bold text-white flex items-center gap-2 md:gap-3">
