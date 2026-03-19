@@ -10,16 +10,16 @@ import {
   Search, 
   TrendingUp, 
   Globe, 
-  Activity, 
   Building2, 
   Coins, 
   ChevronRight,
-  Loader2,
-  Zap
+  Zap,
+  CalendarDays,
+  CheckCircle2,
+  AlertTriangle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AssetDetailModal } from "./asset-detail-modal";
-import { ResponsiveContainer, AreaChart, Area } from "recharts";
 
 interface MarketExplorerProps {
   prices: MarketPrice[];
@@ -56,7 +56,7 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
             </div>
             <h2 className="text-3xl md:text-5xl font-headline font-bold text-white tracking-tighter led-text-blue">Terminal Global Pro</h2>
           </div>
-          <p className="text-white/40 font-medium text-sm md:text-lg max-w-2xl leading-snug">Monitoramento Omnisciente v5.1: Gráficos de Telemetria e Análise Fundamentalista.</p>
+          <p className="text-white/40 font-medium text-sm md:text-lg max-w-2xl leading-snug">Monitoramento Omnisciente v5.2: Dados Fundamentalistas e Veredito Nexus.</p>
         </div>
 
         <div className="flex items-center gap-4 md:gap-6 bg-[#080D18]/90 border border-white/10 p-4 md:p-6 rounded-[1.5rem] md:rounded-[2rem] shadow-2xl w-fit">
@@ -103,123 +103,126 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
         {filteredPrices.map((price) => {
           const isUp = price.change24h > 0;
           const isFii = price.category === 'fiis';
           const isUSD = price.currency === 'USD';
-          const isBuySignal = isFii && (price.pvpRatio || 1) < 0.95 && (price.vacancyRate || 0) < 10;
-          
-          const isSyncing = isFii && (price.dividendAmount === undefined && price.dataCom === undefined);
+          const isBuySignal = isFii && (price.pvpRatio || 1) < 0.95;
           const hasImageError = imageErrors[price.ticker];
-          
-          // Dados do sparkline (usando dados reais se disponíveis, senão simulados)
-          const sparklineData = price.sparkline ? 
-            price.sparkline.map((v, i) => ({ value: v })) : 
-            Array.from({ length: 12 }).map((_, i) => ({ value: price.price * (1 + (Math.random() * 0.02 - 0.01)) }));
           
           return (
             <Card key={price.ticker} 
-              onClick={() => setSelectedAsset(price)}
               className={cn(
-                "bg-[#080D18]/95 border-white/10 hover:border-primary/40 transition-all group relative overflow-hidden rounded-[2rem] md:rounded-[2.5rem] shadow-2xl flex flex-col cursor-pointer",
-                isBuySignal && "border-emerald-500/40 shadow-[0_0_40px_rgba(16,185,129,0.2)]"
+                "bg-[#080D18] border-white/10 transition-all group relative overflow-hidden rounded-[2.5rem] shadow-2xl flex flex-col border",
+                isBuySignal && "border-emerald-500/40 shadow-[0_0_40px_rgba(16,185,129,0.1)]"
               )}
             >
               {isBuySignal && (
-                <div className="bg-emerald-600 text-white text-[8px] md:text-[9px] font-bold uppercase py-1.5 md:py-2 px-3 md:px-4 text-center tracking-[0.2em] md:tracking-[0.3em] led-glow-blue">
-                  ORDEM NEXUS: OPORTUNIDADE DE COMPRA
+                <div className="bg-emerald-600 text-white text-[8px] md:text-[9px] font-bold uppercase py-2.5 px-4 text-center tracking-[0.3em] led-glow-blue w-full">
+                  ORDEM NEXUS: COMPRA (DESCONTO PATRIMONIAL)
                 </div>
               )}
               
-              <CardContent className="p-6 md:p-8 space-y-5 md:space-y-6 flex-1">
+              <CardContent className="p-8 space-y-6 flex-1">
                 <div className="flex justify-between items-start">
-                  <div className="flex items-center gap-3 md:gap-4">
-                    {price.logo && !hasImageError ? (
-                      <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-white p-1.5 md:p-2 border border-white/10 overflow-hidden shrink-0">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                      {price.logo && !hasImageError ? (
                         <img 
                           src={price.logo} 
                           alt={price.ticker} 
-                          className="w-full h-full object-contain"
+                          className="w-full h-full object-contain p-2"
                           onError={() => handleImageError(price.ticker)}
                         />
-                      </div>
-                    ) : (
-                      <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 text-primary shrink-0">
-                        {isFii ? <Building2 className="h-5 w-5 md:h-6 md:w-6" /> : isUSD ? <Coins className="h-5 w-5 md:h-6 md:w-6" /> : <TrendingUp className="h-5 w-5 md:h-6 md:w-6" />}
-                      </div>
-                    )}
+                      ) : (
+                        <div className="text-primary">
+                          {isFii ? <Building2 className="h-7 w-7" /> : isUSD ? <Coins className="h-7 w-7" /> : <TrendingUp className="h-7 w-7" />}
+                        </div>
+                      )}
+                    </div>
                     <div>
-                      <div className="flex items-center gap-1.5 md:gap-2 mb-0.5 md:mb-1">
-                        <Badge variant="outline" className="text-[7px] md:text-[8px] border-primary/30 text-primary uppercase font-bold tracking-widest px-1.5 md:px-2 py-0.5">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge variant="outline" className="text-[7px] border-primary/30 text-primary uppercase font-bold px-1.5">
                           {price.exchange || (isUSD ? 'BINANCE' : 'B3')}
                         </Badge>
+                        {isFii && <Badge className="bg-primary/20 text-primary border-primary/30 text-[7px]">{price.fiiType || 'Tijolo'}</Badge>}
                       </div>
-                      <h3 className="text-xl md:text-2xl font-headline font-bold text-white group-hover:text-primary transition-colors">{price.ticker}</h3>
+                      <h3 className="text-2xl font-headline font-bold text-white tracking-tight">{price.ticker}</h3>
                     </div>
                   </div>
-                  <div className={cn("px-2.5 md:px-4 py-1 md:py-1.5 rounded-lg md:rounded-xl border font-bold text-xs", isUp ? "text-emerald-400 border-emerald-500/20 bg-emerald-500/5" : "text-rose-400 border-rose-500/20 bg-rose-500/5")}>
-                    {isUp ? '+' : ''}{price.change24h.toFixed(2)}%
+                  <div className={cn("px-3 py-1.5 rounded-xl border font-bold text-[10px]", isUp ? "text-emerald-400 border-emerald-500/20 bg-emerald-500/5" : "text-rose-400 border-rose-500/20 bg-rose-500/5")}>
+                    {price.change24h.toFixed(2)}%
                   </div>
                 </div>
 
-                <div className="flex items-baseline gap-1.5 md:gap-2">
-                  <span className="text-3xl md:text-4xl font-bold text-white tracking-tighter">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-bold text-white tracking-tighter">
                     {price.price.toLocaleString(isUSD ? 'en-US' : 'pt-BR', { 
                       style: 'currency', 
                       currency: isUSD ? 'USD' : 'BRL',
                       maximumFractionDigits: isUSD ? 4 : 2 
                     })}
                   </span>
+                  <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Ativo {price.currency}</span>
                 </div>
 
-                {/* Sparkline Visual (Linha de Flutuação) */}
-                <div className="h-12 w-full mt-2">
-                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={sparklineData}>
-                      <Area type="monotone" dataKey="value" stroke={isUp ? "#10b981" : "#f43f5e"} fill={isUp ? "#10b98120" : "#f43f5e20"} strokeWidth={3} dot={false} />
-                    </AreaChart>
-                   </ResponsiveContainer>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-2">
+                    <div className="flex items-center gap-2 text-primary/60">
+                      <Coins className="h-3 w-3" />
+                      <span className="text-[8px] font-bold uppercase tracking-[0.2em]">Dividend Tracker</span>
+                    </div>
+                    <div className="text-xl font-bold text-white">
+                      {price.dividendAmount ? price.dividendAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'R$ 0,00'}
+                    </div>
+                    <div className="text-[9px] font-bold text-emerald-400 uppercase">{(price.dividendYield || 0).toFixed(2)}% AM</div>
+                  </div>
+
+                  <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-2">
+                    <div className="flex items-center gap-2 text-primary/60">
+                      <Building2 className="h-3 w-3" />
+                      <span className="text-[8px] font-bold uppercase tracking-[0.2em]">Vacância</span>
+                    </div>
+                    <div className="text-xl font-bold text-white">
+                      {(price.vacancyRate || 0).toFixed(1)}%
+                    </div>
+                    <div className="text-[9px] font-bold text-white/40 uppercase">Estável</div>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 md:gap-4 pt-2">
-                  {isFii ? (
-                    <>
-                      <div className="bg-white/5 border border-white/10 rounded-xl md:rounded-2xl p-3 md:p-4 space-y-1">
-                        <span className="text-[7px] md:text-[8px] font-bold text-white/40 uppercase tracking-widest">DY AM</span>
-                        <div className="text-sm font-bold text-emerald-400">{(price.dividendYield || 0).toFixed(2)}%</div>
-                      </div>
-                      <div className="bg-white/5 border border-white/10 rounded-xl md:rounded-2xl p-3 md:p-4 space-y-1">
-                        <span className="text-[7px] md:text-[8px] font-bold text-white/40 uppercase tracking-widest">P/VP</span>
-                        <div className={cn("text-sm font-bold", (price.pvpRatio || 1) < 1 ? "text-emerald-400" : "text-white")}>
-                          {(price.pvpRatio || 1).toFixed(2)}
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="bg-white/5 border border-white/10 rounded-xl md:rounded-2xl p-3 md:p-4 space-y-1">
-                        <span className="text-[7px] md:text-[8px] font-bold text-white/40 uppercase tracking-widest">P/L</span>
-                        <div className="text-sm font-bold text-white">{(price.peRatio || 0).toFixed(1)}x</div>
-                      </div>
-                      <div className="bg-white/5 border border-white/10 rounded-xl md:rounded-2xl p-3 md:p-4 space-y-1">
-                        <span className="text-[7px] md:text-[8px] font-bold text-white/40 uppercase tracking-widest">SAÚDE</span>
-                        <div className="text-sm font-bold text-emerald-400">{price.healthStatus || 'Estável'}</div>
-                      </div>
-                    </>
-                  )}
+                <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                  <div className="flex items-center gap-2">
+                    <CalendarDays className="h-3 w-3 text-primary/60" />
+                    <div className="flex flex-col">
+                      <span className="text-[7px] font-bold text-white/40 uppercase">Data Com</span>
+                      <span className="text-[10px] font-bold text-white">{price.dataCom || '---'}</span>
+                    </div>
+                  </div>
+                  <div className="h-8 w-px bg-white/10" />
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-3 w-3 text-emerald-500/60" />
+                    <div className="flex flex-col">
+                      <span className="text-[7px] font-bold text-white/40 uppercase">Pagamento</span>
+                      <span className="text-[10px] font-bold text-white">{price.paymentDate || '---'}</span>
+                    </div>
+                  </div>
                 </div>
-              </CardContent>
-              
-              <div className="p-5 md:p-6 pt-0 mt-auto">
+
+                <div className="p-4 bg-[#0D1525] border border-white/5 rounded-2xl">
+                  <p className="text-[11px] text-white/60 italic leading-relaxed text-center">
+                    "{price.nexusVerdict || 'N/D (Not available from raw data, defaulting to empty string)'}"
+                  </p>
+                </div>
+
                 <Button 
                   onClick={(e) => { e.stopPropagation(); setSelectedAsset(price); }}
-                  className="w-full bg-white/5 hover:bg-white/10 border-white/10 text-white font-bold text-[10px] md:text-xs h-10 md:h-12 rounded-lg md:rounded-xl group/btn"
+                  className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold text-xs h-14 rounded-2xl group/btn tracking-widest uppercase"
                 >
-                  DETALHES E GRÁFICOS
-                  <ChevronRight className="ml-2 h-3 w-3 md:h-4 md:w-4 group-hover/btn:translate-x-1 transition-transform" />
+                  Análise 360°
+                  <ChevronRight className="ml-2 h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
                 </Button>
-              </div>
+              </CardContent>
             </Card>
           );
         })}
