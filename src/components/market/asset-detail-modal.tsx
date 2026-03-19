@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useMemo } from "react"
-import { MarketPrice, CandleData } from "@/lib/types"
+import { MarketPrice } from "@/lib/types"
 import {
   Dialog,
   DialogContent,
@@ -17,18 +17,18 @@ import {
   Globe, 
   Zap, 
   CalendarDays, 
-  CheckCircle2, 
   Warehouse,
   BarChart3,
   LineChart,
-  Target
+  Target,
+  ArrowUpRight,
+  ArrowDownRight
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
   Area,
   AreaChart,
   Bar,
-  BarChart,
   CartesianGrid,
   Cell,
   ResponsiveContainer,
@@ -53,10 +53,8 @@ export function AssetDetailModal({ asset, isOpen, onClose, onAnalyze }: AssetDet
   const isUSD = asset.currency === 'USD'
   const isFii = asset.category === 'fiis'
 
-  // Simulação de dados se não existirem
   const sparklineData = useMemo(() => {
-    if (asset.sparkline) return asset.sparkline.map((v, i) => ({ time: i, value: v }))
-    // Fallback: Gera flutuação simulada
+    if (asset.sparkline && asset.sparkline.length > 0) return asset.sparkline.map((v, i) => ({ time: i, value: v }))
     return Array.from({ length: 24 }).map((_, i) => ({
       time: i,
       value: asset.price * (1 + (Math.random() * 0.04 - 0.02))
@@ -64,8 +62,7 @@ export function AssetDetailModal({ asset, isOpen, onClose, onAnalyze }: AssetDet
   }, [asset])
 
   const candleData = useMemo(() => {
-    if (asset.candles) return asset.candles
-    // Fallback: Gera velas táticas
+    if (asset.candles && asset.candles.length > 0) return asset.candles
     return Array.from({ length: 15 }).map((_, i) => {
       const base = asset.price * (1 + (Math.random() * 0.02 - 0.01))
       const open = base * (1 + (Math.random() * 0.01 - 0.005))
@@ -117,6 +114,7 @@ export function AssetDetailModal({ asset, isOpen, onClose, onAnalyze }: AssetDet
                 })}
               </div>
               <div className={cn("text-sm font-bold flex items-center justify-end gap-1 mt-1", isUp ? "text-emerald-400" : "text-rose-400")}>
+                {isUp ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
                 {isUp ? '+' : ''}{asset.change24h.toFixed(2)}% (24h)
               </div>
             </div>
@@ -124,7 +122,6 @@ export function AssetDetailModal({ asset, isOpen, onClose, onAnalyze }: AssetDet
         </DialogHeader>
 
         <div className="p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Main Chart Area */}
           <div className="lg:col-span-8 space-y-8">
             <div className="bg-[#080D18]/90 border border-white/10 rounded-[2rem] p-6 shadow-2xl">
               <div className="flex items-center justify-between mb-6">
@@ -187,7 +184,6 @@ export function AssetDetailModal({ asset, isOpen, onClose, onAnalyze }: AssetDet
             </div>
           </div>
 
-          {/* Side Info Panel */}
           <div className="lg:col-span-4 space-y-8">
             <div className="bg-[#080D18]/90 border border-white/10 rounded-[2rem] p-6 space-y-6 shadow-2xl">
               <div className="flex items-center gap-2">
@@ -199,13 +195,13 @@ export function AssetDetailModal({ asset, isOpen, onClose, onAnalyze }: AssetDet
                 <div className="space-y-4">
                    <div className="grid grid-cols-2 gap-4">
                     <div className="bg-white/5 p-4 rounded-xl space-y-1">
-                      <span className="text-[8px] text-muted-foreground font-bold uppercase">P/VP</span>
+                      <span className="text-[8px] text-muted-foreground font-bold uppercase tracking-widest">P/VP</span>
                       <div className={cn("text-lg font-bold", (asset.pvpRatio || 1) < 1 ? "text-emerald-400" : "text-white")}>
                         {(asset.pvpRatio || 1.0).toFixed(2)}
                       </div>
                     </div>
                     <div className="bg-white/5 p-4 rounded-xl space-y-1">
-                      <span className="text-[8px] text-muted-foreground font-bold uppercase">Vacância</span>
+                      <span className="text-[8px] text-muted-foreground font-bold uppercase tracking-widest">Vacância</span>
                       <div className="text-lg font-bold text-white">
                         {(asset.vacancyRate || 0).toFixed(1)}%
                       </div>
@@ -213,22 +209,23 @@ export function AssetDetailModal({ asset, isOpen, onClose, onAnalyze }: AssetDet
                   </div>
                   <div className="bg-primary/10 border border-primary/20 p-4 rounded-xl space-y-2">
                     <div className="flex items-center justify-between">
-                       <span className="text-[8px] text-primary font-bold uppercase">Dividend Yield AM</span>
+                       <span className="text-[8px] text-primary font-bold uppercase tracking-widest">Dividend Yield AM</span>
                        <Badge className="bg-emerald-600 text-[8px]">{(asset.dividendYield || 0).toFixed(2)}%</Badge>
                     </div>
                     <div className="text-xl font-bold text-white">
-                      R$ {(asset.dividendAmount || 0).toFixed(2)}
+                      {asset.dividendAmount ? asset.dividendAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'R$ 0,00'}
                     </div>
+                    <div className="text-[8px] text-white/40 font-bold uppercase">Data Com: {asset.dataCom || 'Aguardando'}</div>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-4">
                   <div className="bg-white/5 p-4 rounded-xl flex items-center justify-between">
-                    <span className="text-[9px] text-muted-foreground font-bold uppercase">P/L Projetado</span>
-                    <span className="text-sm font-bold text-white">{(asset.peRatio || 12.5).toFixed(1)}x</span>
+                    <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest">P/L Projetado</span>
+                    <span className="text-sm font-bold text-white">{(asset.peRatio || 0).toFixed(1)}x</span>
                   </div>
                   <div className="bg-white/5 p-4 rounded-xl flex items-center justify-between">
-                    <span className="text-[9px] text-muted-foreground font-bold uppercase">Status Saúde</span>
+                    <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest">Status Saúde</span>
                     <span className="text-sm font-bold text-emerald-400">{asset.healthStatus || 'Saudável'}</span>
                   </div>
                 </div>

@@ -1,7 +1,8 @@
 'use server';
 /**
- * @fileOverview Nexus Global Market Data Engine v5.0.
+ * @fileOverview Nexus Global Market Data Engine v5.1.
  * Monitoramento de alta precisão + Geração de Séries Temporais para Gráficos e Candles.
+ * Busca ativa de dividendos e múltiplos via Web Grounding.
  */
 
 import { ai } from '@/ai/genkit';
@@ -110,25 +111,27 @@ const specializedMarketGroundingPrompt = ai.definePrompt({
   name: 'specializedMarketGroundingPrompt',
   input: { schema: z.object({ tickers: z.array(z.string()), currentDate: z.string() }) },
   system: `### PERSONA: NEXUS (ANALISTA DE ELITE)
-Sua missão é extrair DADOS FUNDAMENTALISTAS (Clube FII, Status Invest) e gerar a telemetria de flutuação dos ativos.`,
+Sua missão é extrair DADOS FUNDAMENTALISTAS atualizados (Clube FII, Status Invest, Investidor10) e gerar a telemetria de flutuação dos ativos.
+Navegue ativamente para encontrar Dividendos, Data Com, P/VP e Vacância.`,
   config: { googleSearchRetrieval: {} },
   prompt: `### TAREFA (DATA: {{{currentDate}}}):
-Extraia dividendos, P/L, P/VP e vacância para: {{#each tickers}}{{{this}}}, {{/each}}.
-Simule também uma série temporal realista (sparkline e candles) para cada ativo baseada no preço atual e volatilidade de 24h.`,
+Extraia dividendos recentes, P/L, P/VP e vacância para: {{#each tickers}}{{{this}}}, {{/each}}.
+Gere também uma série temporal realista (sparkline de 24 pontos e candles de 15 pontos) para cada ativo baseada na volatilidade real e preço atual.
+NÃO RETORNE PREÇOS COMO 0. Se não encontrar, use a estimativa tática baseada no contexto de mercado.`,
 });
 
 const structurePrompt = ai.definePrompt({
   name: 'marketStructurePrompt',
   input: { schema: z.object({ rawData: z.string() }) },
   output: { schema: MarketDataOutputSchema },
-  prompt: `Converta os dados brutos em JSON estruturado v5.0. 
+  prompt: `Converta os dados brutos em JSON estruturado v5.1. 
   
   DIRETRIZES TÁTICAS:
-  1. **Telemetria**: 'sparkline' deve ter 24 números e 'candles' deve ter 15 objetos com open/high/low/close.
-  2. **Fundamentos**: Preencha 'pvpRatio', 'dividendAmount', 'vacancyRate' etc. baseados nos sites especializados.
+  1. **Telemetria**: 'sparkline' deve ter 24 números (evite linhas retas, simule volatilidade). 'candles' deve ter 15 objetos com open/high/low/close realistas.
+  2. **Fundamentos**: Preencha 'pvpRatio', 'dividendAmount', 'vacancyRate', 'dataCom' e 'paymentDate' baseados nos sites especializados (Clube FII/Status Invest).
   3. **Veredito**: Crie uma análise curta (2 frases) sobre o custo-benefício atual do ativo.
   
-  Dados: {{{rawData}}}`,
+  Dados Brutos Capturados: {{{rawData}}}`,
 });
 
 export async function fetchGlobalMarketData(customTickers?: string[]): Promise<MarketDataOutput | null> {
@@ -152,7 +155,7 @@ export async function fetchGlobalMarketData(customTickers?: string[]): Promise<M
       API_BINANCE: ${JSON.stringify(binancePrices)}
       API_BRAPI: ${JSON.stringify(brapi)}
       API_USD: ${JSON.stringify(usdRate)}
-      WEB_GROUNDING: ${groundedData}
+      WEB_GROUNDING_FUNDAMENTALS: ${groundedData}
     `;
 
     const { output } = await structurePrompt({ rawData: context });

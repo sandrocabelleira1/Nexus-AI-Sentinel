@@ -12,14 +12,10 @@ import {
   Globe, 
   Activity, 
   Building2, 
-  CalendarDays, 
-  Warehouse, 
-  CheckCircle2, 
   Coins, 
   ChevronRight,
   Loader2,
-  Zap,
-  LineChart
+  Zap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AssetDetailModal } from "./asset-detail-modal";
@@ -60,7 +56,7 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
             </div>
             <h2 className="text-3xl md:text-5xl font-headline font-bold text-white tracking-tighter led-text-blue">Terminal Global Pro</h2>
           </div>
-          <p className="text-white/40 font-medium text-sm md:text-lg max-w-2xl leading-snug">Monitoramento Omnisciente v5.0: Gráficos de Telemetria e Análise Fundamentalista.</p>
+          <p className="text-white/40 font-medium text-sm md:text-lg max-w-2xl leading-snug">Monitoramento Omnisciente v5.1: Gráficos de Telemetria e Análise Fundamentalista.</p>
         </div>
 
         <div className="flex items-center gap-4 md:gap-6 bg-[#080D18]/90 border border-white/10 p-4 md:p-6 rounded-[1.5rem] md:rounded-[2rem] shadow-2xl w-fit">
@@ -117,8 +113,10 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
           const isSyncing = isFii && (price.dividendAmount === undefined && price.dataCom === undefined);
           const hasImageError = imageErrors[price.ticker];
           
-          // Dados simulados para o sparkline do card
-          const sparklineData = Array.from({ length: 12 }).map((_, i) => ({ value: price.price * (1 + (Math.random() * 0.02 - 0.01)) }));
+          // Dados do sparkline (usando dados reais se disponíveis, senão simulados)
+          const sparklineData = price.sparkline ? 
+            price.sparkline.map((v, i) => ({ value: v })) : 
+            Array.from({ length: 12 }).map((_, i) => ({ value: price.price * (1 + (Math.random() * 0.02 - 0.01)) }));
           
           return (
             <Card key={price.ticker} 
@@ -175,47 +173,47 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
                   </span>
                 </div>
 
-                {/* Sparkline Visual */}
-                <div className="h-10 w-full opacity-30 group-hover:opacity-100 transition-opacity">
+                {/* Sparkline Visual (Linha de Flutuação) */}
+                <div className="h-12 w-full mt-2">
                    <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={sparklineData}>
-                      <Area type="monotone" dataKey="value" stroke={isUp ? "#10b981" : "#f43f5e"} fill={isUp ? "#10b98120" : "#f43f5e20"} strokeWidth={2} />
+                      <Area type="monotone" dataKey="value" stroke={isUp ? "#10b981" : "#f43f5e"} fill={isUp ? "#10b98120" : "#f43f5e20"} strokeWidth={3} dot={false} />
                     </AreaChart>
                    </ResponsiveContainer>
                 </div>
 
-                {isFii ? (
-                  <div className="space-y-4">
-                    {isSyncing ? (
-                      <div className="flex items-center gap-3 p-3 md:p-4 bg-white/5 border border-dashed border-white/10 rounded-xl md:rounded-2xl animate-pulse">
-                        <Loader2 className="h-3 w-3 md:h-4 md:w-4 text-primary animate-spin" />
-                        <span className="text-[9px] md:text-[10px] font-bold text-white/40 uppercase tracking-widest">Sincronizando Telemetria...</span>
+                <div className="grid grid-cols-2 gap-3 md:gap-4 pt-2">
+                  {isFii ? (
+                    <>
+                      <div className="bg-white/5 border border-white/10 rounded-xl md:rounded-2xl p-3 md:p-4 space-y-1">
+                        <span className="text-[7px] md:text-[8px] font-bold text-white/40 uppercase tracking-widest">DY AM</span>
+                        <div className="text-sm font-bold text-emerald-400">{(price.dividendYield || 0).toFixed(2)}%</div>
                       </div>
-                    ) : (
-                      <div className="grid grid-cols-2 gap-3 md:gap-4">
-                        <div className="bg-white/5 border border-white/10 rounded-xl md:rounded-2xl p-3 md:p-4 space-y-1">
-                          <span className="text-[7px] md:text-[8px] font-bold text-white/40 uppercase">DY AM</span>
-                          <div className="text-sm font-bold text-emerald-400">{(price.dividendYield || 0).toFixed(2)}%</div>
-                        </div>
-                        <div className="bg-white/5 border border-white/10 rounded-xl md:rounded-2xl p-3 md:p-4 space-y-1">
-                          <span className="text-[7px] md:text-[8px] font-bold text-white/40 uppercase">P/VP</span>
-                          <div className={cn("text-sm font-bold", (price.pvpRatio || 1) < 1 ? "text-emerald-400" : "text-white")}>
-                            {(price.pvpRatio || 1).toFixed(2)}
-                          </div>
+                      <div className="bg-white/5 border border-white/10 rounded-xl md:rounded-2xl p-3 md:p-4 space-y-1">
+                        <span className="text-[7px] md:text-[8px] font-bold text-white/40 uppercase tracking-widest">P/VP</span>
+                        <div className={cn("text-sm font-bold", (price.pvpRatio || 1) < 1 ? "text-emerald-400" : "text-white")}>
+                          {(price.pvpRatio || 1).toFixed(2)}
                         </div>
                       </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="bg-white/5 border border-white/10 rounded-xl md:rounded-2xl p-4 flex items-center justify-between">
-                    <span className="text-[8px] md:text-[9px] text-white/40 font-bold uppercase">Saúde Neural</span>
-                    <Badge variant="outline" className="text-emerald-400 border-emerald-400/20 text-[8px]">{price.healthStatus || 'Estável'}</Badge>
-                  </div>
-                )}
+                    </>
+                  ) : (
+                    <>
+                      <div className="bg-white/5 border border-white/10 rounded-xl md:rounded-2xl p-3 md:p-4 space-y-1">
+                        <span className="text-[7px] md:text-[8px] font-bold text-white/40 uppercase tracking-widest">P/L</span>
+                        <div className="text-sm font-bold text-white">{(price.peRatio || 0).toFixed(1)}x</div>
+                      </div>
+                      <div className="bg-white/5 border border-white/10 rounded-xl md:rounded-2xl p-3 md:p-4 space-y-1">
+                        <span className="text-[7px] md:text-[8px] font-bold text-white/40 uppercase tracking-widest">SAÚDE</span>
+                        <div className="text-sm font-bold text-emerald-400">{price.healthStatus || 'Estável'}</div>
+                      </div>
+                    </>
+                  )}
+                </div>
               </CardContent>
               
               <div className="p-5 md:p-6 pt-0 mt-auto">
                 <Button 
+                  onClick={(e) => { e.stopPropagation(); setSelectedAsset(price); }}
                   className="w-full bg-white/5 hover:bg-white/10 border-white/10 text-white font-bold text-[10px] md:text-xs h-10 md:h-12 rounded-lg md:rounded-xl group/btn"
                 >
                   DETALHES E GRÁFICOS
