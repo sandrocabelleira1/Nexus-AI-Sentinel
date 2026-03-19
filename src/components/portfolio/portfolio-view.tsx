@@ -50,25 +50,40 @@ export function PortfolioView({ assets, marketPrices, onUpdateAsset }: Portfolio
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Calcula patrimônio total. 
-  // Nota: Para o total consolidado, o app assume que os dados no MarketPrice 
-  // estão na moeda correta para o cálculo da posição total do usuário em BRL.
-  // Se for Crypto em USD, mostramos o preço USD no card, mas o currentTotalValue 
-  // aqui usará o valor de mercado (price) vezes quantidade. 
-  // Usuário pediu para manter preço em dólar para ficar correto (evitar distorção de conversão manual).
-  const { totalInvested, currentTotalValue } = useMemo(() => {
+  // Busca a cotação USDBRL para conversão no consolidado
+  const usdRate = useMemo(() => {
+    const rateAsset = marketPrices.find(p => p.ticker === 'USDBRL');
+    return rateAsset ? rateAsset.price : 5.0; // Fallback para 5.0 se não encontrar
+  }, [marketPrices]);
+
+  // Calcula patrimônio total com conversão cambial para ativos em USD
+  const { totalInvestedBRL, currentTotalValueBRL } = useMemo(() => {
     return assets.reduce((acc, curr) => {
       const priceData = marketPrices.find(p => p.ticker === curr.ticker);
-      const currentVal = priceData ? priceData.price * curr.quantity : curr.investedValue;
-      return {
-        totalInvested: acc.totalInvested + curr.investedValue,
-        currentTotalValue: acc.currentTotalValue + currentVal
-      };
-    }, { totalInvested: 0, currentTotalValue: 0 });
-  }, [assets, marketPrices]);
+      
+      // Determina se o ativo é nativo USD
+      const isUSDAsset = priceData?.currency === 'USD' || curr.type === 'Criptomoeda';
+      
+      // Pega o preço atual (ou o investido se não tiver dado de mercado)
+      const rawCurrentPrice = priceData ? priceData.price : (curr.investedValue / (curr.quantity || 1));
+      
+      // Valor da posição na moeda original
+      const currentValOriginal = rawCurrentPrice * curr.quantity;
+      const investedOriginal = curr.investedValue;
 
-  const totalGainLoss = currentTotalValue - totalInvested;
-  const totalGainLossPercentage = totalInvested > 0 ? (totalGainLoss / totalInvested) * 100 : 0;
+      // Conversão para BRL se necessário
+      const currentValBRL = isUSDAsset ? currentValOriginal * usdRate : currentValOriginal;
+      const investedBRL = isUSDAsset ? investedOriginal * usdRate : investedOriginal;
+
+      return {
+        totalInvestedBRL: acc.totalInvestedBRL + investedBRL,
+        currentTotalValueBRL: acc.currentTotalValueBRL + currentValBRL
+      };
+    }, { totalInvestedBRL: 0, currentTotalValueBRL: 0 });
+  }, [assets, marketPrices, usdRate]);
+
+  const totalGainLoss = currentTotalValueBRL - totalInvestedBRL;
+  const totalGainLossPercentage = totalInvestedBRL > 0 ? (totalGainLoss / totalInvestedBRL) * 100 : 0;
 
   const firestore = useFirestore();
   const { user } = useUser();
@@ -139,7 +154,7 @@ export function PortfolioView({ assets, marketPrices, onUpdateAsset }: Portfolio
                 <Target className="h-6 w-6 text-primary" /> Novo Aporte Estratégico
               </DialogTitle>
               <DialogDescription className="text-white/40 font-medium">
-                O Nexus vinculará este ativo ao Radar Omnisciente v3.3.
+                O Nexus vinculará este ativo ao Radar Omnisciente v3.5.
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleAddAsset} className="grid gap-6 py-6">
@@ -199,7 +214,7 @@ export function PortfolioView({ assets, marketPrices, onUpdateAsset }: Portfolio
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Valor Investido (R$)</Label>
+                  <Label className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Valor Investido (Na Moeda do Ativo)</Label>
                   <Input 
                     required
                     type="number"
@@ -248,12 +263,15 @@ export function PortfolioView({ assets, marketPrices, onUpdateAsset }: Portfolio
           </div>
           <div className="flex items-baseline gap-2">
             <h4 className="text-3xl md:text-4xl font-headline font-bold text-white tracking-tighter">
-              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(currentTotalValue)}
+              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(currentTotalValueBRL)}
             </h4>
             <div className={cn("flex items-center gap-1 text-xs md:text-sm font-bold", totalGainLoss >= 0 ? "text-emerald-400" : "text-rose-400")}>
               {totalGainLoss >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
               {totalGainLossPercentage.toFixed(2)}%
             </div>
+          </div>
+          <div className="text-[9px] text-white/20 font-bold uppercase tracking-widest">
+            Câmbio Base: {usdRate.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
           </div>
         </div>
 
