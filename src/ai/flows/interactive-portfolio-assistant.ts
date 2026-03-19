@@ -1,6 +1,7 @@
 'use server';
 /**
- * @fileOverview Assistente de Portfólio Interativo Nexus com Integração Clube FII.
+ * @fileOverview Assistente de Portfólio Interativo Nexus v3.9.
+ * Integração profunda com Clube FII e análise web em tempo real.
  */
 
 import { ai } from '@/ai/genkit';
@@ -36,7 +37,7 @@ const InteractivePortfolioAssistantOutputSchema = z.object({
   }),
   display_modes: z.object({
     essential: z.object({
-      text: z.string().describe('Texto assertivo com recomendação direta de investimento.'),
+      text: z.string().describe('Texto assertivo com recomendação direta. Cite dados do Clube FII se for Fundo Imobiliário.'),
       glossary: z.array(z.object({ term: z.string(), definition: z.string() })),
     }),
     full: z.object({
@@ -52,13 +53,13 @@ const groundedChatPrompt = ai.definePrompt({
   name: 'interactivePortfolioGroundedPrompt',
   input: { schema: InteractivePortfolioAssistantInputSchema },
   system: `### PERSONA: NEXUS (O ESTRATEGISTA-CHEFE GLOBAL)
-Você é o Nexus. Seu diferencial tático em FIIs é a integração com o CLUBEFII.COM.BR.
+Você é o Nexus. Seu diferencial tático é navegar em tempo real para validar dados.
 
 ### DIRETRIZES DE RESPOSTA:
-1. **FIIs v3.0**: Para qualquer FII mencionado, consulte métricas de P/VP, Vacância e Dividendos via Clube FII.
-2. **Assertividade**: Diga "COMPRE AGORA" se o P/VP estiver abaixo de 0.95 no Clube FII e a vacância for baixa.
-3. **Causalidade**: Conecte eventos globais ao setor imobiliário (ex: queda de juros -> alta em fundos de tijolo).
-4. **Idioma**: Português do Brasil com tom de comando.`,
+1. **FIIs**: Visite clubefii.com.br e Status Invest para cada FII. Verifique P/VP e Vacância física/financeira.
+2. **Cripto**: Verifique notícias de última hora na Binance e CoinDesk.
+3. **Bolsa**: Consulte tendências na B3 e Valor Econômico.
+4. **Moeda**: Criptos são em USD. B3 é em BRL.`,
   config: {
     googleSearchRetrieval: {},
   },
@@ -72,7 +73,7 @@ Carteira: {{#each userAssets}}- {{{this.name}}} ({{{this.location}}}){{/each}}
 ### SOLICITAÇÃO
 "{{{message}}}"
 
-Se o usuário pedir análise de um FII, busque os dados mais recentes no Clube FII e emita o Veredito Nexus.`,
+Navegue na web agora para buscar os dados mais recentes dos ativos mencionados e emita o Veredito Nexus.`,
 });
 
 const structuredChatPrompt = ai.definePrompt({
@@ -80,7 +81,7 @@ const structuredChatPrompt = ai.definePrompt({
   input: { schema: z.object({ rawResponse: z.string() }) },
   output: { schema: InteractivePortfolioAssistantOutputSchema },
   prompt: `Formate a análise do Nexus AI em JSON. 
-O campo 'essential.text' deve conter a recomendação direta e o resumo dos dados extraídos do Clube FII se for um fundo imobiliário.
+O campo 'essential.text' deve ser um comando direto, curto e tático.
 
 Análise: {{{rawResponse}}}`,
 });
