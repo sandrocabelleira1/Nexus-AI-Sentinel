@@ -79,6 +79,14 @@ export interface AutonomousInsight {
   };
 }
 
+export interface CandleData {
+  time: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+}
+
 export interface MarketPrice {
   id: string;
   ticker: string;
@@ -101,4 +109,7 @@ export interface MarketPrice {
   paymentDate?: string;
   vacancyRate?: number;
   nexusVerdict?: string;
+  // Visual Data v5.0
+  sparkline?: number[];
+  candles?: CandleData[];
 }

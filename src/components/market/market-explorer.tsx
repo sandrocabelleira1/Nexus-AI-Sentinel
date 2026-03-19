@@ -18,9 +18,12 @@ import {
   Coins, 
   ChevronRight,
   Loader2,
-  Zap
+  Zap,
+  LineChart
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AssetDetailModal } from "./asset-detail-modal";
+import { ResponsiveContainer, AreaChart, Area } from "recharts";
 
 interface MarketExplorerProps {
   prices: MarketPrice[];
@@ -32,6 +35,7 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<'all' | 'crypto' | 'stocks' | 'fiis'>('all');
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+  const [selectedAsset, setSelectedAsset] = useState<MarketPrice | null>(null);
 
   const filteredPrices = useMemo(() => {
     return prices.filter(p => {
@@ -56,7 +60,7 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
             </div>
             <h2 className="text-3xl md:text-5xl font-headline font-bold text-white tracking-tighter led-text-blue">Terminal Global Pro</h2>
           </div>
-          <p className="text-white/40 font-medium text-sm md:text-lg max-w-2xl leading-snug">Monitoramento Omnisciente v4.3: Binance Real-Time (USD) + B3 Brapi (BRL).</p>
+          <p className="text-white/40 font-medium text-sm md:text-lg max-w-2xl leading-snug">Monitoramento Omnisciente v5.0: Gráficos de Telemetria e Análise Fundamentalista.</p>
         </div>
 
         <div className="flex items-center gap-4 md:gap-6 bg-[#080D18]/90 border border-white/10 p-4 md:p-6 rounded-[1.5rem] md:rounded-[2rem] shadow-2xl w-fit">
@@ -66,7 +70,7 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
           </div>
           <div className="flex items-center gap-2 md:gap-4 px-2 md:px-4">
             <Zap className="h-3 w-3 md:h-4 md:w-4 text-primary animate-pulse" />
-            <span className="text-[9px] md:text-[11px] text-primary font-bold uppercase tracking-[0.2em] md:tracking-[0.4em]">BINANCE CONNECTED</span>
+            <span className="text-[9px] md:text-[11px] text-primary font-bold uppercase tracking-[0.2em] md:tracking-[0.4em]">LIVE DATA STREAM</span>
           </div>
         </div>
       </div>
@@ -75,7 +79,7 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
         <div className="relative flex-1 group">
           <Search className="absolute left-6 md:left-8 top-1/2 -translate-y-1/2 h-5 w-5 md:h-6 md:w-6 text-primary" />
           <Input 
-            placeholder="HGLG11, AAPL, BTC..."
+            placeholder="Buscar ativos por ticker..."
             className="h-16 md:h-20 pl-14 md:pl-20 bg-[#080D18]/95 border-white/10 rounded-xl md:rounded-[1.5rem] text-lg md:text-xl font-bold focus-visible:ring-primary shadow-2xl"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -113,14 +117,20 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
           const isSyncing = isFii && (price.dividendAmount === undefined && price.dataCom === undefined);
           const hasImageError = imageErrors[price.ticker];
           
+          // Dados simulados para o sparkline do card
+          const sparklineData = Array.from({ length: 12 }).map((_, i) => ({ value: price.price * (1 + (Math.random() * 0.02 - 0.01)) }));
+          
           return (
-            <Card key={price.ticker} className={cn(
-              "bg-[#080D18]/95 border-white/10 hover:border-primary/40 transition-all group relative overflow-hidden rounded-[2rem] md:rounded-[2.5rem] shadow-2xl flex flex-col",
-              isBuySignal && "border-emerald-500/40 shadow-[0_0_40px_rgba(16,185,129,0.2)]"
-            )}>
+            <Card key={price.ticker} 
+              onClick={() => setSelectedAsset(price)}
+              className={cn(
+                "bg-[#080D18]/95 border-white/10 hover:border-primary/40 transition-all group relative overflow-hidden rounded-[2rem] md:rounded-[2.5rem] shadow-2xl flex flex-col cursor-pointer",
+                isBuySignal && "border-emerald-500/40 shadow-[0_0_40px_rgba(16,185,129,0.2)]"
+              )}
+            >
               {isBuySignal && (
                 <div className="bg-emerald-600 text-white text-[8px] md:text-[9px] font-bold uppercase py-1.5 md:py-2 px-3 md:px-4 text-center tracking-[0.2em] md:tracking-[0.3em] led-glow-blue">
-                  ORDEM NEXUS: COMPRA (DESCONTO PATRIMONIAL)
+                  ORDEM NEXUS: OPORTUNIDADE DE COMPRA
                 </div>
               )}
               
@@ -146,7 +156,6 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
                         <Badge variant="outline" className="text-[7px] md:text-[8px] border-primary/30 text-primary uppercase font-bold tracking-widest px-1.5 md:px-2 py-0.5">
                           {price.exchange || (isUSD ? 'BINANCE' : 'B3')}
                         </Badge>
-                        {isFii && <Badge className="bg-primary/20 text-primary border-primary/30 text-[7px] md:text-[8px]">{price.fiiType || 'Misto'}</Badge>}
                       </div>
                       <h3 className="text-xl md:text-2xl font-headline font-bold text-white group-hover:text-primary transition-colors">{price.ticker}</h3>
                     </div>
@@ -161,11 +170,18 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
                     {price.price.toLocaleString(isUSD ? 'en-US' : 'pt-BR', { 
                       style: 'currency', 
                       currency: isUSD ? 'USD' : 'BRL',
-                      minimumFractionDigits: isUSD ? 2 : 2,
                       maximumFractionDigits: isUSD ? 4 : 2 
                     })}
                   </span>
-                  <span className="text-white/40 font-bold text-[8px] md:text-[10px] uppercase tracking-widest">{isUSD ? 'REAL-TIME USD' : 'Ativo BRL'}</span>
+                </div>
+
+                {/* Sparkline Visual */}
+                <div className="h-10 w-full opacity-30 group-hover:opacity-100 transition-opacity">
+                   <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={sparklineData}>
+                      <Area type="monotone" dataKey="value" stroke={isUp ? "#10b981" : "#f43f5e"} fill={isUp ? "#10b98120" : "#f43f5e20"} strokeWidth={2} />
+                    </AreaChart>
+                   </ResponsiveContainer>
                 </div>
 
                 {isFii ? (
@@ -173,87 +189,36 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
                     {isSyncing ? (
                       <div className="flex items-center gap-3 p-3 md:p-4 bg-white/5 border border-dashed border-white/10 rounded-xl md:rounded-2xl animate-pulse">
                         <Loader2 className="h-3 w-3 md:h-4 md:w-4 text-primary animate-spin" />
-                        <span className="text-[9px] md:text-[10px] font-bold text-white/40 uppercase tracking-widest">Nexus Sincronizando...</span>
+                        <span className="text-[9px] md:text-[10px] font-bold text-white/40 uppercase tracking-widest">Sincronizando Telemetria...</span>
                       </div>
                     ) : (
-                      <>
-                        <div className="grid grid-cols-2 gap-3 md:gap-4">
-                          <div className="bg-white/5 border border-white/10 rounded-xl md:rounded-2xl p-3 md:p-4 space-y-1">
-                            <div className="flex items-center gap-1.5 md:gap-2 text-primary">
-                              <Coins className="h-2.5 w-2.5 md:h-3 md:w-3" />
-                              <span className="text-[7px] md:text-[8px] font-bold uppercase tracking-widest">Dividend Tracker</span>
-                            </div>
-                            <div className="text-lg md:text-xl font-bold text-white">
-                              R$ {(price.dividendAmount || 0).toFixed(2)}
-                            </div>
-                            <span className="text-[8px] md:text-[9px] text-emerald-400 font-bold">{(price.dividendYield || 0).toFixed(2)}% AM</span>
-                          </div>
-                          <div className="bg-white/5 border border-white/10 rounded-xl md:rounded-2xl p-3 md:p-4 space-y-1">
-                            <div className="flex items-center gap-1.5 md:gap-2 text-primary">
-                              <Warehouse className="h-2.5 w-2.5 md:h-3 md:w-3" />
-                              <span className="text-[7px] md:text-[8px] font-bold uppercase tracking-widest">Vacância</span>
-                            </div>
-                            <div className="text-lg md:text-xl font-bold text-white">
-                              {(price.vacancyRate || 0).toFixed(1)}%
-                            </div>
-                            <span className="text-[8px] md:text-[9px] text-white/40 font-bold">{(price.vacancyRate || 0) < 10 ? 'ESTÁVEL' : 'ALTA'}</span>
+                      <div className="grid grid-cols-2 gap-3 md:gap-4">
+                        <div className="bg-white/5 border border-white/10 rounded-xl md:rounded-2xl p-3 md:p-4 space-y-1">
+                          <span className="text-[7px] md:text-[8px] font-bold text-white/40 uppercase">DY AM</span>
+                          <div className="text-sm font-bold text-emerald-400">{(price.dividendYield || 0).toFixed(2)}%</div>
+                        </div>
+                        <div className="bg-white/5 border border-white/10 rounded-xl md:rounded-2xl p-3 md:p-4 space-y-1">
+                          <span className="text-[7px] md:text-[8px] font-bold text-white/40 uppercase">P/VP</span>
+                          <div className={cn("text-sm font-bold", (price.pvpRatio || 1) < 1 ? "text-emerald-400" : "text-white")}>
+                            {(price.pvpRatio || 1).toFixed(2)}
                           </div>
                         </div>
-
-                        <div className="bg-white/5 border border-white/10 rounded-xl md:rounded-2xl p-3 md:p-4 flex items-center justify-between">
-                          <div className="flex flex-col">
-                            <span className="text-[7px] md:text-[8px] text-white/40 font-bold uppercase">Data Com</span>
-                            <div className="flex items-center gap-1 md:gap-1.5">
-                              <CalendarDays className="h-2.5 w-2.5 md:h-3 md:w-3 text-primary" />
-                              <span className="text-[11px] md:text-xs text-white font-bold">{price.dataCom || 'N/A'}</span>
-                            </div>
-                          </div>
-                          <div className="h-6 md:h-8 w-px bg-white/10" />
-                          <div className="flex flex-col text-right">
-                            <span className="text-[7px] md:text-[8px] text-white/40 font-bold uppercase">Pagamento</span>
-                            <div className="flex items-center gap-1 md:gap-1.5 justify-end">
-                              <CheckCircle2 className="h-2.5 w-2.5 md:h-3 md:w-3 text-emerald-500" />
-                              <span className="text-[11px] md:text-xs text-white font-bold">{price.paymentDate || 'N/A'}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </>
+                      </div>
                     )}
-
-                    <div className="p-3 md:p-4 bg-primary/10 border border-primary/20 rounded-xl md:rounded-2xl min-h-[60px]">
-                      <p className="text-[10px] md:text-[11px] text-white/80 leading-relaxed italic font-medium">
-                        " {price.nexusVerdict || 'O Nexus está avaliando as sinapses do mercado para este ativo.'} "
-                      </p>
-                    </div>
                   </div>
                 ) : (
-                  <div className="bg-white/5 border border-white/10 rounded-xl md:rounded-2xl p-5 md:p-6 space-y-3 md:space-y-4">
-                    <div className="flex items-center justify-between text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-primary">
-                      <span>Fundamentos Neurais</span>
-                      <Activity className="h-3 w-3 md:h-4 md:w-4" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 md:gap-8">
-                      <div className="space-y-1">
-                        <span className="text-[7px] md:text-[8px] text-white/40 uppercase font-bold tracking-widest block">{isUSD ? '24h Change' : 'DY Anual'}</span>
-                        <span className={cn("font-bold text-xs md:text-sm", isUSD && isUp ? "text-emerald-400" : isUSD ? "text-rose-400" : "text-white")}>
-                          {isUSD ? `${price.change24h.toFixed(2)}%` : `${(price.dividendYield || 0).toFixed(2)}%`}
-                        </span>
-                      </div>
-                      <div className="space-y-1">
-                        <span className="text-[7px] md:text-[8px] text-white/40 uppercase font-bold tracking-widest block">Status</span>
-                        <span className="text-emerald-400 font-bold text-xs md:text-sm">{price.healthStatus || 'Estável'}</span>
-                      </div>
-                    </div>
+                  <div className="bg-white/5 border border-white/10 rounded-xl md:rounded-2xl p-4 flex items-center justify-between">
+                    <span className="text-[8px] md:text-[9px] text-white/40 font-bold uppercase">Saúde Neural</span>
+                    <Badge variant="outline" className="text-emerald-400 border-emerald-400/20 text-[8px]">{price.healthStatus || 'Estável'}</Badge>
                   </div>
                 )}
               </CardContent>
               
               <div className="p-5 md:p-6 pt-0 mt-auto">
                 <Button 
-                  onClick={() => onAnalyze?.(`Execute comando Nexus de Análise 360 para o ativo ${price.ticker}. Varredura Omnisciente obrigatória em Clube FII, Brapi e Web Intelligence.`)}
                   className="w-full bg-white/5 hover:bg-white/10 border-white/10 text-white font-bold text-[10px] md:text-xs h-10 md:h-12 rounded-lg md:rounded-xl group/btn"
                 >
-                  ANÁLISE 360°
+                  DETALHES E GRÁFICOS
                   <ChevronRight className="ml-2 h-3 w-3 md:h-4 md:w-4 group-hover/btn:translate-x-1 transition-transform" />
                 </Button>
               </div>
@@ -261,6 +226,13 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
           );
         })}
       </div>
+
+      <AssetDetailModal 
+        asset={selectedAsset} 
+        isOpen={!!selectedAsset} 
+        onClose={() => setSelectedAsset(null)} 
+        onAnalyze={onAnalyze}
+      />
     </div>
   );
 }
