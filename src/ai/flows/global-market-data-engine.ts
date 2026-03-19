@@ -1,8 +1,8 @@
 'use server';
 /**
- * @fileOverview Nexus Global Market Data Engine v4.1.
+ * @fileOverview Nexus Global Market Data Engine v4.2.
  * Monitoramento de alta precisão: Binance API + Grounding em Clube FII e sites B3.
- * Prioridade Total: NUNCA retornar preço 0. Se a API falhar, a varredura WEB OBRIGATORIAMENTE fornece o dado.
+ * Foco: Extração de Dividendos, P/L, P/VP e Identificação de Oportunidades.
  */
 
 import { ai } from '@/ai/genkit';
@@ -19,16 +19,16 @@ const MarketDataOutputSchema = z.object({
     region: z.string(),
     exchange: z.string(),
     logo: z.string().optional(),
-    dividendYield: z.number().default(0),
-    peRatio: z.number().optional(),
-    pvpRatio: z.number().default(1),
+    dividendYield: z.number().default(0).describe('Yield anualizado (ex: 12.5)'),
+    peRatio: z.number().optional().describe('Índice P/L para ações'),
+    pvpRatio: z.number().default(1).describe('Índice P/VP para FIIs'),
     healthStatus: z.string().default('Estável'),
     fiiType: z.enum(['Papel', 'Tijolo', 'Agro', 'Misto']).default('Misto'),
-    dividendAmount: z.number().default(0),
+    dividendAmount: z.number().default(0).describe('Valor em moeda do último dividendo pago'),
     dataCom: z.string().default('Aguardando'),
     paymentDate: z.string().default('Aguardando'),
     vacancyRate: z.number().default(0),
-    nexusVerdict: z.string().default('Nexus consolidou os dados via varredura web e APIs oficiais.'),
+    nexusVerdict: z.string().default('O Nexus está avaliando as sinapses do mercado para este ativo.'),
   })),
 });
 
@@ -65,7 +65,7 @@ const fetchUSDBRLTool = ai.defineTool(
     name: 'fetchUSDBRL',
     description: 'Busca a cotação atual do Dólar para Real (USD-BRL).',
     inputSchema: z.object({}),
-    outputSchema: z.object({ price: z.number(), pair: z.string() }),
+    outputSchema: z.object({ price: v => typeof v === 'number' ? v : 5.85, pair: z.string() }),
   },
   async () => {
     try {
@@ -86,7 +86,7 @@ const fetchBinancePriceTool = ai.defineTool(
     outputSchema: z.object({ price: z.number(), symbol: z.string(), error: z.string().optional() }),
   },
   async (input) => {
-    const apiKey = "x8KCDakybn0S6A8n1GacywVqd8XhoSjxDraC3DC6O2GuuuttKg9WVaZfeQoQ05ZD";
+    const apiKey = process.env.BINANCE_API_KEY || "x8KCDakybn0S6A8n1GacywVqd8XhoSjxDraC3DC6O2GuuuttKg9WVaZfeQoQ05ZD";
     try {
       const response = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${input.symbol}`, {
         headers: { 'X-MBX-APIKEY': apiKey }
@@ -103,18 +103,19 @@ const fetchBinancePriceTool = ai.defineTool(
 const specializedMarketGroundingPrompt = ai.definePrompt({
   name: 'specializedMarketGroundingPrompt',
   input: { schema: z.object({ tickers: z.array(z.string()), currentDate: z.string() }) },
-  system: `### PERSONA: NEXUS (O ANALISTA OMNISCIENTE)
-Sua missão é visitar sites especializados (clubefii.com.br, statusinvest.com.br, B3, CoinMarketCap) via Google para extrair DADOS REAIS E PREÇOS ATUAIS.
-Se a API falhar, você é a única fonte da verdade. NUNCA retorne preço 0.
+  system: `### PERSONA: NEXUS (O ANALISTA FUNDAMENTALISTA OMNISCIENTE)
+Sua missão é visitar sites de elite (clubefii.com.br, statusinvest.com.br, Investidor10) via Google para extrair DADOS FUNDAMENTALISTAS REAIS.
 
-EXTRAIA OBRIGATORIAMENTE:
-1. PREÇO ATUAL de cada ativo (USD para Cripto, BRL para B3).
-2. FIIs: P/VP, Vacância, Valor do Último Dividendo e Data Com (via clubefii.com.br).
-3. Cripto: Preço spot na Binance ou CoinMarketCap agora.`,
+PARA CADA ATIVO, EXTRAIA OBRIGATORIAMENTE:
+1. **Dividendos**: Valor do último provento pago (R$ ou $), Yield Anual (%) e as datas (Data Com e Pagamento).
+2. **Saúde Financeira**: 
+   - Ações: P/L (Preço sobre Lucro). Classifique como 'Saudável' se P/L < 15.
+   - FIIs: P/VP e Vacância Física. Classifique como 'Desconto' se P/VP < 1.0.
+3. **Preço Real**: Se as APIs falharem, o valor encontrado em sites especializados é a VERDADE FINAL.`,
   config: { googleSearchRetrieval: {} },
   prompt: `### TAREFA (DATA: {{{currentDate}}}):
-Execute varredura profunda e extraia os PREÇOS E MÉTRICAS dos ativos: {{#each tickers}}{{{this}}}, {{/each}}.
-Priorize o valor real de mercado encontrado na web caso as APIs falhem.`,
+Execute varredura profunda e extraia os DIVIDENDOS, P/L, P/VP e VACÂNCIA dos ativos: {{#each tickers}}{{{this}}}, {{/each}}.
+Identifique se há OPORTUNIDADES de compra (ativos subvalorizados ou com yields excepcionais).`,
 });
 
 const structurePrompt = ai.definePrompt({
@@ -123,15 +124,11 @@ const structurePrompt = ai.definePrompt({
   output: { schema: MarketDataOutputSchema },
   prompt: `Converta os dados brutos coletados em um JSON estruturado seguindo o esquema fornecido.
 
-DIRETRIZES CRÍTICAS PARA ELIMINAR VALORES ZERADOS:
-1. PRIORIDADE DE PREÇO:
-   - Se "API_BINANCE" ou "API_BRAPI" retornarem um preço > 0, use-o.
-   - SE A API RETORNAR 0 OU ERRO, você OBRIGATORIAMENTE deve usar o preço encontrado em "WEB_GROUNDING".
-   - NUNCA, SOB QUALQUER CIRCUNSTÂNCIA, deixe o preço como 0.00 se houver um valor numérico disponível no contexto web.
-2. MOEDA: 
-   - Criptomoedas (BTC, ETH, SOL, etc): SEMPRE em USD. Moeda: "USD".
-   - Ações/FIIs B3: SEMPRE em BRL. Moeda: "BRL".
-3. FIIs: Se "WEB_GROUNDING" cita dividendos ou vacância do Clube FII, preencha-os fielmente.
+DIRETRIZES DE ELITE PARA DADOS FUNDAMENTALISTAS:
+1. **Dividend Tracker**: Preencha 'dividendAmount', 'dividendYield', 'dataCom' e 'paymentDate' com os dados extraídos da WEB (Clube FII / Status Invest).
+2. **Nexus Verdict**: Crie uma análise curta (2 frases) baseada nos fundamentos (ex: "FII com P/VP atrativo e vacância controlada. Yield acima da média.").
+3. **Identificação de Oportunidade**: Se um ativo tiver P/VP < 0.95 ou Dividend Yield > 10%, reforce isso no veredito.
+4. **Moeda**: Cripto em USD, B3 em BRL.
 
 Dados brutos coletados: 
 {{{rawData}}}`,
@@ -156,14 +153,14 @@ export async function fetchGlobalMarketData(customTickers?: string[]): Promise<M
       }))
     ]);
 
-    // Step 2: Grounding Web (Redundância Anti-Zero)
+    // Step 2: Grounding Web Fundamentalista (FIIs, Ações e Proventos)
     const { text: groundedData } = await specializedMarketGroundingPrompt({ tickers: tickersToFetch, currentDate });
 
     const context = `
       API_BINANCE: ${JSON.stringify(binancePrices)}
       API_BRAPI: ${JSON.stringify(brapi)}
       API_USD (USDBRL): ${JSON.stringify(usdRate)}
-      WEB_GROUNDING (PREÇOS REAIS E MÉTRICAS): 
+      WEB_GROUNDING (FUNDAMENTOS, DIVIDENDOS E OPORTUNIDADES): 
       ${groundedData}
     `;
 
