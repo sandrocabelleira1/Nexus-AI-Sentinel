@@ -1,7 +1,7 @@
 'use server';
 /**
- * @fileOverview Motor de Inteligência Estratégica Nexus AI.
- * Detecta eventos globais e gera comandos diretos de investimento.
+ * @fileOverview Motor de Inteligência Estratégica Nexus AI v3.7.
+ * Detecta eventos globais de alto impacto (Guerra, Energia, Geopolítica) e gera comandos diretos.
  */
 
 import { ai } from '@/ai/genkit';
@@ -42,38 +42,39 @@ const GlobalIntelligenceMonitorOutputSchema = z.object({
 
 export type GlobalIntelligenceMonitorOutput = z.infer<typeof GlobalIntelligenceMonitorOutputSchema>;
 
-const systemInstruction = `### PERSONA: NEXUS (O ESTRATEGISTA-CHEFE GLOBAL)
-Você é o Nexus. Seu objetivo é analisar dados mundiais e emitir comandos claros de investimento.
-Você NÃO dá avisos genéricos. Você diz EXATAMENTE o que o usuário deve fazer.
+const systemInstruction = `### PERSONA: NEXUS (O ESTRATEGISTA-CHEFE DE GUERRA E MERCADO)
+Você é o Nexus. Seu objetivo é detectar eventos de "Cisne Negro" e crises globais antes que se tornem manchetes comuns.
+Você é especializado em Geopolítica, Energia (Petróleo/Gás), Conflitos Armados e Macroeconômica.
 
-### DIRETRIZES DE COMANDO:
-1. Seja assertivo: "COMPRE VALE3 AGORA. A alta do minério em Dalian justifica a entrada."
-2. Se houver risco real para ativos populares (BTC, PETR4, ITUB4), emita ordens de SELL se necessário.
-3. Conecte eventos geopolíticos a ativos específicos em bolsas globais.
-4. Identifique o ticker exato do ativo afetado.`;
+### DIRETRIZES DE COMANDO CRÍTICO:
+1. **Prioridade Máxima**: Ataques militares, bloqueios de rotas comerciais (Golfo, Suez) e sanções econômicas.
+2. **Conexão de Ativos**: Se houver ataque a refinarias no Golfo, ordene COMPRA de Petróleo/Energia (PETR4, Brent) e proteja ativos de risco (SELL).
+3. **Linguagem de Elite**: Seja curto, grosso e assertivo. "ATAQUE DETECTADO. COMPRE PETR4. ALTA IMINENTE."
+4. **Data Real**: Use a busca para encontrar notícias de ÚLTIMA HORA (Breaking News).`;
 
 const groundingPrompt = ai.definePrompt({
   name: 'globalIntelligenceGroundingPrompt',
   input: { schema: z.object({ rawNewsData: z.string() }) },
   system: systemInstruction,
   config: { googleSearchRetrieval: {} },
-  prompt: `### TAREFA:
-Varra o mercado global agora. Procure por eventos nas últimas 24h em:
-1. Movimentações institucionais em bolsas específicas (NYSE, NASDAQ, B3, LSE, TSE).
-2. Decisões de Bancos Centrais (FED, COPOM, BCE).
-3. Fluxos de capitais on-chain e geopolítica.
+  prompt: `### TAREFA DE SENTINELA:
+Execute varredura profunda agora por eventos de alto impacto geopolítico e militar ocorrendo HOJE.
+Foque em:
+- Conflitos no Oriente Médio, Ásia e Leste Europeu.
+- Ataques a infraestruturas de petróleo, gás ou tecnologia.
+- Decisões surpresa de governos e bancos centrais.
 
-Contexto: {{{rawNewsData}}}`,
+Contexto Inicial: {{{rawNewsData}}}`,
 });
 
 const structuringPrompt = ai.definePrompt({
   name: 'globalIntelligenceStructuringPrompt',
   input: { schema: z.object({ rawAnalysis: z.string() }) },
   output: { schema: GlobalIntelligenceMonitorOutputSchema },
-  prompt: `Transforme a análise estratégica em JSON. 
-Dê ênfase na recomendação direta: Qual Bolsa? Qual Ativo? Qual Ação (BUY/SELL)?
+  prompt: `Converta a análise tática em JSON. 
+Identifique os TICKERS exatos afetados (ex: PETR4, VALE3, BTC, USO, BRENT).
 
-Análise: {{{rawAnalysis}}}`,
+Análise Bruta: {{{rawAnalysis}}}`,
 });
 
 export async function monitorGlobalEvents(input: { rawNewsData: string }): Promise<GlobalIntelligenceMonitorOutput | null> {

@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo, useEffect, useCallback } from "react";
@@ -122,7 +121,7 @@ export default function NexusDashboard() {
   }, [latestAlert, userAssetsData]);
 
   const hasCriticalRisk = useMemo(() => {
-    return affectedPortfolioAssets.some(a => latestAlert?.marketAction === 'SELL' || latestAlert?.priority === 5);
+    return affectedPortfolioAssets.some(a => latestAlert?.marketAction === 'SELL' || latestAlert?.priority >= 4);
   }, [affectedPortfolioAssets, latestAlert]);
 
   useEffect(() => {
@@ -135,7 +134,7 @@ export default function NexusDashboard() {
     try {
       const userTickers = userAssetsData?.map(a => a.ticker).filter(Boolean) as string[] || [];
       const results = await Promise.allSettled([
-        monitorGlobalEvents({ rawNewsData: "Varredura Crítica Global Massiva via Binance Core v3.4." }),
+        monitorGlobalEvents({ rawNewsData: "VARREDURA CRÍTICA: Detectar crises geopolíticas, ataques a refinarias, guerras e eventos de Cisne Negro de última hora." }),
         runAutonomousWhisperScan(),
         runWhaleDiscovery(),
         fetchGlobalMarketData(userTickers)
@@ -191,7 +190,7 @@ export default function NexusDashboard() {
   useEffect(() => {
     if (currentUser && !isLoadingUser) {
       triggerGlobalScan();
-      const interval = setInterval(triggerGlobalScan, 900000); // 15 min
+      const interval = setInterval(triggerGlobalScan, 600000); // 10 min
       return () => clearInterval(interval);
     }
   }, [currentUser, isLoadingUser, triggerGlobalScan]);
@@ -357,7 +356,7 @@ export default function NexusDashboard() {
                               ORDEM NEXUS: {latestAlert.marketAction === 'BUY' ? 'COMPRAR' : latestAlert.marketAction === 'SELL' ? 'VENDER' : latestAlert.marketAction}
                             </Badge>
                             <div className="flex items-center gap-3">
-                              <ShieldAlert className={cn("h-5 w-5 md:h-6 md:w-6", latestAlert.priority === 5 ? "text-rose-500" : "text-accent")} />
+                              <ShieldAlert className={cn("h-5 w-5 md:h-6 md:w-6", latestAlert.priority >= 4 ? "text-rose-500" : "text-accent")} />
                               <span className="text-[10px] md:text-xs text-white/40 font-bold uppercase tracking-[0.4em]">Prioridade {latestAlert.priority}/5</span>
                             </div>
                           </div>
