@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { MarketPrice, GlobalIntelligenceAlert } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,7 @@ interface MarketExplorerProps {
 export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplorerProps) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<'all' | 'crypto' | 'stocks' | 'fiis'>('all');
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
 
   const filteredPrices = useMemo(() => {
     return prices.filter(p => {
@@ -40,6 +41,10 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
       return matchesSearch && matchesCategory;
     });
   }, [prices, search, filter]);
+
+  const handleImageError = (ticker: string) => {
+    setImageErrors(prev => ({ ...prev, [ticker]: true }));
+  };
 
   return (
     <div className="space-y-8 md:space-y-12 animate-in fade-in slide-in-from-bottom-5 duration-700">
@@ -51,7 +56,7 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
             </div>
             <h2 className="text-3xl md:text-5xl font-headline font-bold text-white tracking-tighter led-text-blue">Terminal Global Pro</h2>
           </div>
-          <p className="text-white/40 font-medium text-sm md:text-lg max-w-2xl leading-snug">Monitoramento Omnisciente v3.3: Binance Real-Time (USD) + B3 Brapi (BRL).</p>
+          <p className="text-white/40 font-medium text-sm md:text-lg max-w-2xl leading-snug">Monitoramento Omnisciente v4.3: Binance Real-Time (USD) + B3 Brapi (BRL).</p>
         </div>
 
         <div className="flex items-center gap-4 md:gap-6 bg-[#080D18]/90 border border-white/10 p-4 md:p-6 rounded-[1.5rem] md:rounded-[2rem] shadow-2xl w-fit">
@@ -106,6 +111,7 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
           const isBuySignal = isFii && (price.pvpRatio || 1) < 0.95 && (price.vacancyRate || 0) < 10;
           
           const isSyncing = isFii && (price.dividendAmount === undefined && price.dataCom === undefined);
+          const hasImageError = imageErrors[price.ticker];
           
           return (
             <Card key={price.ticker} className={cn(
@@ -121,10 +127,17 @@ export function MarketExplorer({ prices, latestAlert, onAnalyze }: MarketExplore
               <CardContent className="p-6 md:p-8 space-y-5 md:space-y-6 flex-1">
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-3 md:gap-4">
-                    {price.logo ? (
-                      <img src={price.logo} alt={price.ticker} className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-white p-1.5 md:p-2 border border-white/10" />
+                    {price.logo && !hasImageError ? (
+                      <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-white p-1.5 md:p-2 border border-white/10 overflow-hidden shrink-0">
+                        <img 
+                          src={price.logo} 
+                          alt={price.ticker} 
+                          className="w-full h-full object-contain"
+                          onError={() => handleImageError(price.ticker)}
+                        />
+                      </div>
                     ) : (
-                      <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 text-primary">
+                      <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 text-primary shrink-0">
                         {isFii ? <Building2 className="h-5 w-5 md:h-6 md:w-6" /> : isUSD ? <Coins className="h-5 w-5 md:h-6 md:w-6" /> : <TrendingUp className="h-5 w-5 md:h-6 md:w-6" />}
                       </div>
                     )}

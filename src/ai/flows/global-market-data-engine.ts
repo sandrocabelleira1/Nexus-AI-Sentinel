@@ -1,8 +1,8 @@
 'use server';
 /**
- * @fileOverview Nexus Global Market Data Engine v4.2.
+ * @fileOverview Nexus Global Market Data Engine v4.3.
  * Monitoramento de alta precisão: Binance API + Grounding em Clube FII e sites B3.
- * Foco: Extração de Dividendos, P/L, P/VP e Identificação de Oportunidades.
+ * Foco: Extração de Dividendos, P/L, P/VP, Logotipos e Identificação de Oportunidades.
  */
 
 import { ai } from '@/ai/genkit';
@@ -18,7 +18,7 @@ const MarketDataOutputSchema = z.object({
     category: z.enum(['crypto', 'stocks', 'fiis', 'index', 'currency']),
     region: z.string(),
     exchange: z.string(),
-    logo: z.string().optional(),
+    logo: z.string().optional().describe('URL direta do logotipo do ativo (ex: da Brapi ou sites oficiais)'),
     dividendYield: z.number().default(0).describe('Yield anualizado (ex: 12.5)'),
     peRatio: z.number().optional().describe('Índice P/L para ações'),
     pvpRatio: z.number().default(1).describe('Índice P/VP para FIIs'),
@@ -44,7 +44,7 @@ const DEFAULT_TICKERS = [
 const fetchBrapiDataTool = ai.defineTool(
   {
     name: 'fetchBrapiData',
-    description: 'Busca cotações na API Brapi para ativos B3 e US.',
+    description: 'Busca cotações e logotipos na API Brapi para ativos B3 e US.',
     inputSchema: z.object({ tickers: z.array(z.string()) }),
     outputSchema: z.any(),
   },
@@ -107,14 +107,15 @@ const specializedMarketGroundingPrompt = ai.definePrompt({
 Sua missão é visitar sites de elite (clubefii.com.br, statusinvest.com.br, Investidor10) via Google para extrair DADOS FUNDAMENTALISTAS REAIS.
 
 PARA CADA ATIVO, EXTRAIA OBRIGATORIAMENTE:
-1. **Dividendos**: Valor do último provento pago (R$ ou $), Yield Anual (%) e as datas (Data Com e Pagamento).
-2. **Saúde Financeira**: 
+1. **Logotipo**: Encontre a URL oficial do logotipo do ativo. Se estiver na API Brapi (campo logourl), use-a.
+2. **Dividendos**: Valor do último provento pago (R$ ou $), Yield Anual (%) e as datas (Data Com e Pagamento).
+3. **Saúde Financeira**: 
    - Ações: P/L (Preço sobre Lucro). Classifique como 'Saudável' se P/L < 15.
    - FIIs: P/VP e Vacância Física. Classifique como 'Desconto' se P/VP < 1.0.
-3. **Preço Real**: Se as APIs falharem, o valor encontrado em sites especializados é a VERDADE FINAL.`,
+4. **Preço Real**: Se as APIs falharem, o valor encontrado em sites especializados é a VERDADE FINAL.`,
   config: { googleSearchRetrieval: {} },
   prompt: `### TAREFA (DATA: {{{currentDate}}}):
-Execute varredura profunda e extraia os DIVIDENDOS, P/L, P/VP e VACÂNCIA dos ativos: {{#each tickers}}{{{this}}}, {{/each}}.
+Execute varredura profunda e extraia os LOGOTIPOS, DIVIDENDOS, P/L, P/VP e VACÂNCIA dos ativos: {{#each tickers}}{{{this}}}, {{/each}}.
 Identifique se há OPORTUNIDADES de compra (ativos subvalorizados ou com yields excepcionais).`,
 });
 
@@ -125,10 +126,11 @@ const structurePrompt = ai.definePrompt({
   prompt: `Converta os dados brutos coletados em um JSON estruturado seguindo o esquema fornecido.
 
 DIRETRIZES DE ELITE PARA DADOS FUNDAMENTALISTAS:
-1. **Dividend Tracker**: Preencha 'dividendAmount', 'dividendYield', 'dataCom' e 'paymentDate' com os dados extraídos da WEB (Clube FII / Status Invest).
-2. **Nexus Verdict**: Crie uma análise curta (2 frases) baseada nos fundamentos (ex: "FII com P/VP atrativo e vacância controlada. Yield acima da média.").
-3. **Identificação de Oportunidade**: Se um ativo tiver P/VP < 0.95 ou Dividend Yield > 10%, reforce isso no veredito.
-4. **Moeda**: Cripto em USD, B3 em BRL.
+1. **Logo Tracker**: Preencha o campo 'logo' com a URL de imagem encontrada (Brapi field 'logourl' ou web). Certifique-se de que a URL seja válida.
+2. **Dividend Tracker**: Preencha 'dividendAmount', 'dividendYield', 'dataCom' e 'paymentDate' com os dados extraídos da WEB (Clube FII / Status Invest).
+3. **Nexus Verdict**: Crie uma análise curta (2 frases) baseada nos fundamentos (ex: "FII com P/VP atrativo e vacância controlada. Yield acima da média.").
+4. **Identificação de Oportunidade**: Se um ativo tiver P/VP < 0.95 ou Dividend Yield > 10%, reforce isso no veredito.
+5. **Moeda**: Cripto em USD, B3 em BRL.
 
 Dados brutos coletados: 
 {{{rawData}}}`,
@@ -160,7 +162,7 @@ export async function fetchGlobalMarketData(customTickers?: string[]): Promise<M
       API_BINANCE: ${JSON.stringify(binancePrices)}
       API_BRAPI: ${JSON.stringify(brapi)}
       API_USD (USDBRL): ${JSON.stringify(usdRate)}
-      WEB_GROUNDING (FUNDAMENTOS, DIVIDENDOS E OPORTUNIDADES): 
+      WEB_GROUNDING (FUNDAMENTOS, LOGOTIPOS, DIVIDENDOS E OPORTUNIDADES): 
       ${groundedData}
     `;
 
