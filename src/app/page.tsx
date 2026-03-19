@@ -134,7 +134,7 @@ export default function NexusDashboard() {
     try {
       const userTickers = userAssetsData?.map(a => a.ticker).filter(Boolean) as string[] || [];
       const results = await Promise.allSettled([
-        monitorGlobalEvents({ context: "VARREDURA CRÍTICA OMNISCIENTE: Localizar crises geopolíticas, ataques a infraestruturas de energia e conflitos militares no Golfo e Oriente Médio ocorrendo AGORA." }),
+        monitorGlobalEvents({ context: "VARREDURA OMNISCIENTE TOTAL: Localizar notícias de ÚLTIMA HORA no Google News sobre greves (caminhoneiros, portos), ataques geopolíticos (Golfo Pérsico), medidas governamentais surpresa no Brasil e eventos de 'Cisne Negro' que impactam o mercado AGORA." }),
         runAutonomousWhisperScan(),
         runWhaleDiscovery(),
         fetchGlobalMarketData(userTickers)

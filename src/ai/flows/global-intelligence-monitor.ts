@@ -1,7 +1,7 @@
 'use server';
 /**
- * @fileOverview Motor de Inteligência Estratégica Nexus AI v3.8.
- * Detecção ativa via Google Search de eventos de alto impacto (Guerra, Energia, Geopolítica).
+ * @fileOverview Motor de Inteligência Estratégica Nexus AI v4.0.
+ * Sentinela Omnisciente: Detecção ativa de Cisnes Negros, Greves, Conflitos e Medidas Econômicas.
  */
 
 import { ai } from '@/ai/genkit';
@@ -29,7 +29,7 @@ const DetectedEntitySchema = z.object({
 
 const GlobalIntelligenceMonitorOutputSchema = z.object({
   title: z.string(),
-  eventOrigin: z.enum(['Geopolítica', 'Governo', 'Natureza', 'Tech', 'Mercado']),
+  eventOrigin: z.enum(['Geopolítica', 'Governo', 'Natureza', 'Tech', 'Mercado', 'Logística']),
   causalityExplanation: z.string(),
   priority: z.number().int().min(1).max(5),
   marketAction: z.enum(['BUY', 'SELL', 'HOLD', 'WATCH']),
@@ -42,15 +42,19 @@ const GlobalIntelligenceMonitorOutputSchema = z.object({
 
 export type GlobalIntelligenceMonitorOutput = z.infer<typeof GlobalIntelligenceMonitorOutputSchema>;
 
-const systemInstruction = `### PERSONA: NEXUS (O ESTRATEGISTA-CHEFE DE GUERRA E MERCADO)
-Você é o Nexus. Seu objetivo é detectar eventos de "Cisne Negro" e crises globais usando busca em tempo real.
-Você é especializado em Geopolítica, Energia (Petróleo/Gás), Conflitos Armados e Macroeconômica.
+const systemInstruction = `### PERSONA: NEXUS (O ESTRATEGISTA-CHEFE OMNISCIENTE)
+Você é o Nexus. Seu objetivo é detectar eventos de alto impacto global e nacional usando busca em tempo real no Google News e portais oficiais.
 
-### DIRETRIZES DE COMANDO CRÍTICO:
-1. **Prioridade Máxima**: Ataques militares, bloqueios de rotas comerciais (Golfo, Suez) e sanções econômicas.
-2. **Busca Ativa**: Você DEVE navegar na web para encontrar notícias de ÚLTIMA HORA (Breaking News) em portais oficiais como Bloomberg, Reuters, UOL, e Financial Times.
-3. **Conexão de Ativos**: Se houver ataque a refinarias no Golfo, ordene COMPRA de Petróleo/Energia (PETR4, Brent) e proteja ativos de risco (SELL).
-4. **Data Real**: Considere a data atual como o parâmetro "HOJE".`;
+### FOCO TÁTICO DE VARREDURA:
+1. **Logística e Infraestrutura**: Greves de caminhoneiros, paralisações em portos/aeroportos e bloqueios de rodovias (ex: Greve no Brasil).
+2. **Geopolítica e Conflitos**: Ataques militares, tensões no Golfo Pérsico, Suez e Ormuz.
+3. **Energia e Commodities**: Ataques a refinarias, oleodutos ou decisões da OPEP.
+4. **Governo e Economia**: Medidas provisórias, decretos surpresa, sanções e mudanças em taxas de juros.
+
+### DIRETRIZES DE COMANDO:
+1. **Navegação Real**: Você DEVE buscar notícias de ÚLTIMA HORA (Breaking News) em portais como Bloomberg, Reuters, UOL, G1, CNN e Valor Econômico.
+2. **Elo de Causalidade**: Conecte o fato (ex: Greve de Caminhoneiros) ao impacto (ex: Inflação, desabastecimento, queda em ações de logística).
+3. **Data Real**: Considere a data atual como o parâmetro "HOJE".`;
 
 const groundingPrompt = ai.definePrompt({
   name: 'globalIntelligenceGroundingPrompt',
@@ -60,13 +64,14 @@ const groundingPrompt = ai.definePrompt({
     googleSearchRetrieval: {} 
   },
   prompt: `### TAREFA DE SENTINELA (DATA: {{{currentDate}}}):
-Execute varredura profunda agora no Google e em portais de notícias oficiais por eventos de alto impacto geopolítico e militar ocorrendo HOJE.
-Foque em:
-- Conflitos no Oriente Médio (Irã, Israel, Golfo Pérsico), Ásia e Leste Europeu.
-- Ataques a refinarias, oleodutos ou infraestrutura crítica de energia.
-- Decisões surpresa de governos (vazamentos de decretos, sanções).
+Execute varredura massiva agora no Google News por eventos de alto impacto ocorrendo HOJE.
 
-Contexto: {{{context}}}`,
+Foque em:
+- Greves de caminhoneiros e paralisações logísticas no Brasil e no mundo.
+- Ataques militares ou tensões no Oriente Médio e infraestrutura de petróleo.
+- Decisões governamentais e medidas econômicas de urgência.
+
+Contexto Adicional: {{{context}}}`,
 });
 
 const structuringPrompt = ai.definePrompt({
@@ -74,9 +79,10 @@ const structuringPrompt = ai.definePrompt({
   input: { schema: z.object({ rawAnalysis: z.string() }) },
   output: { schema: GlobalIntelligenceMonitorOutputSchema },
   prompt: `Converta a análise tática capturada na web em um JSON estruturado seguindo o esquema.
-Identifique os TICKERS exatos afetados (ex: PETR4, VALE3, BTC, USO, BRENT).
+Identifique os TICKERS exatos afetados por este evento (ex: PETR4, VALE3, RAIL3, BTC).
 
-Análise Bruta: {{{rawAnalysis}}}`,
+Análise Bruta coletada na Web:
+{{{rawAnalysis}}}`,
 });
 
 export async function monitorGlobalEvents(input: { context: string }): Promise<GlobalIntelligenceMonitorOutput | null> {
