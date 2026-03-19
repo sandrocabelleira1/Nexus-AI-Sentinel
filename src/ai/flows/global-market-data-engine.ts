@@ -1,8 +1,8 @@
 'use server';
 /**
- * @fileOverview Nexus Global Market Data Engine v3.9.
+ * @fileOverview Nexus Global Market Data Engine v4.1.
  * Monitoramento de alta precisão: Binance API + Grounding em Clube FII e sites B3.
- * Busca ativa via web para dados que APIs não fornecem (Vacância, P/VP, etc).
+ * Prioridade Total: NUNCA retornar preço 0. Se a API falhar, a varredura WEB OBRIGATORIAMENTE fornece o dado.
  */
 
 import { ai } from '@/ai/genkit';
@@ -50,6 +50,7 @@ const fetchBrapiDataTool = ai.defineTool(
   },
   async (input) => {
     const apiKey = process.env.BRAPI_API_KEY;
+    if (!apiKey) return { error: "Sem chave Brapi" };
     try {
       const response = await fetch(`https://brapi.dev/api/quote/${input.tickers.join(',')}?token=${apiKey}&fundamentals=true`);
       return await response.json();
@@ -72,7 +73,7 @@ const fetchUSDBRLTool = ai.defineTool(
       const data = await response.json();
       return { price: parseFloat(data.USDBRL.bid), pair: "USD-BRL" };
     } catch (error) {
-      return { price: 5.80, pair: "USD-BRL" }; 
+      return { price: 5.85, pair: "USD-BRL" }; 
     }
   }
 );
@@ -80,8 +81,8 @@ const fetchUSDBRLTool = ai.defineTool(
 const fetchBinancePriceTool = ai.defineTool(
   {
     name: 'fetchBinancePrice',
-    description: 'Busca o preço atual de uma criptomoeda na Binance. Requer o par USDT (ex: BTCUSDT).',
-    inputSchema: z.object({ symbol: z.string().describe('O par de negociação, ex: BTCUSDT') }),
+    description: 'Busca o preço atual de uma criptomoeda na Binance.',
+    inputSchema: z.object({ symbol: z.string() }),
     outputSchema: z.object({ price: z.number(), symbol: z.string(), error: z.string().optional() }),
   },
   async (input) => {
@@ -94,7 +95,6 @@ const fetchBinancePriceTool = ai.defineTool(
       const data = await response.json();
       return { price: parseFloat(data.price), symbol: data.symbol };
     } catch (error) {
-      console.error(`Error fetching ${input.symbol} from Binance:`, error);
       return { error: "Erro Binance", price: 0, symbol: input.symbol };
     }
   }
@@ -104,14 +104,17 @@ const specializedMarketGroundingPrompt = ai.definePrompt({
   name: 'specializedMarketGroundingPrompt',
   input: { schema: z.object({ tickers: z.array(z.string()), currentDate: z.string() }) },
   system: `### PERSONA: NEXUS (O ANALISTA OMNISCIENTE)
-Sua missão é visitar sites especializados (clubefii.com.br, statusinvest.com.br, B3) via Google para extrair:
-1. Para FIIs: P/VP, Vacância, Valor do Último Dividendo e Data Com.
-2. Para Ações: Dividend Yield e Saúde Financeira.
-3. Para Cripto: Sentimento de mercado e notícias de última hora na Binance/CoinMarketCap.`,
+Sua missão é visitar sites especializados (clubefii.com.br, statusinvest.com.br, B3, CoinMarketCap) via Google para extrair DADOS REAIS E PREÇOS ATUAIS.
+Se a API falhar, você é a única fonte da verdade. NUNCA retorne preço 0.
+
+EXTRAIA OBRIGATORIAMENTE:
+1. PREÇO ATUAL de cada ativo (USD para Cripto, BRL para B3).
+2. FIIs: P/VP, Vacância, Valor do Último Dividendo e Data Com (via clubefii.com.br).
+3. Cripto: Preço spot na Binance ou CoinMarketCap agora.`,
   config: { googleSearchRetrieval: {} },
   prompt: `### TAREFA (DATA: {{{currentDate}}}):
-Execute varredura profunda para os ativos: {{#each tickers}}{{{this}}}, {{/each}}.
-Identifique as métricas de FIIs no clubefii.com.br. Tente encontrar os preços mais recentes de Cripto via busca web caso a API falhe.`,
+Execute varredura profunda e extraia os PREÇOS E MÉTRICAS dos ativos: {{#each tickers}}{{{this}}}, {{/each}}.
+Priorize o valor real de mercado encontrado na web caso as APIs falhem.`,
 });
 
 const structurePrompt = ai.definePrompt({
@@ -120,14 +123,15 @@ const structurePrompt = ai.definePrompt({
   output: { schema: MarketDataOutputSchema },
   prompt: `Converta os dados brutos coletados em um JSON estruturado seguindo o esquema fornecido.
 
-DIRETRIZES CRÍTICAS:
-1. PRIORIDADE DE PREÇO: SEMPRE use o preço vindo da "API_BINANCE" para criptomoedas e "API_BRAPI" para ações/FIIs. Nunca deixe o preço como 0 se houver valor nas APIs.
+DIRETRIZES CRÍTICAS PARA ELIMINAR VALORES ZERADOS:
+1. PRIORIDADE DE PREÇO:
+   - Se "API_BINANCE" ou "API_BRAPI" retornarem um preço > 0, use-o.
+   - SE A API RETORNAR 0 OU ERRO, você OBRIGATORIAMENTE deve usar o preço encontrado em "WEB_GROUNDING".
+   - NUNCA, SOB QUALQUER CIRCUNSTÂNCIA, deixe o preço como 0.00 se houver um valor numérico disponível no contexto web.
 2. MOEDA: 
    - Criptomoedas (BTC, ETH, SOL, etc): SEMPRE em USD. Moeda: "USD".
    - Ações/FIIs B3: SEMPRE em BRL. Moeda: "BRL".
-   - Ativo "USDBRL": OBRIGATÓRIO incluir na lista com a taxa vinda da "API_USD".
-3. METRICAS FII: Se "WEB_GROUNDING" contiver dados de Dividendos, Vacância ou P/VP do Clube FII, preencha-os.
-4. CATEGORIA: Classifique corretamente como 'crypto', 'stocks', 'fiis' ou 'currency'.
+3. FIIs: Se "WEB_GROUNDING" cita dividendos ou vacância do Clube FII, preencha-os fielmente.
 
 Dados brutos coletados: 
 {{{rawData}}}`,
@@ -142,25 +146,24 @@ export async function fetchGlobalMarketData(customTickers?: string[]): Promise<M
 
     const currentDate = new Date().toISOString();
     
-    // Step 1: APIs Oficiais (Rápido e Preciso)
+    // Step 1: APIs Oficiais
     const [brapi, usdRate, binancePrices] = await Promise.all([
       fetchBrapiDataTool({ tickers: tickersToFetch.filter(t => !t.match(cryptoRegex)) }),
       fetchUSDBRLTool({}),
       Promise.all(tickersToFetch.filter(t => t.match(cryptoRegex)).map(t => {
-        // Normaliza ticker para Binance (ex: BTC -> BTCUSDT)
         const symbol = t.includes('USDT') ? t : t + 'USDT';
         return fetchBinancePriceTool({ symbol });
       }))
     ]);
 
-    // Step 2: Grounding Neural (Profundo - FIIs e Notícias)
+    // Step 2: Grounding Web (Redundância Anti-Zero)
     const { text: groundedData } = await specializedMarketGroundingPrompt({ tickers: tickersToFetch, currentDate });
 
     const context = `
-      API_BINANCE (Preços em USD): ${JSON.stringify(binancePrices)}
-      API_BRAPI (B3/US Stocks): ${JSON.stringify(brapi)}
-      API_USD (Taxa USDBRL): ${JSON.stringify(usdRate)}
-      WEB_GROUNDING (Métricas Clube FII / Notícias): 
+      API_BINANCE: ${JSON.stringify(binancePrices)}
+      API_BRAPI: ${JSON.stringify(brapi)}
+      API_USD (USDBRL): ${JSON.stringify(usdRate)}
+      WEB_GROUNDING (PREÇOS REAIS E MÉTRICAS): 
       ${groundedData}
     `;
 
