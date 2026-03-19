@@ -1,8 +1,9 @@
+
 'use server';
 /**
- * @fileOverview Nexus Global Market Data Engine v3.3.
- * Monitoramento de alta precisão: Binance (Real USD) + Brapi (BRL).
- * Utiliza credenciais de API via variáveis de ambiente.
+ * @fileOverview Nexus Global Market Data Engine v3.4.
+ * Monitoramento de alta precisão: Binance API Oficial (USD) + Brapi (BRL).
+ * Utiliza credenciais de API via variáveis de ambiente para dados em tempo real.
  */
 
 import { ai } from '@/ai/genkit';
@@ -28,7 +29,7 @@ const MarketDataOutputSchema = z.object({
     dataCom: z.string().default('Aguardando'),
     paymentDate: z.string().default('Aguardando'),
     vacancyRate: z.number().default(0),
-    nexusVerdict: z.string().default('Nexus consolidou os dados de mercado em tempo real.'),
+    nexusVerdict: z.string().default('Nexus consolidou os dados de mercado em tempo real via Binance API.'),
   })),
 });
 
@@ -62,9 +63,9 @@ const fetchBrapiDataTool = ai.defineTool(
 const fetchBinancePriceTool = ai.defineTool(
   {
     name: 'fetchBinancePrice',
-    description: 'Busca o preço atual de criptomoedas na API da Binance (ex: BTCUSDT).',
-    inputSchema: z.object({ symbol: z.string().describe('O símbolo do par, ex: BTCUSDT') }),
-    outputSchema: z.object({ price: z.string(), symbol: z.string() }),
+    description: 'Busca o preço atual de uma criptomoeda na Binance. Requer o par USDT (ex: BTCUSDT).',
+    inputSchema: z.object({ symbol: z.string().describe('O par de negociação, ex: BTCUSDT, ETHUSDT') }),
+    outputSchema: z.object({ price: z.number(), symbol: z.string(), error: z.string().optional() }),
   },
   async (input) => {
     const apiKey = process.env.BINANCE_API_KEY;
@@ -73,9 +74,12 @@ const fetchBinancePriceTool = ai.defineTool(
         headers: apiKey ? { 'X-MBX-APIKEY': apiKey } : {}
       });
       const data = await response.json();
-      return { price: data.price, symbol: data.symbol };
+      if (data.price) {
+        return { price: parseFloat(data.price), symbol: data.symbol };
+      }
+      return { error: data.msg || "Símbolo não encontrado", price: 0, symbol: input.symbol };
     } catch (error) {
-      return { error: "Erro Binance" };
+      return { error: "Erro de conexão com a Binance", price: 0, symbol: input.symbol };
     }
   }
 );
@@ -84,22 +88,23 @@ const marketDataPrompt = ai.definePrompt({
   name: 'marketDataPrompt',
   tools: [fetchBrapiDataTool, fetchBinancePriceTool],
   input: { schema: z.object({ tickers: z.array(z.string()) }) },
-  system: `### PERSONA: SENTINELA OMNISCIENTE NEXUS v3.3
-Sua missão é extrair preços REAIS e ATUALIZADOS. 
+  system: `### PERSONA: SENTINELA OMNISCIENTE NEXUS v3.4 (BINANCE CORE)
+Sua missão é extrair preços REAIS, ATUALIZADOS e ABSOLUTOS. 
 
-### PROTOCOLO CRIPTO (BINANCE):
-1. Para cada criptomoeda (BTC, ETH, SOL, XRP, DOT, BNB, etc), use a ferramenta 'fetchBinancePrice' com o par USDT (ex: BTCUSDT).
-2. **MANTENHA O PREÇO EM DÓLAR (USD)**. Não converta para BRL. Use o valor direto da Binance.
-3. Se o ativo for Cripto ou Stock US, a moeda (currency) deve ser "USD".
+### PROTOCOLO CRIPTO (BINANCE API):
+1. Use obrigatoriamente a ferramenta 'fetchBinancePrice' para cada criptomoeda solicitada.
+2. Importante: Você deve passar o par USDT (ex: para BTC use BTCUSDT, para ETH use ETHUSDT, para SOL use SOLUSDT).
+3. **MANTENHA O PREÇO EM DÓLAR (USD)**. Não tente converter para BRL. O valor retornado pela Binance é o preço real em USD.
+4. Defina 'currency' como "USD" para todos os ativos extraídos da Binance.
 
 ### PROTOCOLO B3 (BRAPI):
 1. Use 'fetchBrapiData' para ações brasileiras e FIIs.
-2. A moeda (currency) para ativos B3 deve ser "BRL".
+2. Defina 'currency' como "BRL" para ativos B3.
 
-### OUTPUT:
-Retorne a análise técnica detalhada para TODOS os tickers solicitados, garantindo que o campo 'currency' esteja correto.`,
-  prompt: `Execute varredura profunda para os ativos: {{#each tickers}}{{{this}}}, {{/each}}. 
-Mantenha preços de Cripto em USD e B3 em BRL.`,
+### REQUISITO DE SAÍDA:
+Gere uma análise técnica para todos os tickers. Se o preço for da Binance, use o valor exato retornado em USD.`,
+  prompt: `Execute varredura profunda e extraia os preços em tempo real para: {{#each tickers}}{{{this}}}, {{/each}}. 
+Priorize dados da Binance API para Cripto e mantenha em USD.`,
 });
 
 const structurePrompt = ai.definePrompt({
@@ -107,11 +112,11 @@ const structurePrompt = ai.definePrompt({
   input: { schema: z.object({ rawData: z.string() }) },
   output: { schema: MarketDataOutputSchema },
   prompt: `Converta os dados brutos de mercado para o formato JSON estruturado do Nexus. 
-Garanta que 'price' seja um number.
-Ativos Binance/US -> currency: "USD"
+Garanta que 'price' seja o number exato extraído das ferramentas.
+Ativos da Binance/US -> currency: "USD"
 Ativos B3 -> currency: "BRL"
 
-Dados: {{{rawData}}}`,
+Dados brutos: {{{rawData}}}`,
 });
 
 export async function fetchGlobalMarketData(customTickers?: string[]): Promise<MarketDataOutput | null> {

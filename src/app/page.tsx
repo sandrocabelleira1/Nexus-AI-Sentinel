@@ -135,7 +135,7 @@ export default function NexusDashboard() {
     try {
       const userTickers = userAssetsData?.map(a => a.ticker).filter(Boolean) as string[] || [];
       const results = await Promise.allSettled([
-        monitorGlobalEvents({ rawNewsData: "Varredura Crítica Global Massiva de FIIs v3.1, Ações e Cripto." }),
+        monitorGlobalEvents({ rawNewsData: "Varredura Crítica Global Massiva via Binance Core v3.4." }),
         runAutonomousWhisperScan(),
         runWhaleDiscovery(),
         fetchGlobalMarketData(userTickers)
@@ -283,7 +283,7 @@ export default function NexusDashboard() {
       <main className="max-w-[1800px] mx-auto px-4 md:px-8 py-6 md:py-10 space-y-8 md:space-y-10 relative z-10">
         {activeTab === 'dashboard' && (
           <div className="flex flex-col lg:grid lg:grid-cols-12 gap-8 items-start">
-            {/* Center Panel - Main Intelligence (Top on mobile) */}
+            {/* Center Panel - Intelligence Command */}
             <div className="w-full lg:col-span-6 order-1 lg:order-2">
               <div className={cn(
                 "bg-[#080D18]/95 border rounded-[2rem] md:rounded-[3rem] min-h-[500px] md:h-[850px] relative overflow-hidden flex flex-col shadow-2xl transition-all group",
@@ -443,7 +443,7 @@ export default function NexusDashboard() {
               </div>
             </div>
 
-            {/* Side Panels - Strategic Indicators (Stacked below on mobile) */}
+            {/* Side Panels - Strategic Indicators */}
             <div className="w-full lg:col-span-3 flex flex-col gap-8 order-2 lg:order-1">
               <div className="h-[350px] md:h-[400px]">
                 <WorldMood latestAlert={latestAlert} latestWhisper={latestWhisper} onAnalyze={handleDeepAnalysis} />
