@@ -38,7 +38,7 @@ const DEFAULT_TICKERS = [
   "HGLG11", "MXRF11", "XPLG11", "KNRI11", "VISC11", "XPML11",
   "PETR4", "VALE3", "ITUB4", "BBAS3", "WEGE3",
   "AAPL", "MSFT", "NVDA",
-  "BTC", "ETH", "SOL", "BNB", "XRP", "DOT"
+  "BTC", "ETH", "SOL", "BNB", "XRP", "DOT", "ADA", "LINK"
 ];
 
 const fetchBrapiDataTool = ai.defineTool(
@@ -90,9 +90,11 @@ const fetchBinancePriceTool = ai.defineTool(
       const response = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${input.symbol}`, {
         headers: { 'X-MBX-APIKEY': apiKey }
       });
+      if (!response.ok) throw new Error("Binance API error");
       const data = await response.json();
       return { price: parseFloat(data.price), symbol: data.symbol };
     } catch (error) {
+      console.error(`Error fetching ${input.symbol} from Binance:`, error);
       return { error: "Erro Binance", price: 0, symbol: input.symbol };
     }
   }
@@ -109,44 +111,57 @@ Sua missão é visitar sites especializados (clubefii.com.br, statusinvest.com.b
   config: { googleSearchRetrieval: {} },
   prompt: `### TAREFA (DATA: {{{currentDate}}}):
 Execute varredura profunda para os ativos: {{#each tickers}}{{{this}}}, {{/each}}.
-Identifique as métricas de FIIs no clubefii.com.br. Extraia o preço em Dólar para Criptos via web se houver dúvida.`,
+Identifique as métricas de FIIs no clubefii.com.br. Tente encontrar os preços mais recentes de Cripto via busca web caso a API falhe.`,
 });
 
 const structurePrompt = ai.definePrompt({
   name: 'marketStructurePrompt',
   input: { schema: z.object({ rawData: z.string() }) },
   output: { schema: MarketDataOutputSchema },
-  prompt: `Converta para JSON estruturado. 
-- Ativos Cripto: SEMPRE em USD. Moeda: "USD".
-- Ativos B3: SEMPRE em BRL. Moeda: "BRL".
-- USDBRL: OBRIGATÓRIO estar na lista.
+  prompt: `Converta os dados brutos coletados em um JSON estruturado seguindo o esquema fornecido.
 
-Dados brutos coletados: {{{rawData}}}`,
+DIRETRIZES CRÍTICAS:
+1. PRIORIDADE DE PREÇO: SEMPRE use o preço vindo da "API_BINANCE" para criptomoedas e "API_BRAPI" para ações/FIIs. Nunca deixe o preço como 0 se houver valor nas APIs.
+2. MOEDA: 
+   - Criptomoedas (BTC, ETH, SOL, etc): SEMPRE em USD. Moeda: "USD".
+   - Ações/FIIs B3: SEMPRE em BRL. Moeda: "BRL".
+   - Ativo "USDBRL": OBRIGATÓRIO incluir na lista com a taxa vinda da "API_USD".
+3. METRICAS FII: Se "WEB_GROUNDING" contiver dados de Dividendos, Vacância ou P/VP do Clube FII, preencha-os.
+4. CATEGORIA: Classifique corretamente como 'crypto', 'stocks', 'fiis' ou 'currency'.
+
+Dados brutos coletados: 
+{{{rawData}}}`,
 });
 
 export async function fetchGlobalMarketData(customTickers?: string[]): Promise<MarketDataOutput | null> {
   try {
+    const cryptoRegex = /BTC|ETH|SOL|BNB|XRP|DOT|ADA|LINK|USDT|USDC/;
     const tickersToFetch = customTickers && customTickers.length > 0 
       ? [...new Set([...DEFAULT_TICKERS, ...customTickers])]
       : DEFAULT_TICKERS;
 
     const currentDate = new Date().toISOString();
     
-    // Step 1: APIs Oficiais (Rápido)
+    // Step 1: APIs Oficiais (Rápido e Preciso)
     const [brapi, usdRate, binancePrices] = await Promise.all([
-      fetchBrapiDataTool({ tickers: tickersToFetch.filter(t => !t.match(/BTC|ETH|SOL|BNB|XRP|DOT/)) }),
+      fetchBrapiDataTool({ tickers: tickersToFetch.filter(t => !t.match(cryptoRegex)) }),
       fetchUSDBRLTool({}),
-      Promise.all(tickersToFetch.filter(t => t.match(/BTC|ETH|SOL|BNB|XRP|DOT/)).map(t => fetchBinancePriceTool({ symbol: t + 'USDT' })))
+      Promise.all(tickersToFetch.filter(t => t.match(cryptoRegex)).map(t => {
+        // Normaliza ticker para Binance (ex: BTC -> BTCUSDT)
+        const symbol = t.includes('USDT') ? t : t + 'USDT';
+        return fetchBinancePriceTool({ symbol });
+      }))
     ]);
 
     // Step 2: Grounding Neural (Profundo - FIIs e Notícias)
     const { text: groundedData } = await specializedMarketGroundingPrompt({ tickers: tickersToFetch, currentDate });
 
     const context = `
-      API_BRAPI: ${JSON.stringify(brapi)}
-      API_USD: ${JSON.stringify(usdRate)}
-      API_BINANCE: ${JSON.stringify(binancePrices)}
-      WEB_GROUNDING: ${groundedData}
+      API_BINANCE (Preços em USD): ${JSON.stringify(binancePrices)}
+      API_BRAPI (B3/US Stocks): ${JSON.stringify(brapi)}
+      API_USD (Taxa USDBRL): ${JSON.stringify(usdRate)}
+      WEB_GROUNDING (Métricas Clube FII / Notícias): 
+      ${groundedData}
     `;
 
     const { output } = await structurePrompt({ rawData: context });
