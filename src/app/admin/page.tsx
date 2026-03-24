@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useMemo } from "react";
@@ -186,7 +185,7 @@ export default function AdminDashboard() {
                       <TableRow key={u.id} className="border-white/5 hover:bg-white/5 transition-colors">
                         <TableCell>
                           <div className="flex flex-col">
-                            <span className="font-bold text-white text-base">{u.displayName}</span>
+                            <span className="font-bold text-white text-base">{u.displayName || "Sem Nome"}</span>
                             <span className="text-[9px] text-white/30 font-mono tracking-tighter">{u.id}</span>
                           </div>
                         </TableCell>
@@ -196,23 +195,23 @@ export default function AdminDashboard() {
                               <Mail className="h-3.5 w-3.5 text-primary" /> {u.email}
                             </div>
                             <div className="flex items-center gap-2 text-xs text-white/70">
-                              <Phone className="h-3.5 w-3.5 text-emerald-500" /> {u.whatsapp}
+                              <Phone className="h-3.5 w-3.5 text-emerald-500" /> {u.whatsapp || "N/A"}
                             </div>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-wrap gap-2">
                             <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px] font-bold">
-                              {u.age} ANOS
+                              {u.age ? `${u.age} ANOS` : 'N/A'}
                             </Badge>
                             <Badge variant="outline" className="bg-white/5 text-white/50 border-white/10 text-[10px] font-bold">
-                              {u.preferredDisplayMode?.toUpperCase()}
+                              {u.preferredDisplayMode?.toUpperCase() || 'ESSENTIAL'}
                             </Badge>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2 text-xs text-white/60 max-w-[250px] leading-relaxed">
-                            <MapPin className="h-3.5 w-3.5 text-accent shrink-0" /> {u.address}
+                            <MapPin className="h-3.5 w-3.5 text-accent shrink-0" /> {u.address || "Sem Endereço"}
                           </div>
                         </TableCell>
                         <TableCell className="text-right">

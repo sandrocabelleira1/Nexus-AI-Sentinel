@@ -5,18 +5,22 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   UserCredential,
+  updateProfile,
 } from 'firebase/auth';
 
 /** Initiate anonymous sign-in (non-blocking). */
 export function initiateAnonymousSignIn(authInstance: Auth): Promise<UserCredential> {
-  // Retornamos a promise para que o chamador possa tratar erros, 
-  // mas mantemos a recomendação de não usar 'await' no fluxo principal da UI se desejado.
   return signInAnonymously(authInstance);
 }
 
 /** Initiate email/password sign-up (non-blocking). */
-export function initiateEmailSignUp(authInstance: Auth, email: string, password: string): Promise<UserCredential> {
-  return createUserWithEmailAndPassword(authInstance, email, password);
+export function initiateEmailSignUp(authInstance: Auth, email: string, password: string, displayName?: string): Promise<UserCredential> {
+  return createUserWithEmailAndPassword(authInstance, email, password).then(async (credential) => {
+    if (displayName) {
+      await updateProfile(credential.user, { displayName });
+    }
+    return credential;
+  });
 }
 
 /** Initiate email/password sign-in (non-blocking). */

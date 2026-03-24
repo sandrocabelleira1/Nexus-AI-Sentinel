@@ -83,17 +83,22 @@ export default function NexusDashboard() {
   }, [firestore, currentUser]);
   const { data: adminRole } = useDoc(adminCheckRef);
 
-  // Sincronização automática do perfil do usuário
+  // Sincronização automática do perfil do usuário - Evita sobrescrever o nome escolhido
   useEffect(() => {
     if (currentUser && firestore) {
       const userRef = doc(firestore, "users", currentUser.uid);
-      setDocumentNonBlocking(userRef, {
+      const syncData: any = {
         id: currentUser.uid,
         email: currentUser.email,
-        displayName: currentUser.displayName || "Estrategista Nexus",
-        preferredDisplayMode: "Essential",
         updatedAt: new Date().toISOString()
-      }, { merge: true });
+      };
+      
+      // Apenas atualiza o nome se ele estiver presente no Auth e for diferente do padrão
+      if (currentUser.displayName && currentUser.displayName !== "Estrategista Nexus") {
+        syncData.displayName = currentUser.displayName;
+      }
+
+      setDocumentNonBlocking(userRef, syncData, { merge: true });
     }
   }, [currentUser, firestore]);
 

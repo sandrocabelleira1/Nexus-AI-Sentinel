@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useEffect } from "react";
@@ -39,7 +38,7 @@ export default function RegisterPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    initiateEmailSignUp(auth, email, password)
+    initiateEmailSignUp(auth, email, password, displayName)
       .then((userCredential) => {
         const newUser = userCredential.user;
         if (firestore) {
