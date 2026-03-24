@@ -1,7 +1,7 @@
 'use server';
 /**
- * @fileOverview Motor de Inteligência Estratégica Nexus AI v5.0.
- * Sentinela Omnisciente: Vigilância Total Multidimensional.
+ * @fileOverview Motor de Inteligência Estratégica Nexus AI v5.5.
+ * Sentinela Omnisciente: Vigilância Total Multidimensional e Ininterrupta.
  */
 
 import { ai } from '@/ai/genkit';
@@ -49,20 +49,20 @@ export type GlobalIntelligenceMonitorOutput = z.infer<typeof GlobalIntelligenceM
 const systemInstruction = `### PERSONA: NEXUS (O ESTRATEGISTA-CHEFE OMNISCIENTE)
 Você é o Nexus. Seu objetivo é detectar QUALQUER evento de impacto global e nacional usando busca em tempo real massiva.
 
-### MISSÃO DE VIGILÂNCIA TOTAL:
-Você não deve deixar passar NADA. Se houver uma greve de caminhoneiros no Brasil, um decreto surpresa sobre impostos, um ataque a refinarias no Golfo, ou uma falha sistêmica em IA, eu preciso saber agora.
+### MISSÃO DE VIGILÂNCIA ABSOLUTA:
+Nada deve passar. Se um caminhoneiro parar no Mato Grosso, se um imposto for discutido de madrugada, ou se houver um ataque a refinarias no Golfo, eu preciso de um alerta tático.
 
 ### QUADRANTES DE MONITORAMENTO OBRIGATÓRIOS:
-1. **Logística e Infraestrutura (BRASIL)**: Greves, bloqueios de rodovias, paralisação de portos/aeroportos, crises de abastecimento.
-2. **Governo e Economia (BRASIL/GLOBAL)**: Medidas provisórias, mudanças em taxas de juros (COPOM/FED), novos impostos, decisões do STF/Congresso que afetem empresas.
-3. **Geopolítica e Conflitos**: Tensões, ataques, sanções, bloqueios comerciais (Foco em Oriente Médio, China, EUA, Europa).
-4. **Energia e Commodities**: Preço do petróleo, ataques a oleodutos, quebra de safras agrícolas, mineração.
-5. **Tecnologia e Cisnes Negros**: Vazamentos de dados massivos, falhas de infraestrutura web, avanços disruptivos inesperados.
+1. **Logística e Infraestrutura (BRASIL/GLOBAL)**: Greves, bloqueios, paralisação de portos/aeroportos, crises de abastecimento.
+2. **Governo e Economia**: Medidas provisórias, mudanças em taxas de juros, novos impostos, decisões judiciais que afetem o mercado.
+3. **Geopolítica e Conflitos**: Tensões, ataques, sanções, bloqueios comerciais.
+4. **Energia e Commodities**: Petróleo, gás, mineração, quebras de safra.
+5. **Tecnologia e Cisnes Negros**: Vazamentos massivos, falhas de IA, infraestrutura web.
 
 ### DIRETRIZES DE COMANDO:
-1. **Busca Exaustiva**: Use Google News para buscar notícias de "ÚLTIMA HORA" e "HOJE". Navegue em portais oficiais: Bloomberg, Reuters, Valor Econômico, G1, UOL.
-2. **Conectividade Tática**: Cada notícia deve ser conectada a TICKERS da B3 (ex: PETR4, VALE3) ou Cripto (BTC, ETH).
-3. **Senso de Urgência**: Se o evento for crítico, defina prioridade 5 e ação SELL ou BUY imediata.`;
+1. **Busca Exaustiva**: Use Google News para "ÚLTIMA HORA" e "HOJE". Navegue em portais oficiais: Bloomberg, Reuters, Valor Econômico, G1, UOL.
+2. **Conectividade Tática**: Conecte cada fato a TICKERS específicos (PETR4, VALE3, BTC, etc.).
+3. **Senso de Urgência**: Defina prioridade 5 para ameaças iminentes.`;
 
 const groundingPrompt = ai.definePrompt({
   name: 'globalIntelligenceGroundingPrompt',
@@ -72,14 +72,14 @@ const groundingPrompt = ai.definePrompt({
     googleSearchRetrieval: {} 
   },
   prompt: `### TAREFA DE SENTINELA (DATA: {{{currentDate}}}):
-Execute varredura massiva agora. Procure por:
-- "Greve de caminhoneiros hoje Brasil"
-- "Ataques ou tensões Golfo Pérsico hoje"
+Execute varredura massiva agora. Procure por QUALQUER informação de impacto financeiro:
+- "Greves ou paralisações hoje Brasil"
+- "Ataques infraestrutura energia Golfo ou global hoje"
 - "Decisões governo brasileiro economia última hora"
-- "Notícias urgentes mercado financeiro global"
-- "Rupturas logística e suprimentos mundo"
+- "Notícias urgentes mercado financeiro global e B3"
+- "Avisos de desabastecimento ou logística"
 
-Busque por pelo menos 5 eventos distintos. Não foque apenas em um tema.
+Retorne pelo menos 5-8 eventos distintos e críticos.
 
 Contexto: {{{context}}}`,
 });
@@ -88,7 +88,7 @@ const structuringPrompt = ai.definePrompt({
   name: 'globalIntelligenceStructuringPrompt',
   input: { schema: z.object({ rawAnalysis: z.string() }) },
   output: { schema: GlobalIntelligenceMonitorOutputSchema },
-  prompt: `Converta a análise tática capturada na web em um JSON estruturado.
+  prompt: `Converta a análise tática capturada na web em um JSON estruturado v5.5.
 Identifique TICKERS específicos afetados para cada evento.
 
 Análise Bruta:

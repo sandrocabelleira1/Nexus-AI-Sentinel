@@ -1,8 +1,8 @@
 'use server';
 /**
- * @fileOverview Nexus Global Market Data Engine v5.1.
+ * @fileOverview Nexus Global Market Data Engine v5.5.
  * Monitoramento de alta precisão + Geração de Séries Temporais para Gráficos e Candles.
- * Busca ativa de dividendos e múltiplos via Web Grounding.
+ * Busca ativa de dividendos e múltiplos via Web Grounding Hardened.
  */
 
 import { ai } from '@/ai/genkit';
@@ -94,11 +94,8 @@ const fetchBinancePriceTool = ai.defineTool(
     outputSchema: z.object({ price: z.number(), symbol: z.string() }),
   },
   async (input) => {
-    const apiKey = "x8KCDakybn0S6A8n1GacywVqd8XhoSjxDraC3DC6O2GuuuttKg9WVaZfeQoQ05ZD";
     try {
-      const response = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${input.symbol}`, {
-        headers: { 'X-MBX-APIKEY': apiKey }
-      });
+      const response = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${input.symbol}`);
       const data = await response.json();
       return { price: parseFloat(data.price), symbol: data.symbol };
     } catch (error) {
@@ -111,24 +108,28 @@ const specializedMarketGroundingPrompt = ai.definePrompt({
   name: 'specializedMarketGroundingPrompt',
   input: { schema: z.object({ tickers: z.array(z.string()), currentDate: z.string() }) },
   system: `### PERSONA: NEXUS (ANALISTA DE ELITE)
-Sua missão é extrair DADOS FUNDAMENTALISTAS atualizados (Clube FII, Status Invest, Investidor10) e gerar a telemetria de flutuação dos ativos.
-Navegue ativamente para encontrar Dividendos, Data Com, P/VP e Vacância.`,
+Sua missão é extrair PREÇOS E DADOS FUNDAMENTALISTAS atualizados (Clube FII, Status Invest, Investidor10, CoinMarketCap).
+Navegue ativamente para encontrar Dividendos, Data Com, P/VP e Vacância.
+
+### REGRAS DE PREÇO:
+NÃO RETORNE PREÇO 0. Se a API falhar, use o preço que encontrar nos sites de cotação agora.
+Criptos estão em USD. B3 está em BRL.`,
   config: { googleSearchRetrieval: {} },
   prompt: `### TAREFA (DATA: {{{currentDate}}}):
 Extraia dividendos recentes, P/L, P/VP e vacância para: {{#each tickers}}{{{this}}}, {{/each}}.
-Gere também uma série temporal realista (sparkline de 24 pontos e candles de 15 pontos) para cada ativo baseada na volatilidade real e preço atual.
-NÃO RETORNE PREÇOS COMO 0. Se não encontrar, use a estimativa tática baseada no contexto de mercado.`,
+Capture o PREÇO ATUAL real de cada um via busca web.
+Gere também uma série temporal realista baseada no preço capturado.`,
 });
 
 const structurePrompt = ai.definePrompt({
   name: 'marketStructurePrompt',
   input: { schema: z.object({ rawData: z.string() }) },
   output: { schema: MarketDataOutputSchema },
-  prompt: `Converta os dados brutos em JSON estruturado v5.1. 
+  prompt: `Converta os dados brutos em JSON estruturado v5.5. 
   
   DIRETRIZES TÁTICAS:
-  1. **Telemetria**: 'sparkline' deve ter 24 números (evite linhas retas, simule volatilidade). 'candles' deve ter 15 objetos com open/high/low/close realistas.
-  2. **Fundamentos**: Preencha 'pvpRatio', 'dividendAmount', 'vacancyRate', 'dataCom' e 'paymentDate' baseados nos sites especializados (Clube FII/Status Invest).
+  1. **Preço Crítico**: Se 'price' for 0 em uma API, use obrigatoriamente o preço do Web Grounding. NUNCA exiba 0.
+  2. **Fundamentos**: Preencha 'pvpRatio', 'dividendAmount', 'vacancyRate' baseados nos sites especializados.
   3. **Veredito**: Crie uma análise curta (2 frases) sobre o custo-benefício atual do ativo.
   
   Dados Brutos Capturados: {{{rawData}}}`,
@@ -155,7 +156,7 @@ export async function fetchGlobalMarketData(customTickers?: string[]): Promise<M
       API_BINANCE: ${JSON.stringify(binancePrices)}
       API_BRAPI: ${JSON.stringify(brapi)}
       API_USD: ${JSON.stringify(usdRate)}
-      WEB_GROUNDING_FUNDAMENTALS: ${groundedData}
+      WEB_GROUNDING_DATA: ${groundedData}
     `;
 
     const { output } = await structurePrompt({ rawData: context });
