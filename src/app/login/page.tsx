@@ -1,27 +1,45 @@
 "use client"
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Cpu, Loader2, ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { useAuth, initiateEmailSignIn } from "@/firebase";
+import { useAuth, initiateEmailSignIn, useUser } from "@/firebase";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const auth = useAuth();
+  const { user } = useUser();
   const router = useRouter();
+  const { toast } = useToast();
+
+  // Redireciona se o usuário já estiver logado
+  useEffect(() => {
+    if (user) {
+      router.push("/");
+    }
+  }, [user, router]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    initiateEmailSignIn(auth, email, password);
-    // O redirecionamento é tratado pelo AuthGuard ou useEffect no dashboard
+    
+    initiateEmailSignIn(auth, email, password)
+      .catch((error: any) => {
+        setIsLoading(false);
+        toast({
+          variant: "destructive",
+          title: "Falha na Autenticação",
+          description: error.message || "E-mail ou senha incorretos.",
+        });
+      });
   };
 
   return (
@@ -53,6 +71,7 @@ export default function LoginPage() {
                   className="bg-white/5 border-white/10 h-12 rounded-xl" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
               <div className="space-y-2">
@@ -63,6 +82,7 @@ export default function LoginPage() {
                   className="bg-white/5 border-white/10 h-12 rounded-xl" 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
             </CardContent>

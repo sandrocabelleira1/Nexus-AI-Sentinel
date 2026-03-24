@@ -1,15 +1,16 @@
 "use client"
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Cpu, Loader2, UserPlus } from "lucide-react";
 import Link from "next/link";
-import { useAuth, initiateEmailSignUp, useFirestore, setDocumentNonBlocking } from "@/firebase";
+import { useAuth, initiateEmailSignUp, useUser, useFirestore, setDocumentNonBlocking } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { doc } from "firebase/firestore";
+import { useToast } from "@/hooks/use-toast";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
@@ -17,16 +18,45 @@ export default function RegisterPage() {
   const [displayName, setDisplayName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const auth = useAuth();
+  const { user } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
+  const { toast } = useToast();
+
+  // Redireciona se o usuário já estiver logado
+  useEffect(() => {
+    if (user) {
+      router.push("/");
+    }
+  }, [user, router]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    initiateEmailSignUp(auth, email, password);
-    // Nota: O perfil do usuário é criado no Firestore via useEffect ou após o login bem sucedido
-    // Mas aqui vamos disparar um setDoc logo após a criação se possível. 
-    // Em um sistema real, usaríamos Cloud Functions, mas aqui faremos no redirect.
+
+    initiateEmailSignUp(auth, email, password)
+      .then((userCredential) => {
+        const newUser = userCredential.user;
+        if (firestore) {
+          const userRef = doc(firestore, "users", newUser.uid);
+          setDocumentNonBlocking(userRef, {
+            id: newUser.uid,
+            email: newUser.email,
+            displayName: displayName || "Estrategista Nexus",
+            preferredDisplayMode: "Essential",
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }, { merge: true });
+        }
+      })
+      .catch((error: any) => {
+        setIsLoading(false);
+        toast({
+          variant: "destructive",
+          title: "Erro no Protocolo",
+          description: error.message || "Falha ao criar conta. Verifique os dados.",
+        });
+      });
   };
 
   return (
@@ -57,6 +87,7 @@ export default function RegisterPage() {
                   className="bg-white/5 border-white/10 h-12 rounded-xl" 
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
               <div className="space-y-2">
@@ -67,6 +98,7 @@ export default function RegisterPage() {
                   className="bg-white/5 border-white/10 h-12 rounded-xl" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
               <div className="space-y-2">
@@ -77,6 +109,7 @@ export default function RegisterPage() {
                   className="bg-white/5 border-white/10 h-12 rounded-xl" 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
             </CardContent>
