@@ -2,9 +2,9 @@
   "placeholderImages": [
     {
       "id": "hero-nexus",
-      "description": "Visual tático de uma rede neural global monitorando o planeta.",
-      "imageUrl": "https://picsum.photos/seed/nexus-hero/1200/800",
-      "imageHint": "global network neural"
+      "description": "Visual tático de uma rede de satélites monitorando o planeta conectado em tempo real.",
+      "imageUrl": "https://picsum.photos/seed/nexus-satellite-world/1200/800",
+      "imageHint": "satellite earth network"
     },
     {
       "id": "feature-grounding",
