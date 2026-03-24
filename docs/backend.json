@@ -105,6 +105,29 @@
         "consentVersion",
         "agreedAt"
       ]
+    },
+    "AdminRole": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AdminRole",
+      "type": "object",
+      "description": "Represents an administrative role assignment for a user. The presence of this document grants elevated permissions.",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "The UID of the administrator."
+        },
+        "role": {
+          "type": "string",
+          "enum": ["SUPER_ADMIN", "MODERATOR"],
+          "description": "The level of administrative access."
+        },
+        "assignedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the role was assigned."
+        }
+      },
+      "required": ["uid", "role", "assignedAt"]
     }
   },
   "auth": {
@@ -122,7 +145,7 @@
           "schema": {
             "$ref": "#/backend/entities/UserProfile"
           },
-          "description": "Stores core profile information and settings for a user. The document ID (`userId`) is the user's Firebase Authentication UID. The 'id' field within the document must match this UID for explicit ownership and authorization independence.",
+          "description": "Stores core profile information and settings for a user. The document ID (`userId`) is the user's Firebase Authentication UID.",
           "params": [
             {
               "name": "userId",
@@ -138,7 +161,7 @@
           "schema": {
             "$ref": "#/backend/entities/UserConsent"
           },
-          "description": "Records a user's agreement to specific terms, policies, or disclaimers. The 'userId' field in the document must match the path parameter `{userId}` for authorization independence.",
+          "description": "Records a user's agreement to specific terms, policies, or disclaimers.",
           "params": [
             {
               "name": "userId",
@@ -152,97 +175,13 @@
         }
       },
       {
-        "path": "/users/{userId}/assets/{assetId}",
-        "definition": {
-          "entityName": "UserAsset",
-          "schema": {
-            "$ref": "#/backend/entities/UserAsset"
-          },
-          "description": "Stores a user's manually registered financial assets and their storage locations. Includes denormalized 'userId' for authorization independence via path, ensuring the asset belongs to the user.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user (Firebase Authentication UID)."
-            },
-            {
-              "name": "assetId",
-              "description": "The unique identifier for a specific user asset."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/alerts/{alertId}",
-        "definition": {
-          "entityName": "UserAlert",
-          "schema": {
-            "$ref": "#/backend/entities/UserAlert"
-          },
-          "description": "Stores AI-generated alerts and predictive insights tailored for a specific user. Includes denormalized 'userId' for authorization independence via path, linking the alert directly to the user.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user (Firebase Authentication UID)."
-            },
-            {
-              "name": "alertId",
-              "description": "The unique identifier for a specific AI-generated alert."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/chatSessions/{sessionId}",
-        "definition": {
-          "entityName": "ChatSession",
-          "schema": {
-            "$ref": "#/backend/entities/ChatSession"
-          },
-          "description": "Represents a unique chat session between a user and the AI assistant. Includes denormalized 'userId' for authorization independence via path.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user (Firebase Authentication UID)."
-            },
-            {
-              "name": "sessionId",
-              "description": "The unique identifier for a specific AI chat session."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/chatSessions/{sessionId}/messages/{messageId}",
-        "definition": {
-          "entityName": "ChatMessage",
-          "schema": {
-            "$ref": "#/backend/entities/ChatMessage"
-          },
-          "description": "Individual messages within a user's AI chat session. Inherits authorization from its parent chat session and includes 'userId' for path-based security and 'sessionId' for referential integrity.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user (Firebase Authentication UID)."
-            },
-            {
-              "name": "sessionId",
-              "description": "The unique identifier for the parent AI chat session."
-            },
-            {
-              "name": "messageId",
-              "description": "The unique identifier for a specific message within the chat session."
-            }
-          ]
-        }
-      },
-      {
         "path": "/admin_roles/{adminUid}",
         "definition": {
           "entityName": "AdminRole",
           "schema": {
             "$ref": "#/backend/entities/AdminRole"
           },
-          "description": "Designated collection for identifying global administrators. The presence of a document at this path signifies administrative status for the corresponding UID, enabling simple DBAC checks without custom claims.",
+          "description": "Designated collection for identifying global administrators. The presence of a document at this path signifies administrative status for the corresponding UID.",
           "params": [
             {
               "name": "adminUid",
