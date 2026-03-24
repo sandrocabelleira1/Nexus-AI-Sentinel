@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useMemo } from "react";
@@ -37,6 +38,7 @@ import { BorderGlow } from "@/components/ui/border-glow";
 import { DecryptedText } from "@/components/ui/decrypted-text";
 import { SpotlightCard } from "@/components/ui/spotlight-card";
 import { EvilEye } from "@/components/ui/evil-eye";
+import FloatingLines from "@/components/ui/floating-lines";
 
 export default function LandingPage() {
   const { user } = useUser();
@@ -106,6 +108,13 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-background relative overflow-x-hidden">
+      {/* Dynamic Background Base */}
+      <FloatingLines 
+        linesGradient={['#2563eb', '#7c3aed', '#db2777']}
+        animationSpeed={0.5}
+        mixBlendMode="screen"
+      />
+
       {/* Background Decor */}
       <div className="fixed inset-0 cyber-grid pointer-events-none opacity-20" />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[800px] bg-primary/10 blur-[150px] rounded-full pointer-events-none" />
@@ -138,10 +147,9 @@ export default function LandingPage() {
         </div>
       </header>
 
-      <main>
+      <main className="relative z-10">
         {/* Hero Section with High Fidelity Evil Eye */}
         <section className="relative pt-32 pb-40 px-6 overflow-hidden">
-          {/* Evil Eye Background v3.0 - Parâmetros Requisitados */}
           <EvilEye 
             eyeColor="#0e13a0"
             intensity={1.5}
@@ -152,7 +160,7 @@ export default function LandingPage() {
             noiseScale={1}
             pupilFollow={1}
             flameSpeed={1}
-            backgroundColor="#060010"
+            backgroundColor="transparent"
           />
           
           <div className="max-w-7xl mx-auto text-center space-y-8 relative z-10">
@@ -549,7 +557,7 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer className="py-10 border-t border-white/10 px-6 text-center">
+      <footer className="py-10 border-t border-white/10 px-6 text-center relative z-10">
         <p className="text-[10px] text-white/40 font-medium uppercase">&copy; 2026 Nexus AI Sentinel. Inteligência soberana para o novo mundo financeiro.</p>
       </footer>
     </div>
