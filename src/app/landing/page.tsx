@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useMemo } from "react";
@@ -34,6 +35,8 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { MarketPrice } from "@/lib/types";
 import { BorderGlow } from "@/components/ui/border-glow";
+import { DecryptedText } from "@/components/ui/decrypted-text";
+import { SpotlightCard } from "@/components/ui/spotlight-card";
 
 export default function LandingPage() {
   const { user } = useUser();
@@ -145,7 +148,10 @@ export default function LandingPage() {
             </div>
             
             <h2 className="text-5xl md:text-8xl font-headline font-bold text-white tracking-tighter leading-[0.9] max-w-5xl mx-auto uppercase">
-              O Olho de Vidro da <span className="led-text-blue">Nova Economia.</span>
+              O Olho de Vidro da <br/>
+              <span className="led-text-blue">
+                <DecryptedText text="Nova Economia." />
+              </span>
             </h2>
             
             <p className="text-lg md:text-xl text-white/50 max-w-3xl mx-auto font-medium leading-relaxed">
@@ -394,7 +400,7 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
             <div className="relative group">
                <div className="absolute inset-0 bg-primary/20 blur-[120px] rounded-full group-hover:bg-primary/30 transition-all" />
-               <div className="glass-panel border-white/20 rounded-[3rem] p-4 relative overflow-hidden shadow-2xl">
+               <SpotlightCard className="p-4 relative overflow-hidden shadow-2xl border-white/20">
                  <img 
                     src={fiiImage?.imageUrl} 
                     alt="FII Investments" 
@@ -405,7 +411,7 @@ export default function LandingPage() {
                     <Badge className="bg-emerald-600 text-[10px] font-bold py-2 px-4 rounded-xl led-glow-blue">P/VP: 0.88</Badge>
                     <Badge className="bg-primary text-[10px] font-bold py-2 px-4 rounded-xl">YIELD: 1.1% AM</Badge>
                  </div>
-               </div>
+               </SpotlightCard>
             </div>
             <div className="space-y-8">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 border border-primary/20">
@@ -423,10 +429,10 @@ export default function LandingPage() {
                   { title: "Dividend Tracker", desc: "Datas Com e Pagamento sincronizados com os comunicados oficiais." },
                   { title: "Veredito Nexus", desc: "Análise tática sobre o custo-benefício de cada ativo no cenário atual." }
                 ].map((item, i) => (
-                  <div key={i} className="bg-white/5 border border-white/10 p-6 rounded-2xl hover:border-primary/40 transition-colors">
+                  <SpotlightCard key={i} className="p-6 rounded-2xl hover:border-primary/40 transition-colors">
                     <h4 className="text-sm font-bold text-white uppercase mb-2">{item.title}</h4>
                     <p className="text-xs text-white/40 leading-relaxed">{item.desc}</p>
-                  </div>
+                  </SpotlightCard>
                 ))}
               </div>
             </div>
@@ -463,7 +469,7 @@ export default function LandingPage() {
             </div>
             <div className="order-1 lg:order-2 relative group">
                <div className="absolute inset-0 bg-accent/20 blur-[120px] rounded-full" />
-               <div className="glass-panel border-white/20 rounded-[3rem] p-4 relative overflow-hidden shadow-2xl">
+               <SpotlightCard className="p-4 relative overflow-hidden shadow-2xl border-white/20">
                  <img 
                     src={cryptoImage?.imageUrl} 
                     alt="Crypto Whales" 
@@ -473,7 +479,7 @@ export default function LandingPage() {
                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <Radar className="h-20 w-20 text-accent animate-ping opacity-20" />
                  </div>
-               </div>
+               </SpotlightCard>
             </div>
           </div>
         </section>
@@ -493,7 +499,7 @@ export default function LandingPage() {
                 { icon: ShieldAlert, title: "Cisnes Negros", color: "rose" },
                 { icon: BrainCircuit, title: "Rumores IA", color: "emerald" }
               ].map((f, i) => (
-                <div key={i} className="bg-white/5 border border-white/10 rounded-[2.5rem] p-10 space-y-6 hover:border-primary/40 transition-all group">
+                <SpotlightCard key={i} className="p-10 space-y-6 group hover:border-primary/40 transition-all">
                   <div className={cn(
                     "p-4 rounded-2xl w-fit mx-auto",
                     f.color === 'blue' ? 'bg-primary/20 text-primary' : 
@@ -503,7 +509,7 @@ export default function LandingPage() {
                     <f.icon className="h-10 w-10" />
                   </div>
                   <h4 className="text-xl font-bold text-white uppercase">{f.title}</h4>
-                </div>
+                </SpotlightCard>
               ))}
             </div>
           </div>
