@@ -74,6 +74,21 @@ export default function NexusDashboard() {
   const auth = useAuth();
   const { user: currentUser } = useUser();
 
+  // Sincronização automática do perfil do usuário
+  useEffect(() => {
+    if (currentUser && firestore) {
+      const userRef = doc(firestore, "users", currentUser.uid);
+      setDocumentNonBlocking(userRef, {
+        id: currentUser.uid,
+        email: currentUser.email,
+        displayName: currentUser.displayName || "Estrategista Nexus",
+        preferredDisplayMode: "Essential",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    }
+  }, [currentUser, firestore]);
+
   const alertsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, "global_intelligence_alerts"), orderBy("createdAt", "desc"), limit(20));
@@ -120,7 +135,7 @@ export default function NexusDashboard() {
     try {
       const userTickers = userAssetsData?.map(a => a.ticker).filter(Boolean) as string[] || [];
       const results = await Promise.allSettled([
-        monitorGlobalEvents({ context: "VIGILÂNCIA OMNISCIENTE TOTAL 5.0 - BUSCA MASSIVA HOJE" }),
+        monitorGlobalEvents({ context: "VIGILÂNCIA OMNISCIENTE TOTAL 5.5 - BUSCA MASSIVA HOJE" }),
         runAutonomousWhisperScan(),
         runWhaleDiscovery(),
         fetchGlobalMarketData(userTickers)
@@ -227,7 +242,7 @@ export default function NexusDashboard() {
 
           <div className="flex items-center gap-2 md:gap-4">
             <Button variant="ghost" size="sm" onClick={triggerGlobalScan} disabled={isScanning} className="rounded-xl bg-accent/10 border border-accent/30 text-accent text-[10px] font-bold px-6 h-10 hover:bg-accent/20">
-              {isScanning ? <Loader2 className="h-3 w-3 animate-spin" /> : <Radar className="h-3 w-3 mr-2" />} VARREDURA 5.0
+              {isScanning ? <Loader2 className="h-3 w-3 animate-spin" /> : <Radar className="h-3 w-3 mr-2" />} VARREDURA 5.5
             </Button>
             
             <Button variant="ghost" size="icon" onClick={() => signOut(auth)} className="text-white/40 hover:text-rose-500 rounded-xl transition-colors">
