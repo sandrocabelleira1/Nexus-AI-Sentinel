@@ -58,10 +58,8 @@ export function ConsentDialog() {
           <DialogTitle className="text-3xl font-headline font-bold text-white text-center tracking-tighter">
             ISENÇÃO DE RESPONSABILIDADE <span className="led-text-accent">LEGAL</span>
           </DialogTitle>
-          <DialogDescription className="text-center text-white/60 font-medium text-sm space-y-4">
-            <p>
-              O Nexus AI Sentinel é um terminal de monitoramento e inteligência autônoma. Leia atentamente os termos abaixo antes de prosseguir.
-            </p>
+          <DialogDescription className="text-center text-white/60 font-medium text-sm">
+            O Nexus AI Sentinel é um terminal de monitoramento e inteligência autônoma. Leia atentamente os termos abaixo antes de prosseguir.
           </DialogDescription>
         </DialogHeader>
 
