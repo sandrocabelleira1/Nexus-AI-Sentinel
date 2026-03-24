@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo, useEffect, useCallback } from "react";
@@ -46,8 +45,6 @@ import { PortfolioView } from "@/components/portfolio/portfolio-view";
 import { MarketExplorer } from "@/components/market/market-explorer";
 import { useCollection, useFirestore, useMemoFirebase, useUser, useAuth, addDocumentNonBlocking, setDocumentNonBlocking, useDoc } from "@/firebase";
 import { collection, query, orderBy, limit, doc } from "firebase/firestore";
-import { formatDistanceToNow } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { monitorGlobalEvents } from "@/ai/flows/global-intelligence-monitor";
 import { runAutonomousWhisperScan } from "@/ai/flows/autonomous-whisper-engine";
 import { runWhaleDiscovery } from "@/ai/flows/whale-discovery";
@@ -269,7 +266,7 @@ export default function NexusDashboard() {
   return (
     <AuthGuard>
       <ConsentDialog />
-      <div className="min-h-screen relative selection:bg-primary selection:text-white overflow-x-hidden">
+      <div className="min-h-screen relative selection:bg-primary selection:text-white flex flex-col">
         <div className="fixed inset-0 cyber-grid pointer-events-none opacity-20" />
 
         <header className="h-16 md:h-20 border-b border-white/10 px-4 md:px-8 flex items-center justify-between sticky top-0 bg-background/80 backdrop-blur-2xl z-50">
@@ -346,7 +343,7 @@ export default function NexusDashboard() {
           </div>
         </header>
 
-        <main className="max-w-[1800px] mx-auto px-4 md:px-8 py-4 md:py-10 space-y-6 md:space-y-10 relative z-10">
+        <main className="flex-1 max-w-[1800px] w-full mx-auto px-4 md:px-8 py-4 md:py-10 space-y-6 md:space-y-10 relative z-10 overflow-y-auto no-scrollbar">
           {activeTab === 'dashboard' && (
             <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 md:gap-8 items-start">
               
