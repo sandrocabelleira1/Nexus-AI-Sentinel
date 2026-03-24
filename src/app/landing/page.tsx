@@ -1,7 +1,7 @@
 
 "use client"
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   ShieldCheck, 
@@ -16,28 +16,55 @@ import {
   BrainCircuit,
   Lock,
   ChevronRight,
-  Database,
   Building2,
   Coins,
-  LineChart,
-  Target,
   Waves,
   CheckCircle2,
-  AlertTriangle,
   Crown,
-  Sparkles,
-  ShieldEllipsis
+  Loader2
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { createCheckoutPreference } from "@/app/actions/payments";
+import { useUser } from "@/firebase";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 
 export default function LandingPage() {
+  const { user } = useUser();
+  const router = useRouter();
+  const { toast } = useToast();
+  const [loadingTier, setLoadingTier] = useState<'PRO' | 'SOVEREIGN' | null>(null);
+
   const heroImage = PlaceHolderImages.find(img => img.id === 'hero-nexus');
   const fiiImage = PlaceHolderImages.find(img => img.id === 'feature-fii');
   const cryptoImage = PlaceHolderImages.find(img => img.id === 'feature-crypto');
+
+  const handleUpgrade = async (tier: 'PRO' | 'SOVEREIGN') => {
+    if (!user) {
+      router.push('/login?redirect=/landing');
+      return;
+    }
+
+    setLoadingTier(tier);
+    try {
+      const { initPoint } = await createCheckoutPreference(tier, user.uid);
+      if (initPoint) {
+        window.location.href = initPoint;
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro no Checkout",
+        description: error.message || "Não foi possível iniciar o pagamento.",
+      });
+    } finally {
+      setLoadingTier(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background relative overflow-x-hidden">
@@ -57,11 +84,19 @@ export default function LandingPage() {
           <a href="#investments" className="text-xs font-bold text-white/60 hover:text-primary transition-colors tracking-widest uppercase">Investimentos</a>
           <a href="#crypto" className="text-xs font-bold text-white/60 hover:text-primary transition-colors tracking-widest uppercase">Cripto & Whales</a>
           <a href="#pricing" className="text-xs font-bold text-white/60 hover:text-primary transition-colors tracking-widest uppercase">Planos Táticos</a>
-          <Link href="/login">
-            <Button variant="outline" className="border-primary/40 text-primary rounded-xl font-bold text-xs px-6 h-10 uppercase">
-              ACESSAR TERMINAL
-            </Button>
-          </Link>
+          {user ? (
+            <Link href="/">
+              <Button className="bg-primary text-background rounded-xl font-bold text-xs px-6 h-10 uppercase">
+                IR PARA O TERMINAL
+              </Button>
+            </Link>
+          ) : (
+            <Link href="/login">
+              <Button variant="outline" className="border-primary/40 text-primary rounded-xl font-bold text-xs px-6 h-10 uppercase">
+                ACESSAR TERMINAL
+              </Button>
+            </Link>
+          )}
         </div>
       </header>
 
@@ -83,15 +118,15 @@ export default function LandingPage() {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
-              <Link href="/register">
+              <Link href={user ? "/" : "/register"}>
                 <Button className="h-16 px-10 rounded-2xl bg-primary text-background font-bold text-lg shadow-[0_0_50px_rgba(37,99,235,0.4)] hover:scale-105 transition-all group uppercase">
-                  INICIAR PROTOCOLO 
+                  {user ? "ACESSAR SISTEMA" : "INICIAR PROTOCOLO"}
                   <ArrowRight className="ml-3 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
               <Link href="/login">
                 <Button variant="ghost" className="h-16 px-10 rounded-2xl border border-white/10 text-white/60 font-bold hover:bg-white/5 uppercase">
-                  ACESSAR TERMINAL
+                  LOGIN ESTRATEGISTA
                 </Button>
               </Link>
             </div>
@@ -121,7 +156,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Pricing Section - ESTRATÉGIA DE COMERCIALIZAÇÃO */}
+        {/* Pricing Section */}
         <section id="pricing" className="py-32 px-6 relative overflow-hidden">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
           
@@ -164,7 +199,7 @@ export default function LandingPage() {
                   </ul>
                 </CardContent>
                 <CardFooter className="p-8 pt-0">
-                  <Link href="/register" className="w-full">
+                  <Link href={user ? "/" : "/register"} className="w-full">
                     <Button variant="outline" className="w-full h-14 rounded-xl border-white/10 text-white font-bold uppercase hover:bg-white/5">INICIAR RECRUTAMENTO</Button>
                   </Link>
                 </CardFooter>
@@ -209,9 +244,13 @@ export default function LandingPage() {
                   </ul>
                 </CardContent>
                 <CardFooter className="p-8 pt-0">
-                  <Link href="/register" className="w-full">
-                    <Button className="w-full h-14 rounded-xl bg-primary text-background font-bold uppercase shadow-lg hover:scale-105 transition-all">ASSUMIR POSTO PRO</Button>
-                  </Link>
+                  <Button 
+                    onClick={() => handleUpgrade('PRO')} 
+                    disabled={loadingTier !== null}
+                    className="w-full h-14 rounded-xl bg-primary text-background font-bold uppercase shadow-lg hover:scale-105 transition-all"
+                  >
+                    {loadingTier === 'PRO' ? <Loader2 className="h-5 w-5 animate-spin" /> : "ASSUMIR POSTO PRO"}
+                  </Button>
                 </CardFooter>
               </Card>
 
@@ -253,16 +292,20 @@ export default function LandingPage() {
                   </ul>
                 </CardContent>
                 <CardFooter className="p-8 pt-0">
-                  <Link href="/register" className="w-full">
-                    <Button className="w-full h-14 rounded-xl bg-accent text-background font-bold uppercase shadow-lg hover:scale-105 transition-all">ELEVAR PARA SOVEREIGN</Button>
-                  </Link>
+                  <Button 
+                    onClick={() => handleUpgrade('SOVEREIGN')} 
+                    disabled={loadingTier !== null}
+                    className="w-full h-14 rounded-xl bg-accent text-background font-bold uppercase shadow-lg hover:scale-105 transition-all"
+                  >
+                    {loadingTier === 'SOVEREIGN' ? <Loader2 className="h-5 w-5 animate-spin" /> : "ELEVAR PARA SOVEREIGN"}
+                  </Button>
                 </CardFooter>
               </Card>
             </div>
           </div>
         </section>
 
-        {/* Deep Dive: Ações & FIIs */}
+        {/* Deep Dive Section */}
         <section id="investments" className="py-32 px-6">
           <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
             <div className="relative group">
@@ -306,7 +349,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Deep Dive: Crypto & Whales */}
+        {/* Crypto Section */}
         <section id="crypto" className="py-32 px-6 bg-[#080D18]/50">
           <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
             <div className="order-2 lg:order-1 space-y-8">
@@ -330,8 +373,8 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <Button className="h-14 px-8 rounded-xl bg-accent text-background font-bold uppercase shadow-[0_0_30px_rgba(249,115,22,0.3)]">
-                VER RADAR DE BALEIAS
+              <Button onClick={() => handleUpgrade('SOVEREIGN')} className="h-14 px-8 rounded-xl bg-accent text-background font-bold uppercase shadow-[0_0_30px_rgba(249,115,22,0.3)]">
+                {loadingTier === 'SOVEREIGN' ? <Loader2 className="h-4 w-4 animate-spin" /> : "VER RADAR DE BALEIAS"}
               </Button>
             </div>
             <div className="order-1 lg:order-2 relative group">
@@ -392,9 +435,9 @@ export default function LandingPage() {
              Junte-se a 2.450+ estrategistas de elite no Nexus AI Terminal.
            </p>
            <div className="relative z-10">
-             <Link href="/register">
+             <Link href={user ? "/" : "/register"}>
                <Button className="h-24 px-16 rounded-[2.5rem] bg-primary text-background font-bold text-3xl shadow-[0_0_80px_rgba(37,99,235,0.6)] hover:scale-105 transition-all uppercase">
-                 ASSUMIR COMANDO AGORA
+                 {user ? "IR PARA O TERMINAL" : "ASSUMIR COMANDO AGORA"}
                </Button>
              </Link>
            </div>
