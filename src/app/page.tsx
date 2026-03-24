@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo, useEffect, useCallback } from "react";
@@ -35,7 +34,8 @@ import {
   ChevronLeft,
   LogOut,
   ShieldEllipsis,
-  User
+  User,
+  Info
 } from "lucide-react";
 import { AssistantChat } from "@/components/ai/assistant-chat";
 import { Badge } from "@/components/ui/badge";
@@ -63,6 +63,11 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { ConsentDialog } from "@/components/auth/consent-dialog";
 import { signOut } from "firebase/auth";
@@ -315,6 +320,36 @@ export default function NexusDashboard() {
               <div className="w-full lg:col-span-6 order-1 lg:order-2">
                 <div className="bg-[#080D18]/95 border border-white/10 rounded-[2rem] md:rounded-[3rem] min-h-[500px] md:h-[850px] relative overflow-hidden flex flex-col shadow-2xl transition-all hover:border-primary/40">
                   <div className="absolute top-4 right-8 z-20 flex items-center gap-4">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all">
+                          <Info className="h-4 w-4 text-primary" />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="glass-panel border-primary/30 w-80 p-6 rounded-3xl">
+                        <div className="space-y-4">
+                          <h4 className="text-sm font-bold text-primary uppercase tracking-widest">Manual Tático: Alertas de Inteligência</h4>
+                          <div className="space-y-3">
+                            <div>
+                              <p className="text-[10px] font-bold text-white/40 uppercase">O que é?</p>
+                              <p className="text-xs text-white/80 leading-relaxed">O motor central de decisão do Nexus, cruzando eventos geopolíticos com o mercado.</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] font-bold text-white/40 uppercase">A "Ordem Nexus"</p>
+                              <p className="text-xs text-white/80 leading-relaxed">
+                                - <span className="text-emerald-400 font-bold">BUY</span>: Gatilho de oportunidade detectado.<br/>
+                                - <span className="text-rose-400 font-bold">SELL</span>: Proteja patrimônio imediatamente.<br/>
+                                - <span className="text-primary font-bold">WATCH</span>: Monitore o volume e novos sussurros.
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] font-bold text-white/40 uppercase">Dica Estratégica</p>
+                              <p className="text-xs text-white/80 leading-relaxed italic">Leia o "Texto Essencial" para entender o impacto direto no seu bolso em menos de 5 segundos.</p>
+                            </div>
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                     <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 px-4 py-1.5 rounded-xl text-[10px] font-bold animate-pulse">
                       SENTINELA ATIVO
                     </Badge>

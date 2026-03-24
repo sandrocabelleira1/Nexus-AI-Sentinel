@@ -1,10 +1,15 @@
 "use client"
 
-import { Globe, Activity, Target, Brain, Zap, Gauge } from "lucide-react";
+import { Globe, Activity, Target, Brain, Zap, Gauge, Info } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
 import { GlobalIntelligenceAlert, AutonomousInsight } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 /**
  * @fileOverview Neural Sphere (Sentiment Index)
@@ -65,7 +70,32 @@ export function WorldMood({ latestAlert, latestWhisper, onAnalyze }: WorldMoodPr
             NEURAL SPHERE
           </span>
         </div>
-        <Gauge className="h-3 w-3 text-emerald-500/30" />
+        <Popover>
+          <PopoverTrigger asChild>
+            <button className="p-1 hover:bg-white/5 rounded-full transition-colors">
+              <Info className="h-3.5 w-3.5 text-white/20 hover:text-primary" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="glass-panel border-primary/30 w-80 p-6 rounded-3xl">
+            <div className="space-y-4">
+              <h4 className="text-sm font-bold text-primary uppercase tracking-widest">Manual Tático: Neural Sphere</h4>
+              <div className="space-y-3">
+                <div>
+                  <p className="text-[10px] font-bold text-white/40 uppercase">O que é?</p>
+                  <p className="text-xs text-white/80 leading-relaxed">Um índice de sentimento global processado por IA em tempo real.</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-white/40 uppercase">Para que serve?</p>
+                  <p className="text-xs text-white/80 leading-relaxed">Mede a temperatura emocional do mercado, cruzando notícias e fluxo de capitais.</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-white/40 uppercase">Como usar?</p>
+                  <p className="text-xs text-white/80 leading-relaxed italic">Identifique topos de euforia para proteger lucro ou pânico extremo para compras táticas.</p>
+                </div>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
       
       <ScrollArea className="flex-1 no-scrollbar">

@@ -1,10 +1,15 @@
 "use client"
 
 import { MarketEntity } from "@/lib/types";
-import { Globe, ShieldCheck, Landmark, Cpu, Building2, UserCircle2, ArrowRightLeft, Activity } from "lucide-react";
+import { Globe, ShieldCheck, Landmark, Cpu, Building2, UserCircle2, ArrowRightLeft, Activity, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface WarRoomProps {
   entities: MarketEntity[];
@@ -29,9 +34,37 @@ export function WarRoom({ entities, onAnalyze }: WarRoomProps) {
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-2 px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
-          <Activity className="h-2 w-2 text-emerald-400 animate-pulse" />
-          <span className="text-[7px] text-white/60 font-bold uppercase">LIVE</span>
+        <div className="flex items-center gap-2">
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="p-1 hover:bg-white/5 rounded-full transition-colors">
+                <Info className="h-3.5 w-3.5 text-white/20 hover:text-accent" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="glass-panel border-accent/30 w-80 p-6 rounded-3xl">
+              <div className="space-y-4">
+                <h4 className="text-sm font-bold text-accent uppercase tracking-widest">Manual Tático: War Room</h4>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-[10px] font-bold text-white/40 uppercase">O que é?</p>
+                    <p className="text-xs text-white/80 leading-relaxed">Monitoramento de grandes players institucionais e soberanos (Governos, BlackRock, etc).</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-white/40 uppercase">Para que serve?</p>
+                    <p className="text-xs text-white/80 leading-relaxed">Entender quem está dominando a narrativa de capital e para onde as instituições estão alocando trilhões.</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-white/40 uppercase">Como usar?</p>
+                    <p className="text-xs text-white/80 leading-relaxed italic">Observe a concentração de poder para entender tendências de longo prazo e identificar riscos sistêmicos.</p>
+                  </div>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+          <div className="flex items-center gap-2 px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
+            <Activity className="h-2 w-2 text-emerald-400 animate-pulse" />
+            <span className="text-[7px] text-white/60 font-bold uppercase">LIVE</span>
+          </div>
         </div>
       </div>
 

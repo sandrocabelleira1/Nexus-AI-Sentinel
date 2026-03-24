@@ -2,11 +2,16 @@
 
 import { AutonomousInsight } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
-import { Radio, Zap, AlertTriangle, ChevronRight, BrainCircuit } from "lucide-react";
+import { Radio, Zap, AlertTriangle, ChevronRight, BrainCircuit, Info } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface WhispersRadarProps {
   insights: AutonomousInsight[];
@@ -27,7 +32,32 @@ export function WhispersRadar({ insights, onAnalyze }: WhispersRadarProps) {
             WHISPERS RADAR
           </span>
         </div>
-        <BrainCircuit className="h-4 w-4 text-white/20" />
+        <Popover>
+          <PopoverTrigger asChild>
+            <button className="p-1 hover:bg-white/5 rounded-full transition-colors">
+              <Info className="h-3.5 w-3.5 text-white/20 hover:text-orange-500" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="glass-panel border-orange-500/30 w-80 p-6 rounded-3xl">
+            <div className="space-y-4">
+              <h4 className="text-sm font-bold text-orange-500 uppercase tracking-widest">Manual Tático: Whispers Radar</h4>
+              <div className="space-y-3">
+                <div>
+                  <p className="text-[10px] font-bold text-white/40 uppercase">O que é?</p>
+                  <p className="text-xs text-white/80 leading-relaxed">Varredura de rumores, vazamentos governamentais e sinais fracos em fóruns técnicos.</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-white/40 uppercase">O que verá?</p>
+                  <p className="text-xs text-white/80 leading-relaxed">Tópicos especulativos com score de fundamentação (probabilidade de ser real).</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-white/40 uppercase">Como usar?</p>
+                  <p className="text-xs text-white/80 leading-relaxed italic">Antecipe notícias oficiais ajustando posições antes que o rumor chegue à grande mídia.</p>
+                </div>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
 
       <ScrollArea className="flex-1 z-10 pr-4">
