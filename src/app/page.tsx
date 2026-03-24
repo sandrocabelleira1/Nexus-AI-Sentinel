@@ -112,19 +112,6 @@ export default function NexusDashboard() {
   const latestAlert = globalAlerts?.[0];
   const latestWhisper = whispers?.[0];
 
-  const affectedPortfolioAssets = useMemo(() => {
-    if (!latestAlert || !userAssetsData) return [];
-    const affectedTickers = latestAlert.affectedAssetTickerSymbols || [];
-    return userAssetsData.filter(asset => {
-      const ticker = asset.ticker || asset.name.split(' ')[0].toUpperCase();
-      return affectedTickers.includes(ticker);
-    });
-  }, [latestAlert, userAssetsData]);
-
-  const hasCriticalRisk = useMemo(() => {
-    return affectedPortfolioAssets.some(a => latestAlert?.marketAction === 'SELL' || latestAlert?.priority >= 4);
-  }, [affectedPortfolioAssets, latestAlert]);
-
   useEffect(() => {
     if (!currentUser && !isLoadingUser && auth) initiateAnonymousSignIn(auth);
   }, [currentUser, isLoadingUser, auth]);
@@ -135,7 +122,7 @@ export default function NexusDashboard() {
     try {
       const userTickers = userAssetsData?.map(a => a.ticker).filter(Boolean) as string[] || [];
       const results = await Promise.allSettled([
-        monitorGlobalEvents({ context: "VARREDURA OMNISCIENTE MULTIDIMENSIONAL TOTAL" }),
+        monitorGlobalEvents({ context: "VIGILÂNCIA OMNISCIENTE TOTAL 5.0 - BUSCA MASSIVA HOJE" }),
         runAutonomousWhisperScan(),
         runWhaleDiscovery(),
         fetchGlobalMarketData(userTickers)
@@ -249,7 +236,7 @@ export default function NexusDashboard() {
 
         <div className="flex items-center gap-2 md:gap-4">
           <Button variant="ghost" size="sm" onClick={triggerGlobalScan} disabled={isScanning} className="rounded-xl bg-accent/10 border border-accent/30 text-accent text-[10px] font-bold px-6 h-10 hover:bg-accent/20">
-            {isScanning ? <Loader2 className="h-3 w-3 animate-spin" /> : <Radar className="h-3 w-3 mr-2" />} VARREDURA 360°
+            {isScanning ? <Loader2 className="h-3 w-3 animate-spin" /> : <Radar className="h-3 w-3 mr-2" />} VARREDURA 5.0
           </Button>
 
           <div className="lg:hidden">
@@ -271,14 +258,11 @@ export default function NexusDashboard() {
         {activeTab === 'dashboard' && (
           <div className="flex flex-col lg:grid lg:grid-cols-12 gap-8 items-start">
             <div className="w-full lg:col-span-6 order-1 lg:order-2">
-              <div className={cn(
-                "bg-[#080D18]/95 border rounded-[2rem] md:rounded-[3rem] min-h-[500px] md:h-[850px] relative overflow-hidden flex flex-col shadow-2xl transition-all",
-                hasCriticalRisk ? "border-rose-500/40" : "border-white/10 hover:border-primary/40"
-              )}>
+              <div className="bg-[#080D18]/95 border border-white/10 rounded-[2rem] md:rounded-[3rem] min-h-[500px] md:h-[850px] relative overflow-hidden flex flex-col shadow-2xl transition-all hover:border-primary/40">
                 <div className="absolute top-4 right-8 z-20 flex items-center gap-4">
-                  <Button variant="ghost" size="sm" onClick={() => setIsHistoryOpen(true)} className="bg-white/5 border border-white/10 rounded-xl text-[10px] font-bold px-4">
-                    <History className="h-3 w-3 mr-2" /> ARQUIVO
-                  </Button>
+                  <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 px-4 py-1.5 rounded-xl text-[10px] font-bold animate-pulse">
+                    SENTINELA ATIVO
+                  </Badge>
                 </div>
 
                 <Carousel className="w-full h-full">
@@ -314,19 +298,27 @@ export default function NexusDashboard() {
                                 </p>
                               </div>
 
-                              <div className="grid grid-cols-2 gap-4">
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 <div className="p-4 bg-white/5 border border-white/10 rounded-2xl">
-                                  <span className="text-[8px] font-bold text-white/40 uppercase tracking-widest block mb-1">Impacto Logístico</span>
-                                  <span className="text-xs text-white font-medium">{alert.eventOrigin === 'Logística' ? 'Crítico' : 'Monitorado'}</span>
+                                  <span className="text-[8px] font-bold text-white/40 uppercase tracking-widest block mb-1">Origem</span>
+                                  <span className="text-xs text-white font-medium">{alert.eventOrigin}</span>
                                 </div>
                                 <div className="p-4 bg-white/5 border border-white/10 rounded-2xl">
-                                  <span className="text-[8px] font-bold text-white/40 uppercase tracking-widest block mb-1">Risco Setorial</span>
+                                  <span className="text-[8px] font-bold text-white/40 uppercase tracking-widest block mb-1">Risco</span>
                                   <span className="text-xs text-white font-medium">{alert.riskLevel}</span>
+                                </div>
+                                <div className="p-4 bg-white/5 border border-white/10 rounded-2xl">
+                                  <span className="text-[8px] font-bold text-white/40 uppercase tracking-widest block mb-1">Prioridade</span>
+                                  <span className="text-xs text-white font-medium">{alert.priority}/5</span>
+                                </div>
+                                <div className="p-4 bg-white/5 border border-white/10 rounded-2xl">
+                                  <span className="text-[8px] font-bold text-white/40 uppercase tracking-widest block mb-1">Data</span>
+                                  <span className="text-xs text-white font-medium">{formatDistanceToNow(new Date(alert.createdAt), { locale: ptBR, addSuffix: true })}</span>
                                 </div>
                               </div>
 
                               <Button 
-                                onClick={() => handleDeepAnalysis(`Execute comando Nexus de análise sobre: ${alert.title}.`)} 
+                                onClick={() => handleDeepAnalysis(`Execute comando Nexus de análise sobre: ${alert.title}. Detalhe o impacto em ativos como ${alert.affectedAssetTickerSymbols.join(', ')}.`)} 
                                 className="w-full h-20 rounded-[2rem] bg-primary hover:bg-primary/90 font-bold text-xl flex items-center justify-center gap-4"
                               >
                                 SOLICITAR ANÁLISE 360°
@@ -341,7 +333,7 @@ export default function NexusDashboard() {
                       <CarouselItem className="h-full">
                         <div className="flex flex-col items-center justify-center h-full py-40 opacity-40">
                           <Radar className="h-24 w-24 text-primary animate-ping" />
-                          <p className="text-center mt-8 font-bold tracking-[0.5em] uppercase">Mapeando eventos mundiais...</p>
+                          <p className="text-center mt-8 font-bold tracking-[0.5em] uppercase">Vigilância Omnisciente Ativa...</p>
                         </div>
                       </CarouselItem>
                     )}

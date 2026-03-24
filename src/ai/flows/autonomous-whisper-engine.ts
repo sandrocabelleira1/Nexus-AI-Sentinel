@@ -1,7 +1,7 @@
 'use server';
 /**
- * @fileOverview Nexus Autonomous Whisper & Speculation Engine v3.8.
- * Detecta rumores e vazamentos geopolíticos via Google Search Grounding.
+ * @fileOverview Nexus Autonomous Whisper & Speculation Engine v5.0.
+ * Detecta rumores, vazamentos e sinais fracos via varredura web profunda.
  */
 
 import { ai } from '@/ai/genkit';
@@ -32,24 +32,26 @@ export type AutonomousWhisperOutput = z.infer<typeof AutonomousWhisperOutputSche
 const whisperGroundingPrompt = ai.definePrompt({
   name: 'whisperGroundingPrompt',
   input: { schema: z.object({ query: z.string(), currentDate: z.string() }) },
-  system: `### PERSONA: NEXUS (WHISPER RADAR)
-Sua função é agir como um radar autônomo de rumores e especulações globais navegando na web em tempo real.`,
+  system: `### PERSONA: NEXUS (RADAR DE SINAIS FRACOS)
+Você é um especialista em capturar rumores, vazamentos governamentais e especulações de mercado antes que virem notícia oficial.`,
   config: {
     googleSearchRetrieval: {},
   },
-  prompt: `### TAREFA (DATA: {{{currentDate}}}):
-1. Pesquise no Google por rumores financeiros, sussurros geopolíticos e vazamentos governamentais que ainda não são manchetes oficiais.
-2. Identifique sinais fracos em fóruns especializados, discursos ambíguos e movimentações on-chain.
+  prompt: `### VARREDURA DE RUMORES (DATA: {{{currentDate}}}):
+Pesquise por rumores e sinais de:
+1. Mudanças em políticas monetárias (FED/COPOM).
+2. Vazamentos de fusões e aquisições corporativas.
+3. Rumores de instabilidade política ou greves eminentes no Brasil.
+4. Movimentações incomuns de governos em ativos digitais ou commodities.
 
-Query de Varredura: {{{query}}}`,
+Query: {{{query}}}`,
 });
 
 const whisperStructuringPrompt = ai.definePrompt({
   name: 'whisperStructuringPrompt',
   input: { schema: z.object({ rawAnalysis: z.string() }) },
   output: { schema: AutonomousWhisperOutputSchema },
-  prompt: `Transforme a análise de rumores encontrada na web em um JSON estruturado.
-Para cada rumor, projete 3 cenários (Otimista, Base, Risco).
+  prompt: `Transforme os rumores encontrados em um JSON estruturado. Projete cenários táticos para cada um.
 
 Análise:
 {{{rawAnalysis}}}`,
@@ -59,18 +61,17 @@ export async function runAutonomousWhisperScan(): Promise<AutonomousWhisperOutpu
   try {
     const currentDate = new Date().toISOString();
     const searchQueries = [
-      "financial market rumors today Bloomberg Reuters",
-      "geopolitical leaks Middle East energy sector",
-      "vazamentos governo brasileiro hoje economia",
-      "market whispers Bitcoin SEC decisions"
+      "unconfirmed reports financial market today",
+      "rumores greve caminhoneiros Brasil hoje",
+      "vazamentos governo economia Brasil hoje",
+      "market whispers geopolitical tensions Middle East",
+      "speculations FED interest rates next meeting"
     ].join(", ");
 
     const { text: groundedAnalysis } = await whisperGroundingPrompt({ query: searchQueries, currentDate });
     const { output } = await whisperStructuringPrompt({ rawAnalysis: groundedAnalysis });
 
-    if (!output) return null;
-    
-    return JSON.parse(JSON.stringify(output));
+    return output ? JSON.parse(JSON.stringify(output)) : null;
   } catch (error: any) {
     console.error("Whisper Engine Error:", error.message);
     return null;

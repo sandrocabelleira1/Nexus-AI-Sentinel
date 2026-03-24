@@ -1,7 +1,7 @@
 'use server';
 /**
- * @fileOverview Motor de Inteligência Estratégica Nexus AI v4.8.
- * Sentinela Omnisciente: Detecção multidimensional de eventos globais e nacionais.
+ * @fileOverview Motor de Inteligência Estratégica Nexus AI v5.0.
+ * Sentinela Omnisciente: Vigilância Total Multidimensional.
  */
 
 import { ai } from '@/ai/genkit';
@@ -47,22 +47,22 @@ const GlobalIntelligenceMonitorOutputSchema = z.object({
 export type GlobalIntelligenceMonitorOutput = z.infer<typeof GlobalIntelligenceMonitorOutputSchema>;
 
 const systemInstruction = `### PERSONA: NEXUS (O ESTRATEGISTA-CHEFE OMNISCIENTE)
-Você é o Nexus. Seu objetivo é detectar eventos de alto impacto global e nacional usando busca em tempo real no Google News e portais oficiais.
+Você é o Nexus. Seu objetivo é detectar QUALQUER evento de impacto global e nacional usando busca em tempo real massiva.
 
-### MISSÃO DE VARREDURA MULTIDIMENSIONAL:
-Você deve identificar pelo menos 3 a 5 eventos DISTINTOS ocorrendo HOJE que impactam o mercado financeiro. Não foque em apenas um tema.
+### MISSÃO DE VIGILÂNCIA TOTAL:
+Você não deve deixar passar NADA. Se houver uma greve de caminhoneiros no Brasil, um decreto surpresa sobre impostos, um ataque a refinarias no Golfo, ou uma falha sistêmica em IA, eu preciso saber agora.
 
-### QUADRANTES DE MONITORAMENTO:
-1. **Geopolítica**: Conflitos, ataques, tensões internacionais (ex: Oriente Médio, Ucrânia, Taiwan).
-2. **Logística e Infraestrutura Nacional**: Greves (caminhoneiros, portos), bloqueios de rodovias, crises de abastecimento no Brasil.
-3. **Governo e Economia**: Medidas provisórias, decretos surpresa, reuniões do COPOM/FED, mudanças em impostos ou taxas.
-4. **Energia e Commodities**: Petróleo, Minério, ataques a refinarias ou oleodutos.
-5. **Tecnologia e Cisnes Negros**: Falhas sistêmicas de IA, ataques cibernéticos massivos, descobertas disruptivas.
+### QUADRANTES DE MONITORAMENTO OBRIGATÓRIOS:
+1. **Logística e Infraestrutura (BRASIL)**: Greves, bloqueios de rodovias, paralisação de portos/aeroportos, crises de abastecimento.
+2. **Governo e Economia (BRASIL/GLOBAL)**: Medidas provisórias, mudanças em taxas de juros (COPOM/FED), novos impostos, decisões do STF/Congresso que afetem empresas.
+3. **Geopolítica e Conflitos**: Tensões, ataques, sanções, bloqueios comerciais (Foco em Oriente Médio, China, EUA, Europa).
+4. **Energia e Commodities**: Preço do petróleo, ataques a oleodutos, quebra de safras agrícolas, mineração.
+5. **Tecnologia e Cisnes Negros**: Vazamentos de dados massivos, falhas de infraestrutura web, avanços disruptivos inesperados.
 
 ### DIRETRIZES DE COMANDO:
-1. **Busca Diversificada**: Navegue em portais variados: Bloomberg, Reuters, UOL, G1, CNN, Valor Econômico e portais de governo.
-2. **Separação de Eventos**: Cada evento deve ter seu próprio alerta estruturado.
-3. **Data Real**: Considere a data atual como o parâmetro "HOJE".`;
+1. **Busca Exaustiva**: Use Google News para buscar notícias de "ÚLTIMA HORA" e "HOJE". Navegue em portais oficiais: Bloomberg, Reuters, Valor Econômico, G1, UOL.
+2. **Conectividade Tática**: Cada notícia deve ser conectada a TICKERS da B3 (ex: PETR4, VALE3) ou Cripto (BTC, ETH).
+3. **Senso de Urgência**: Se o evento for crítico, defina prioridade 5 e ação SELL ou BUY imediata.`;
 
 const groundingPrompt = ai.definePrompt({
   name: 'globalIntelligenceGroundingPrompt',
@@ -72,9 +72,14 @@ const groundingPrompt = ai.definePrompt({
     googleSearchRetrieval: {} 
   },
   prompt: `### TAREFA DE SENTINELA (DATA: {{{currentDate}}}):
-Execute varredura massiva agora por notícias de ÚLTIMA HORA. Busque eventos DISTINTOS em cada um dos quadrantes: Geopolítica, Logística Brasil, Economia/Governo e Tech.
+Execute varredura massiva agora. Procure por:
+- "Greve de caminhoneiros hoje Brasil"
+- "Ataques ou tensões Golfo Pérsico hoje"
+- "Decisões governo brasileiro economia última hora"
+- "Notícias urgentes mercado financeiro global"
+- "Rupturas logística e suprimentos mundo"
 
-NÃO me traga apenas notícias de guerra se houver greves ou decretos econômicos acontecendo. Eu preciso da visão 360°.
+Busque por pelo menos 5 eventos distintos. Não foque apenas em um tema.
 
 Contexto: {{{context}}}`,
 });
@@ -83,8 +88,8 @@ const structuringPrompt = ai.definePrompt({
   name: 'globalIntelligenceStructuringPrompt',
   input: { schema: z.object({ rawAnalysis: z.string() }) },
   output: { schema: GlobalIntelligenceMonitorOutputSchema },
-  prompt: `Converta a análise tática capturada na web em um JSON estruturado contendo uma lista de alertas.
-Para cada alerta, identifique os TICKERS exatos afetados (ex: PETR4, VALE3, RAIL3, BTC).
+  prompt: `Converta a análise tática capturada na web em um JSON estruturado.
+Identifique TICKERS específicos afetados para cada evento.
 
 Análise Bruta:
 {{{rawAnalysis}}}`,
