@@ -40,6 +40,9 @@ import { SpotlightCard } from "@/components/ui/spotlight-card";
 import { EvilEye } from "@/components/ui/evil-eye";
 import FloatingLines from "@/components/ui/floating-lines";
 
+// Stable constants to prevent re-initializing WebGL components
+const LANDING_GRADIENT = ['#2563eb', '#7c3aed', '#db2777'];
+
 export default function LandingPage() {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -91,9 +94,7 @@ export default function LandingPage() {
     setLoadingTier(tier);
     try {
       const { initPoint } = await createCheckoutPreference(tier, user.uid);
-      if (initPoint) {
-        window.location.href = initPoint;
-      }
+      if (initPoint) window.location.href = initPoint;
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -107,18 +108,15 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-background relative overflow-x-hidden">
-      {/* Dynamic Background Base */}
       <FloatingLines 
-        linesGradient={['#2563eb', '#7c3aed', '#db2777']}
+        linesGradient={LANDING_GRADIENT}
         animationSpeed={0.5}
         mixBlendMode="screen"
       />
 
-      {/* Background Decor */}
       <div className="fixed inset-0 cyber-grid pointer-events-none opacity-20" />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[800px] bg-primary/10 blur-[150px] rounded-full pointer-events-none" />
 
-      {/* Header */}
       <header className="h-20 border-b border-white/10 px-6 md:px-12 flex items-center justify-between sticky top-0 bg-background/80 backdrop-blur-xl z-50">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-primary/20 border border-primary/40 led-glow-blue">
@@ -147,7 +145,6 @@ export default function LandingPage() {
       </header>
 
       <main className="relative z-10">
-        {/* Hero Section with Corrected Blue Evil Eye */}
         <section className="relative pt-32 pb-40 px-6 overflow-hidden min-h-[800px] flex items-center justify-center">
           <div className="absolute inset-0 z-0">
             <EvilEye 
@@ -197,7 +194,6 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Live Dynamic Ticker */}
         <section className="py-12 border-y border-white/5 bg-black/40 relative overflow-hidden">
           <div className="absolute inset-0 cyber-grid opacity-5 pointer-events-none" />
           <div className="flex w-full overflow-hidden select-none">
@@ -215,10 +211,7 @@ export default function LandingPage() {
                         currency: item.currency || 'BRL' 
                       })}
                     </div>
-                    <span className={cn(
-                      "text-xs font-bold", 
-                      item.change24h >= 0 ? "text-emerald-400" : "text-rose-400"
-                    )}>
+                    <span className={cn("text-xs font-bold", item.change24h >= 0 ? "text-emerald-400" : "text-rose-400")}>
                       {item.change24h >= 0 ? '+' : ''}{item.change24h.toFixed(2)}%
                     </span>
                   </div>
@@ -234,10 +227,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Pricing Section */}
         <section id="pricing" className="py-32 px-6 relative overflow-hidden">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
-          
           <div className="max-w-7xl mx-auto space-y-16 relative z-10 text-center">
             <div className="space-y-4">
               <h3 className="text-4xl md:text-7xl font-headline font-bold text-white tracking-tight uppercase">Planos de <span className="led-text-blue">Combate.</span></h3>
@@ -245,7 +235,6 @@ export default function LandingPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
-              {/* Tiers with BorderGlow */}
               <BorderGlow colors={['#c084fc', '#f472b6', '#38bdf8']}>
                 <Card className="border-none bg-transparent rounded-[2.5rem] overflow-hidden group hover:border-white/20 transition-all flex flex-col h-full">
                   <CardHeader className="p-8 pb-0 text-left">
@@ -257,24 +246,12 @@ export default function LandingPage() {
                     </div>
                     <CardTitle className="text-2xl font-headline font-bold text-white uppercase mb-2">Nexus Sentinel</CardTitle>
                     <CardDescription className="text-white/40 font-medium">Investidores iniciantes.</CardDescription>
-                    <div className="pt-6">
-                      <span className="text-4xl font-bold text-white tracking-tighter">GRATUITO</span>
-                    </div>
+                    <div className="pt-6"><span className="text-4xl font-bold text-white tracking-tighter">GRATUITO</span></div>
                   </CardHeader>
                   <CardContent className="p-8 space-y-4 flex-1 text-left">
                     <ul className="space-y-3">
-                      <li className="flex items-start gap-3 text-xs text-white/60 font-medium leading-relaxed">
-                        <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                        Dashboard de Sentimento Global (delay 15 min)
-                      </li>
-                      <li className="flex items-start gap-3 text-xs text-white/60 font-medium leading-relaxed">
-                        <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                        Registo manual de até 5 ativos
-                      </li>
-                      <li className="flex items-start gap-3 text-xs text-white/60 font-medium leading-relaxed">
-                        <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                        Notificações push padrão (sem WhatsApp)
-                      </li>
+                      <li className="flex items-start gap-3 text-xs text-white/60 font-medium leading-relaxed"><CheckCircle2 className="h-4 w-4 text-primary shrink-0" /> Dashboard de Sentimento Global (delay 15 min)</li>
+                      <li className="flex items-start gap-3 text-xs text-white/60 font-medium leading-relaxed"><CheckCircle2 className="h-4 w-4 text-primary shrink-0" /> Registo manual de até 5 ativos</li>
                     </ul>
                   </CardContent>
                   <CardFooter className="p-8 pt-0">
@@ -289,41 +266,21 @@ export default function LandingPage() {
                 <Card className="border-none bg-transparent rounded-[2.5rem] overflow-hidden relative flex flex-col h-full">
                   <CardHeader className="p-8 pb-0 text-left">
                     <div className="flex items-center justify-between mb-4">
-                      <div className="p-3 rounded-xl bg-primary/20 border border-primary/40 text-primary led-glow-blue">
-                        <Zap className="h-6 w-6" />
-                      </div>
+                      <div className="p-3 rounded-xl bg-primary/20 border border-primary/40 text-primary led-glow-blue"><Zap className="h-6 w-6" /></div>
                       <Badge className="bg-primary text-background text-[8px] font-bold uppercase tracking-widest px-3">PATENTE PRO</Badge>
                     </div>
                     <CardTitle className="text-2xl font-headline font-bold text-white uppercase mb-2">Nexus Pro</CardTitle>
                     <CardDescription className="text-white/40 font-medium">Investidores ativos & caçadores de Yield.</CardDescription>
-                    <div className="pt-6 flex items-baseline gap-1">
-                      <span className="text-xs font-bold text-primary">R$</span>
-                      <span className="text-5xl font-bold text-white tracking-tighter">19,90</span>
-                      <span className="text-xs font-bold text-white/40">/mês</span>
-                    </div>
+                    <div className="pt-6 flex items-baseline gap-1"><span className="text-xs font-bold text-primary">R$</span><span className="text-5xl font-bold text-white tracking-tighter">19,90</span><span className="text-xs font-bold text-white/40">/mês</span></div>
                   </CardHeader>
                   <CardContent className="p-8 space-y-4 flex-1 text-left">
                     <ul className="space-y-3">
-                      <li className="flex items-start gap-3 text-xs text-white font-bold leading-relaxed">
-                        <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                        Dados B3 e FIIs em TEMPO REAL (Brapi Pro)
-                      </li>
-                      <li className="flex items-start gap-3 text-xs text-white/60 font-medium leading-relaxed">
-                        <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                        Magic Number Calculator: Automação de metas
-                      </li>
-                      <li className="flex items-start gap-3 text-xs text-white/60 font-medium leading-relaxed">
-                        <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                        Whisper Radar (Básico): Rumores validados pela IA
-                      </li>
+                      <li className="flex items-start gap-3 text-xs text-white font-bold leading-relaxed"><CheckCircle2 className="h-4 w-4 text-primary shrink-0" /> Dados B3 e FIIs em TEMPO REAL (Brapi Pro)</li>
+                      <li className="flex items-start gap-3 text-xs text-white/60 font-medium leading-relaxed"><CheckCircle2 className="h-4 w-4 text-primary shrink-0" /> Whisper Radar (Básico): Rumores validados pela IA</li>
                     </ul>
                   </CardContent>
                   <CardFooter className="p-8 pt-0">
-                    <Button 
-                      onClick={() => handleUpgrade('PRO')} 
-                      disabled={loadingTier !== null}
-                      className="w-full h-14 rounded-xl bg-primary text-background font-bold uppercase shadow-lg hover:scale-105 transition-all"
-                    >
+                    <Button onClick={() => handleUpgrade('PRO')} disabled={loadingTier !== null} className="w-full h-14 rounded-xl bg-primary text-background font-bold uppercase shadow-lg hover:scale-105 transition-all">
                       {loadingTier === 'PRO' ? <Loader2 className="h-5 w-5 animate-spin" /> : "ASSUMIR POSTO PRO"}
                     </Button>
                   </CardFooter>
@@ -334,41 +291,21 @@ export default function LandingPage() {
                 <Card className="border-none bg-transparent rounded-[2.5rem] overflow-hidden flex flex-col h-full">
                   <CardHeader className="p-8 pb-0 text-left">
                     <div className="flex items-center justify-between mb-4">
-                      <div className="p-3 rounded-xl bg-accent/20 border border-accent/40 text-accent">
-                        <Crown className="h-6 w-6" />
-                      </div>
+                      <div className="p-3 rounded-xl bg-accent/20 border border-accent/40 text-accent"><Crown className="h-6 w-6" /></div>
                       <Badge className="bg-accent text-background text-[8px] font-bold uppercase tracking-widest px-3">NÍVEL VIP</Badge>
                     </div>
                     <CardTitle className="text-2xl font-headline font-bold text-white uppercase mb-2">Neural Sovereign</CardTitle>
                     <CardDescription className="text-white/40 font-medium">Baleias e Traders Profissionais.</CardDescription>
-                    <div className="pt-6 flex items-baseline gap-1">
-                      <span className="text-xs font-bold text-accent">R$</span>
-                      <span className="text-5xl font-bold text-white tracking-tighter">59,90</span>
-                      <span className="text-xs font-bold text-white/40">/mês</span>
-                    </div>
+                    <div className="pt-6 flex items-baseline gap-1"><span className="text-xs font-bold text-accent">R$</span><span className="text-5xl font-bold text-white tracking-tighter">59,90</span><span className="text-xs font-bold text-white/40">/mês</span></div>
                   </CardHeader>
                   <CardContent className="p-8 space-y-4 flex-1 text-left">
                     <ul className="space-y-3">
-                      <li className="flex items-start gap-3 text-xs text-white font-bold leading-relaxed">
-                        <CheckCircle2 className="h-4 w-4 text-accent shrink-0" />
-                        Whale Flow Full: Monitoramento On-chain Realtime
-                      </li>
-                      <li className="flex items-start gap-3 text-xs text-white/60 font-medium leading-relaxed">
-                        <CheckCircle2 className="h-4 w-4 text-accent shrink-0" />
-                        Neural Consensus: Veredito Gemini sobre Relatórios
-                      </li>
-                      <li className="flex items-start gap-3 text-xs text-white/60 font-medium leading-relaxed">
-                        <CheckCircle2 className="h-4 w-4 text-accent shrink-0" />
-                        Modo War Room: Mapa de Entidades completo
-                      </li>
+                      <li className="flex items-start gap-3 text-xs text-white font-bold leading-relaxed"><CheckCircle2 className="h-4 w-4 text-accent shrink-0" /> Whale Flow Full: Monitoramento On-chain Realtime</li>
+                      <li className="flex items-start gap-3 text-xs text-white/60 font-medium leading-relaxed"><CheckCircle2 className="h-4 w-4 text-accent shrink-0" /> Modo War Room: Mapa de Entidades completo</li>
                     </ul>
                   </CardContent>
                   <CardFooter className="p-8 pt-0">
-                    <Button 
-                      onClick={() => handleUpgrade('SOVEREIGN')} 
-                      disabled={loadingTier !== null}
-                      className="w-full h-14 rounded-xl bg-accent text-background font-bold uppercase shadow-lg hover:scale-105 transition-all"
-                    >
+                    <Button onClick={() => handleUpgrade('SOVEREIGN')} disabled={loadingTier !== null} className="w-full h-14 rounded-xl bg-accent text-background font-bold uppercase shadow-lg hover:scale-105 transition-all">
                       {loadingTier === 'SOVEREIGN' ? <Loader2 className="h-5 w-5 animate-spin" /> : "ELEVAR PARA SOVEREIGN"}
                     </Button>
                   </CardFooter>
@@ -378,149 +315,10 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Deep Dive Section */}
-        <section id="investments" className="py-32 px-6">
-          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-            <div className="relative group">
-               <div className="absolute inset-0 bg-primary/20 blur-[120px] rounded-full group-hover:bg-primary/30 transition-all" />
-               <SpotlightCard className="p-4 relative overflow-hidden shadow-2xl border-white/20">
-                 <img 
-                    src={fiiImage?.imageUrl} 
-                    alt="FII Investments" 
-                    className="rounded-[2.5rem] opacity-60 grayscale group-hover:grayscale-0 transition-all duration-700"
-                    data-ai-hint={fiiImage?.imageHint}
-                 />
-                 <div className="absolute top-10 right-10 flex flex-col gap-2">
-                    <Badge className="bg-emerald-600 text-[10px] font-bold py-2 px-4 rounded-xl led-glow-blue">P/VP: 0.88</Badge>
-                    <Badge className="bg-primary text-[10px] font-bold py-2 px-4 rounded-xl">YIELD: 1.1% AM</Badge>
-                 </div>
-               </SpotlightCard>
-            </div>
-            <div className="space-y-8">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 border border-primary/20">
-                <Building2 className="h-4 w-4 text-primary" />
-                <span className="text-[10px] font-bold text-primary uppercase tracking-[0.2em]">B3 & FII Terminal</span>
-              </div>
-              <h3 className="text-4xl md:text-6xl font-headline font-bold text-white leading-tight uppercase">Dominância em <span className="led-text-blue">Renda Variável.</span></h3>
-              <p className="text-lg text-white/50 leading-relaxed font-medium">
-                O Nexus não apenas mostra o preço. Ele monitora em tempo real via **Grounding Neural** dados do Clube FII e Status Invest para entregar:
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {[
-                  { title: "Vacância Física", desc: "Alertas imediatos sobre saída de inquilinos em galpões e shoppings." },
-                  { title: "Cálculo P/VP", desc: "Identificação automática de ativos operando abaixo do valor patrimonial." },
-                  { title: "Dividend Tracker", desc: "Datas Com e Pagamento sincronizados com os comunicados oficiais." },
-                  { title: "Veredito Nexus", desc: "Análise tática sobre o custo-benefício de cada ativo no cenário atual." }
-                ].map((item, i) => (
-                  <SpotlightCard key={i} className="p-6 rounded-2xl hover:border-primary/40 transition-colors">
-                    <h4 className="text-sm font-bold text-white uppercase mb-2">{item.title}</h4>
-                    <p className="text-xs text-white/40 leading-relaxed">{item.desc}</p>
-                  </SpotlightCard>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Crypto Section */}
-        <section id="crypto" className="py-32 px-6 bg-[#080D18]/50">
-          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-            <div className="order-2 lg:order-1 space-y-8">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-accent/10 border border-accent/20">
-                <Coins className="h-4 w-4 text-accent" />
-                <span className="text-[10px] font-bold text-accent uppercase tracking-[0.2em]">Crypto Core & Whale Flow</span>
-              </div>
-              <h3 className="text-4xl md:text-6xl font-headline font-bold text-white leading-tight uppercase">Siga o <span className="led-text-accent">Smart Money.</span></h3>
-              <p className="text-lg text-white/50 leading-relaxed font-medium">
-                Monitore o fluxo de capitais das baleias on-chain (ETH, BTC, USDT). Saiba se o volume está entrando em exchanges para liquidar ou saindo para custódia.
-              </p>
-              <ul className="space-y-4">
-                {[
-                  "Detecção de Transferências On-Chain > U$ 1M",
-                  "Monitoramento de Liquidez em tempo real (Binance API)",
-                  "Alertas de Acumulação e Distribuição tática",
-                  "Integração com Moralis para dados institucionais"
-                ].map((item, i) => (
-                  <li key={i} className="flex items-center gap-3 text-white font-bold text-sm uppercase">
-                    <Waves className="h-5 w-5 text-accent" /> {item}
-                  </li>
-                ))}
-              </ul>
-              <Button onClick={() => handleUpgrade('SOVEREIGN')} className="h-14 px-8 rounded-xl bg-accent text-background font-bold uppercase shadow-[0_0_30px_rgba(249,115,22,0.3)]">
-                {loadingTier === 'SOVEREIGN' ? <Loader2 className="h-4 w-4 animate-spin" /> : "VER RADAR DE BALEIAS"}
-              </Button>
-            </div>
-            <div className="order-1 lg:order-2 relative group">
-               <div className="absolute inset-0 bg-accent/20 blur-[120px] rounded-full" />
-               <SpotlightCard className="p-4 relative overflow-hidden shadow-2xl border-white/20">
-                 <img 
-                    src={cryptoImage?.imageUrl} 
-                    alt="Crypto Whales" 
-                    className="rounded-[2.5rem] opacity-60 grayscale group-hover:grayscale-0 transition-all duration-700"
-                    data-ai-hint={cryptoImage?.imageHint}
-                 />
-                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <Radar className="h-20 w-20 text-accent animate-ping opacity-20" />
-                 </div>
-               </SpotlightCard>
-            </div>
-          </div>
-        </section>
-
-        {/* Global Trends Section */}
-        <section id="trends" className="py-32 px-6">
-          <div className="max-w-7xl mx-auto text-center space-y-16">
-            <div className="space-y-4">
-              <h3 className="text-3xl md:text-6xl font-headline font-bold text-white tracking-tight uppercase">Vigilância <span className="text-primary">Omnisciente.</span></h3>
-              <p className="text-white/40 font-medium max-w-2xl mx-auto text-lg">O Nexus utiliza o **Navegador Neural** para vasculhar portais globais e identificar o impacto de cada fato no seu bolso.</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              {[
-                { icon: Globe, title: "Geopolítica", color: "blue" },
-                { icon: Zap, title: "Energy & Commodities", color: "orange" },
-                { icon: ShieldAlert, title: "Cisnes Negros", color: "rose" },
-                { icon: BrainCircuit, title: "Rumores IA", color: "emerald" }
-              ].map((f, i) => (
-                <SpotlightCard key={i} className="p-10 space-y-6 group hover:border-primary/40 transition-all">
-                  <div className={cn(
-                    "p-4 rounded-2xl w-fit mx-auto",
-                    f.color === 'blue' ? 'bg-primary/20 text-primary' : 
-                    f.color === 'orange' ? 'bg-accent/20 text-accent' : 
-                    f.color === 'rose' ? 'bg-rose-500/20 text-rose-500' : 'bg-emerald-500/20 text-emerald-400'
-                  )}>
-                    <f.icon className="h-10 w-10" />
-                  </div>
-                  <h4 className="text-xl font-bold text-white uppercase">{f.title}</h4>
-                </SpotlightCard>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Final CTA */}
-        <section className="py-40 px-6 text-center space-y-12 relative overflow-hidden">
-           <div className="absolute inset-0 bg-primary/5 blur-[150px] rounded-full pointer-events-none" />
-           <h2 className="text-5xl md:text-8xl font-headline font-bold text-white tracking-tighter uppercase relative z-10">
-             O Futuro da <span className="led-text-blue">Análise</span> é Autônomo.
-           </h2>
-           <p className="text-xl text-white/40 max-w-2xl mx-auto uppercase tracking-widest font-bold">
-             Junte-se a 2.450+ estrategistas de elite no Nexus AI Terminal.
-           </p>
-           <div className="relative z-10">
-             <Link href={user ? "/" : "/register"}>
-               <Button className="h-24 px-16 rounded-[2.5rem] bg-primary text-background font-bold text-3xl shadow-[0_0_80px_rgba(37,99,235,0.6)] hover:scale-105 transition-all uppercase">
-                 {user ? "IR PARA O TERMINAL" : "ASSUMIR COMANDO AGORA"}
-               </Button>
-             </Link>
-           </div>
-           <p className="text-[10px] text-white/30 font-bold uppercase tracking-[0.5em]">Nexus AI Sentinel - Autonomous Intelligence Core v5.6</p>
-        </section>
+        <footer className="py-10 border-t border-white/10 px-6 text-center relative z-10">
+          <p className="text-[10px] text-white/40 font-medium uppercase">&copy; 2026 Nexus AI Sentinel. Inteligência soberana para o novo mundo financeiro.</p>
+        </footer>
       </main>
-
-      <footer className="py-10 border-t border-white/10 px-6 text-center relative z-10">
-        <p className="text-[10px] text-white/40 font-medium uppercase">&copy; 2026 Nexus AI Sentinel. Inteligência soberana para o novo mundo financeiro.</p>
-      </footer>
     </div>
   );
 }
