@@ -18,21 +18,33 @@ interface Message {
 interface AssistantChatProps {
   assets: UserAsset[];
   displayMode: DisplayMode;
+  userName?: string | null;
   externalOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
   initialQuery?: string | null;
   latestAlert?: GlobalIntelligenceAlert | null;
 }
 
-export function AssistantChat({ assets, displayMode, externalOpen, onOpenChange, initialQuery, latestAlert }: AssistantChatProps) {
+export function AssistantChat({ assets, displayMode, userName, externalOpen, onOpenChange, initialQuery, latestAlert }: AssistantChatProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: "Sou o Nexus. Monitoramento global ativo. Analisei seu portfólio e as tendências geopolíticas atuais. Qual sua prioridade estratégica?" }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [lastProcessedQuery, setLastProcessedQuery] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Initialize messages with personalized greeting
+  useEffect(() => {
+    if (messages.length === 0) {
+      const name = userName || "Estrategista";
+      setMessages([
+        { 
+          role: 'assistant', 
+          content: `Saudações, Comandante ${name}. O Nexus está em vigilância total. Analisei seu portfólio e os sinais globais. Qual sua ordem estratégica para agora?` 
+        }
+      ]);
+    }
+  }, [userName, messages.length]);
 
   // Sync with external open state
   useEffect(() => {

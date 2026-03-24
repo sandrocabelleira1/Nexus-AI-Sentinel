@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo, useEffect, useCallback } from "react";
@@ -33,7 +34,8 @@ import {
   Menu,
   ChevronLeft,
   LogOut,
-  ShieldEllipsis
+  ShieldEllipsis,
+  User
 } from "lucide-react";
 import { AssistantChat } from "@/components/ai/assistant-chat";
 import { Badge } from "@/components/ui/badge";
@@ -255,8 +257,14 @@ export default function NexusDashboard() {
             <div className="p-2 md:p-3 rounded-2xl bg-primary/20 border border-primary/40 led-glow-blue">
               <Cpu className="h-5 w-5 md:h-6 md:w-6 text-primary" />
             </div>
-            <div>
+            <div className="flex flex-col">
               <h1 className="font-headline font-bold text-lg md:text-2xl led-text-blue tracking-tighter">NEXUS AI</h1>
+              {currentUser?.displayName && (
+                <div className="flex items-center gap-1">
+                  <span className="text-[10px] text-primary/60 font-bold uppercase tracking-widest">COMANDANTE:</span>
+                  <span className="text-[10px] text-white font-bold uppercase tracking-tight">{currentUser.displayName}</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -419,7 +427,7 @@ export default function NexusDashboard() {
           {activeTab === 'portfolio' && <PortfolioView assets={userAssetsData || []} marketPrices={marketPrices || []} onUpdateAsset={handleUpdateAsset} onAnalyze={handleDeepAnalysis} />}
         </main>
 
-        <AssistantChat assets={userAssetsData || []} displayMode={'Essencial'} externalOpen={isChatOpen} onOpenChange={setIsChatOpen} initialQuery={chatInitialQuery} latestAlert={latestAlert} />
+        <AssistantChat assets={userAssetsData || []} displayMode={'Essencial'} userName={currentUser?.displayName} externalOpen={isChatOpen} onOpenChange={setIsChatOpen} initialQuery={chatInitialQuery} latestAlert={latestAlert} />
       </div>
     </AuthGuard>
   );
