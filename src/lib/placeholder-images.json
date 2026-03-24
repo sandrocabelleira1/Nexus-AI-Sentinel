@@ -1,3 +1,16 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero-nexus",
+      "description": "Visual tático de uma rede neural global monitorando o planeta.",
+      "imageUrl": "https://picsum.photos/seed/nexus-hero/1200/800",
+      "imageHint": "global network neural"
+    },
+    {
+      "id": "feature-grounding",
+      "description": "Interface de busca em tempo real cruzando dados financeiros.",
+      "imageUrl": "https://picsum.photos/seed/grounding/600/400",
+      "imageHint": "financial data search"
+    }
+  ]
 }
