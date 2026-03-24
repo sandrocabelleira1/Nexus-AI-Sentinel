@@ -47,7 +47,6 @@ export default function LandingPage() {
   const { toast } = useToast();
   const [loadingTier, setLoadingTier] = useState<'PRO' | 'SOVEREIGN' | null>(null);
 
-  const heroImage = PlaceHolderImages.find(img => img.id === 'hero-nexus');
   const fiiImage = PlaceHolderImages.find(img => img.id === 'feature-fii');
   const cryptoImage = PlaceHolderImages.find(img => img.id === 'feature-crypto');
 
@@ -148,20 +147,22 @@ export default function LandingPage() {
       </header>
 
       <main className="relative z-10">
-        {/* Hero Section with High Fidelity Evil Eye */}
-        <section className="relative pt-32 pb-40 px-6 overflow-hidden">
-          <EvilEye 
-            eyeColor="#0e13a0"
-            intensity={1.5}
-            pupilSize={0.6}
-            irisWidth={0.25}
-            glowIntensity={0.35}
-            scale={0.8}
-            noiseScale={1}
-            pupilFollow={1}
-            flameSpeed={1}
-            backgroundColor="transparent"
-          />
+        {/* Hero Section with Corrected Blue Evil Eye */}
+        <section className="relative pt-32 pb-40 px-6 overflow-hidden min-h-[800px] flex items-center justify-center">
+          <div className="absolute inset-0 z-0">
+            <EvilEye 
+              eyeColor="#2563eb"
+              intensity={1.8}
+              pupilSize={0.55}
+              irisWidth={0.28}
+              glowIntensity={0.4}
+              scale={0.9}
+              noiseScale={1.2}
+              pupilFollow={1.0}
+              flameSpeed={1.2}
+              backgroundColor="#000000"
+            />
+          </div>
           
           <div className="max-w-7xl mx-auto text-center space-y-8 relative z-10">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 animate-flicker">
@@ -244,18 +245,8 @@ export default function LandingPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
-              {/* Tier 1: Sentinel (Gratuito) */}
-              <BorderGlow
-                edgeSensitivity={15}
-                glowColor="40 80 80"
-                backgroundColor="#080D18"
-                borderRadius={40}
-                glowRadius={18}
-                glowIntensity={2.4}
-                coneSpread={32}
-                animated
-                colors={['#c084fc', '#f472b6', '#38bdf8']}
-              >
+              {/* Tiers with BorderGlow */}
+              <BorderGlow colors={['#c084fc', '#f472b6', '#38bdf8']}>
                 <Card className="border-none bg-transparent rounded-[2.5rem] overflow-hidden group hover:border-white/20 transition-all flex flex-col h-full">
                   <CardHeader className="p-8 pb-0 text-left">
                     <div className="flex items-center justify-between mb-4">
@@ -294,18 +285,7 @@ export default function LandingPage() {
                 </Card>
               </BorderGlow>
 
-              {/* Tier 2: Pro (R$ 19,90) */}
-              <BorderGlow
-                edgeSensitivity={15}
-                glowColor="40 80 80"
-                backgroundColor="#080D18"
-                borderRadius={40}
-                glowRadius={18}
-                glowIntensity={2.4}
-                coneSpread={32}
-                animated
-                colors={['#38bdf8', '#c084fc', '#f472b6']}
-              >
+              <BorderGlow colors={['#38bdf8', '#c084fc', '#f472b6']}>
                 <Card className="border-none bg-transparent rounded-[2.5rem] overflow-hidden relative flex flex-col h-full">
                   <CardHeader className="p-8 pb-0 text-left">
                     <div className="flex items-center justify-between mb-4">
@@ -336,10 +316,6 @@ export default function LandingPage() {
                         <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
                         Whisper Radar (Básico): Rumores validados pela IA
                       </li>
-                      <li className="flex items-start gap-3 text-xs text-white/60 font-medium leading-relaxed">
-                        <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                        WhatsApp Básico: 3 alertas críticos/semana
-                      </li>
                     </ul>
                   </CardContent>
                   <CardFooter className="p-8 pt-0">
@@ -354,18 +330,7 @@ export default function LandingPage() {
                 </Card>
               </BorderGlow>
 
-              {/* Tier 3: Neural Sovereign (R$ 59,90) */}
-              <BorderGlow
-                edgeSensitivity={15}
-                glowColor="40 80 80"
-                backgroundColor="#080D18"
-                borderRadius={40}
-                glowRadius={18}
-                glowIntensity={2.4}
-                coneSpread={32}
-                animated
-                colors={['#f472b6', '#38bdf8', '#c084fc']}
-              >
+              <BorderGlow colors={['#f472b6', '#38bdf8', '#c084fc']}>
                 <Card className="border-none bg-transparent rounded-[2.5rem] overflow-hidden flex flex-col h-full">
                   <CardHeader className="p-8 pb-0 text-left">
                     <div className="flex items-center justify-between mb-4">
@@ -391,10 +356,6 @@ export default function LandingPage() {
                       <li className="flex items-start gap-3 text-xs text-white/60 font-medium leading-relaxed">
                         <CheckCircle2 className="h-4 w-4 text-accent shrink-0" />
                         Neural Consensus: Veredito Gemini sobre Relatórios
-                      </li>
-                      <li className="flex items-start gap-3 text-xs text-white/60 font-medium leading-relaxed">
-                        <CheckCircle2 className="h-4 w-4 text-accent shrink-0" />
-                        WhatsApp Sovereign: Alertas ilimitados de Baleias
                       </li>
                       <li className="flex items-start gap-3 text-xs text-white/60 font-medium leading-relaxed">
                         <CheckCircle2 className="h-4 w-4 text-accent shrink-0" />

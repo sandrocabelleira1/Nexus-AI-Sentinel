@@ -170,7 +170,7 @@ void main() {
 `;
 
 export function EvilEye({
-  eyeColor = '#0e13a0',
+  eyeColor = '#2563eb', // Nexus Neon Blue
   intensity = 1.5,
   pupilSize = 0.6,
   irisWidth = 0.25,
@@ -179,7 +179,7 @@ export function EvilEye({
   noiseScale = 1.0,
   pupilFollow = 1.0,
   flameSpeed = 1.0,
-  backgroundColor = '#060010'
+  backgroundColor = '#000000'
 }: EvilEyeProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -281,16 +281,6 @@ export function EvilEye({
   }, [eyeColor, intensity, pupilSize, irisWidth, glowIntensity, scale, noiseScale, pupilFollow, flameSpeed, backgroundColor]);
 
   return (
-    <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden z-0">
-      <div 
-        ref={containerRef} 
-        className="w-full h-full max-w-[1400px] max-h-[800px]" 
-      />
-      {/* Anéis de Varredura CSS */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="w-[80%] h-[80%] rounded-full border border-primary/5 animate-[spin_60s_linear_infinite] opacity-20" />
-        <div className="w-[60%] h-[60%] rounded-full border border-primary/10 animate-[spin_40s_linear_reverse_infinite] opacity-10" />
-      </div>
-    </div>
+    <div ref={containerRef} className="w-full h-full" />
   );
 }
