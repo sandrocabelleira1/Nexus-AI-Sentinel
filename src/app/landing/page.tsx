@@ -16,15 +16,22 @@ import {
   BrainCircuit,
   Lock,
   ChevronRight,
-  Database
+  Database,
+  Building2,
+  Coins,
+  LineChart,
+  Target,
+  Waves
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { Badge } from "@/components/ui/badge";
 
 export default function LandingPage() {
   const heroImage = PlaceHolderImages.find(img => img.id === 'hero-nexus');
-  const groundingImage = PlaceHolderImages.find(img => img.id === 'feature-grounding');
+  const fiiImage = PlaceHolderImages.find(img => img.id === 'feature-fii');
+  const cryptoImage = PlaceHolderImages.find(img => img.id === 'feature-crypto');
 
   return (
     <div className="min-h-screen bg-background relative overflow-x-hidden">
@@ -41,8 +48,9 @@ export default function LandingPage() {
           <h1 className="font-headline font-bold text-xl led-text-blue tracking-tighter uppercase">NEXUS AI</h1>
         </div>
         <div className="hidden md:flex items-center gap-8">
-          <a href="#features" className="text-xs font-bold text-white/60 hover:text-primary transition-colors tracking-widest uppercase">Tecnologia</a>
-          <a href="#security" className="text-xs font-bold text-white/60 hover:text-primary transition-colors tracking-widest uppercase">Segurança</a>
+          <a href="#investments" className="text-xs font-bold text-white/60 hover:text-primary transition-colors tracking-widest uppercase">Investimentos</a>
+          <a href="#crypto" className="text-xs font-bold text-white/60 hover:text-primary transition-colors tracking-widest uppercase">Cripto & Whales</a>
+          <a href="#trends" className="text-xs font-bold text-white/60 hover:text-primary transition-colors tracking-widest uppercase">Tendências</a>
           <Link href="/login">
             <Button variant="outline" className="border-primary/40 text-primary rounded-xl font-bold text-xs px-6 h-10 uppercase">
               ACESSAR TERMINAL
@@ -57,15 +65,15 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto text-center space-y-8 relative z-10">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 animate-flicker">
               <Activity className="h-3 w-3 text-primary" />
-              <span className="text-[10px] font-bold text-primary uppercase tracking-[0.3em]">Neural Grounding v5.5 Ativo</span>
+              <span className="text-[10px] font-bold text-primary uppercase tracking-[0.3em]">Omnisciente v5.6 Ativo</span>
             </div>
             
             <h2 className="text-5xl md:text-8xl font-headline font-bold text-white tracking-tighter leading-[0.9] max-w-5xl mx-auto uppercase">
               O Olho de Vidro da <span className="led-text-blue">Nova Economia.</span>
             </h2>
             
-            <p className="text-lg md:text-xl text-white/50 max-w-2xl mx-auto font-medium leading-relaxed">
-              Detecte "Cisnes Negros" e rumores de mercado antes que virem notícias oficiais. A única inteligência que navega na web em tempo real para proteger seu patrimônio.
+            <p className="text-lg md:text-xl text-white/50 max-w-3xl mx-auto font-medium leading-relaxed">
+              O único terminal que integra **B3, FIIs e Cripto** com inteligência de "Grounding". Detecte cisnes negros e baleias on-chain antes que o mercado reaja.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
@@ -75,159 +83,180 @@ export default function LandingPage() {
                   <ArrowRight className="ml-3 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
-              <Button variant="ghost" className="h-16 px-10 rounded-2xl border border-white/10 text-white/60 font-bold hover:bg-white/5 uppercase">
-                VER DEMONSTRAÇÃO
-              </Button>
-            </div>
-          </div>
-
-          {/* Floating UI Element Preview */}
-          <div className="mt-24 max-w-6xl mx-auto relative group">
-            <div className="absolute inset-0 bg-primary/20 blur-[100px] rounded-full group-hover:bg-primary/30 transition-all duration-1000" />
-            <div className="relative glass-panel rounded-[3rem] border-white/20 p-4 md:p-8 shadow-2xl overflow-hidden aspect-video md:aspect-auto">
-              <img 
-                src={heroImage?.imageUrl} 
-                alt="Nexus UI Preview" 
-                className="w-full h-full object-cover rounded-[2rem] opacity-60 mix-blend-overlay"
-                data-ai-hint={heroImage?.imageHint}
-              />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="p-8 bg-black/40 backdrop-blur-xl border border-white/10 rounded-[2.5rem] text-center space-y-4">
-                  <Radar className="h-12 w-12 text-primary mx-auto animate-pulse" />
-                  <p className="text-xs font-bold text-primary uppercase tracking-[0.5em]">Vigilância Omnisciente Ativa</p>
-                </div>
-              </div>
+              <Link href="/login">
+                <Button variant="ghost" className="h-16 px-10 rounded-2xl border border-white/10 text-white/60 font-bold hover:bg-white/5 uppercase">
+                  ACESSAR TERMINAL
+                </Button>
+              </Link>
             </div>
           </div>
         </section>
 
-        {/* Features Grid */}
-        <section id="features" className="py-32 px-6 bg-[#080D18]/50">
-          <div className="max-w-7xl mx-auto space-y-20">
-            <div className="text-center space-y-4">
-              <h3 className="text-3xl md:text-5xl font-headline font-bold text-white tracking-tight uppercase">Capacidade de Resposta <span className="text-primary">Instantânea.</span></h3>
-              <p className="text-white/40 font-medium">Arquitetura neural desenhada para o investidor de elite.</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {/* Live Simulation Ticker */}
+        <section className="py-10 border-y border-white/5 bg-black/20">
+          <div className="max-w-[1800px] mx-auto overflow-hidden relative">
+            <div className="flex gap-10 animate-marquee whitespace-nowrap">
               {[
-                {
-                  icon: BrainCircuit,
-                  title: "Grounding Neural",
-                  desc: "O Nexus não alucina. Ele navega no Google e em portais oficiais em tempo real para validar cada sinal antes de emitir um alerta.",
-                  color: "blue"
-                },
-                {
-                  icon: Radar,
-                  title: "Whale Discovery",
-                  desc: "Monitoramento on-chain de baleias (ETH, USDT, WBTC). Saiba para onde os grandes volumes estão se movendo agora.",
-                  color: "orange"
-                },
-                {
-                  icon: Zap,
-                  title: "Whisper Radar",
-                  desc: "Identifica rumores e 'vazamentos' governamentais em fóruns especializados antes da mídia convencional.",
-                  color: "emerald"
-                }
-              ].map((f, i) => (
-                <div key={i} className="bg-white/5 border border-white/10 rounded-[2.5rem] p-10 space-y-6 hover:border-primary/40 transition-all group">
-                  <div className={cn(
-                    "p-4 rounded-2xl w-fit",
-                    f.color === 'blue' ? 'bg-primary/20 text-primary' : 
-                    f.color === 'orange' ? 'bg-accent/20 text-accent' : 'bg-emerald-500/20 text-emerald-400'
-                  )}>
-                    <f.icon className="h-8 w-8" />
-                  </div>
-                  <h4 className="text-2xl font-bold text-white uppercase">{f.title}</h4>
-                  <p className="text-white/40 leading-relaxed font-medium">
-                    {f.desc}
-                  </p>
+                { t: "PETR4", p: "R$ 38.45", c: "+2.4%", v: "COMPRA" },
+                { t: "MXRF11", p: "R$ 10.22", c: "-0.5%", v: "HOLD" },
+                { t: "BTC", p: "U$ 64,230", c: "+4.1%", v: "WHALE BUY" },
+                { t: "VALE3", p: "R$ 62.10", c: "-1.2%", v: "WATCH" },
+                { t: "ETH", p: "U$ 3,450", c: "+1.8%", v: "ACCUMULATION" },
+                { t: "HGLG11", p: "R$ 164.20", c: "+0.2%", v: "YIELD WIN" },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-4 bg-white/5 px-6 py-3 rounded-2xl border border-white/10">
+                  <span className="font-bold text-white">{item.t}</span>
+                  <span className="text-xs text-white/40">{item.p}</span>
+                  <span className={cn("text-xs font-bold", item.c.startsWith('+') ? "text-emerald-400" : "text-rose-400")}>{item.c}</span>
+                  <Badge variant="outline" className="text-[8px] border-primary/40 text-primary">{item.v}</Badge>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Deep Grounding Detail */}
-        <section className="py-32 px-6">
+        {/* Deep Dive: Ações & FIIs */}
+        <section id="investments" className="py-32 px-6">
           <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+            <div className="relative group">
+               <div className="absolute inset-0 bg-primary/20 blur-[120px] rounded-full group-hover:bg-primary/30 transition-all" />
+               <div className="glass-panel border-white/20 rounded-[3rem] p-4 relative overflow-hidden shadow-2xl">
+                 <img 
+                    src={fiiImage?.imageUrl} 
+                    alt="FII Investments" 
+                    className="rounded-[2.5rem] opacity-60 grayscale group-hover:grayscale-0 transition-all duration-700"
+                    data-ai-hint={fiiImage?.imageHint}
+                 />
+                 <div className="absolute top-10 right-10 flex flex-col gap-2">
+                    <Badge className="bg-emerald-600 text-[10px] font-bold py-2 px-4 rounded-xl led-glow-blue">P/VP: 0.88</Badge>
+                    <Badge className="bg-primary text-[10px] font-bold py-2 px-4 rounded-xl">YIELD: 1.1% AM</Badge>
+                 </div>
+               </div>
+            </div>
             <div className="space-y-8">
-              <div className="inline-flex items-center rounded-full border border-primary/40 px-4 py-1.5 text-xs font-bold text-primary tracking-widest uppercase">TECNOLOGIA PROPRIETÁRIA</div>
-              <h3 className="text-4xl md:text-6xl font-headline font-bold text-white leading-tight uppercase">Chega de dados <span className="led-text-blue">estáticos e atrasados.</span></h3>
-              <p className="text-lg text-white/50 leading-relaxed">
-                Enquanto outros terminais dependem de APIs que levam minutos para atualizar, o Nexus usa o **Navegador Neural**. Ele visita sites como Clube FII, Status Invest e Bloomberg para capturar a informação no segundo em que ela é publicada.
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 border border-primary/20">
+                <Building2 className="h-4 w-4 text-primary" />
+                <span className="text-[10px] font-bold text-primary uppercase tracking-[0.2em]">B3 & FII Terminal</span>
+              </div>
+              <h3 className="text-4xl md:text-6xl font-headline font-bold text-white leading-tight uppercase">Dominância em <span className="led-text-blue">Renda Variável.</span></h3>
+              <p className="text-lg text-white/50 leading-relaxed font-medium">
+                O Nexus não apenas mostra o preço. Ele monitora em tempo real via **Grounding Neural** dados do Clube FII e Status Invest para entregar:
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {[
+                  { title: "Vacância Física", desc: "Alertas imediatos sobre saída de inquilinos em galpões e shoppings." },
+                  { title: "Cálculo P/VP", desc: "Identificação automática de ativos operando abaixo do valor patrimonial." },
+                  { title: "Dividend Tracker", desc: "Datas Com e Pagamento sincronizados com os comunicados oficiais." },
+                  { title: "Veredito Nexus", desc: "Análise tática sobre o custo-benefício de cada ativo no cenário atual." }
+                ].map((item, i) => (
+                  <div key={i} className="bg-white/5 border border-white/10 p-6 rounded-2xl hover:border-primary/40 transition-colors">
+                    <h4 className="text-sm font-bold text-white uppercase mb-2">{item.title}</h4>
+                    <p className="text-xs text-white/40 leading-relaxed">{item.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Deep Dive: Crypto & Whales */}
+        <section id="crypto" className="py-32 px-6 bg-[#080D18]/50">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+            <div className="order-2 lg:order-1 space-y-8">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-accent/10 border border-accent/20">
+                <Coins className="h-4 w-4 text-accent" />
+                <span className="text-[10px] font-bold text-accent uppercase tracking-[0.2em]">Crypto Core & Whale Flow</span>
+              </div>
+              <h3 className="text-4xl md:text-6xl font-headline font-bold text-white leading-tight uppercase">Siga o <span className="led-text-accent">Smart Money.</span></h3>
+              <p className="text-lg text-white/50 leading-relaxed font-medium">
+                Monitore o fluxo de capitais das baleias on-chain (ETH, BTC, USDT). Saiba se o volume está entrando em exchanges para liquidar ou saindo para custódia.
               </p>
               <ul className="space-y-4">
                 {[
-                  "Monitoramento de Greves e Infraestrutura",
-                  "Cálculo de Dividendos em Tempo Real",
-                  "Análise de Vacância Física de FIIs",
-                  "Detecção de Cisnes Negros Geopolíticos"
+                  "Detecção de Transferências On-Chain > U$ 1M",
+                  "Monitoramento de Liquidez em tempo real (Binance API)",
+                  "Alertas de Acumulação e Distribuição tática",
+                  "Integração com Moralis para dados institucionais"
                 ].map((item, i) => (
                   <li key={i} className="flex items-center gap-3 text-white font-bold text-sm uppercase">
-                    <ShieldCheck className="h-5 w-5 text-primary" /> {item}
+                    <Waves className="h-5 w-5 text-accent" /> {item}
                   </li>
                 ))}
               </ul>
+              <Button className="h-14 px-8 rounded-xl bg-accent text-background font-bold uppercase shadow-[0_0_30px_rgba(249,115,22,0.3)]">
+                VER RADAR DE BALEIAS
+              </Button>
             </div>
-            <div className="relative">
-               <div className="absolute inset-0 bg-primary/20 blur-[120px] rounded-full" />
-               <div className="glass-panel border-white/20 rounded-[3rem] p-2 relative overflow-hidden shadow-2xl">
+            <div className="order-1 lg:order-2 relative group">
+               <div className="absolute inset-0 bg-accent/20 blur-[120px] rounded-full" />
+               <div className="glass-panel border-white/20 rounded-[3rem] p-4 relative overflow-hidden shadow-2xl">
                  <img 
-                    src={groundingImage?.imageUrl} 
-                    alt="Neural Grounding" 
-                    className="rounded-[2.5rem] opacity-40 grayscale"
-                    data-ai-hint={groundingImage?.imageHint}
+                    src={cryptoImage?.imageUrl} 
+                    alt="Crypto Whales" 
+                    className="rounded-[2.5rem] opacity-60 grayscale group-hover:grayscale-0 transition-all duration-700"
+                    data-ai-hint={cryptoImage?.imageHint}
                  />
-                 <div className="absolute bottom-10 left-10 right-10 bg-[#080D18]/80 backdrop-blur-xl p-6 rounded-2xl border border-white/10">
-                    <div className="flex items-center gap-3 mb-2">
-                       <Database className="h-4 w-4 text-primary" />
-                       <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Fonte de Dados Validada</span>
-                    </div>
-                    <p className="text-xs text-white italic">"Nexus detectou ataque no Golfo Pérsico via Grounding em 4 segundos após indexação no Google News."</p>
+                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <Radar className="h-20 w-20 text-accent animate-ping opacity-20" />
                  </div>
                </div>
             </div>
           </div>
         </section>
 
-        {/* Security Section */}
-        <section id="security" className="py-32 px-6">
-          <div className="max-w-4xl mx-auto bg-primary/5 border border-primary/20 rounded-[4rem] p-12 md:p-20 text-center space-y-10 relative overflow-hidden">
-             <div className="absolute top-0 right-0 p-10 opacity-10">
-               <Lock className="h-40 w-40 text-primary" />
-             </div>
-             <h3 className="text-3xl md:text-5xl font-headline font-bold text-white uppercase">Privacidade de <span className="text-primary">Nível Militar.</span></h3>
-             <p className="text-white/50 text-lg max-w-2xl mx-auto font-medium">
-               Suas chaves de API e dados de portfólio são criptografados e armazenados em infraestrutura isolada. O Nexus opera como seu estrategista privado, não como um coletor de dados.
-             </p>
-             <div className="flex flex-wrap items-center justify-center gap-8">
-               <div className="flex items-center gap-3">
-                 <ShieldAlert className="h-6 w-6 text-primary" />
-                 <span className="text-xs font-bold text-white uppercase tracking-widest">AES-256 Encrypted</span>
-               </div>
-               <div className="flex items-center gap-3">
-                 <Activity className="h-6 w-6 text-primary" />
-                 <span className="text-xs font-bold text-white uppercase tracking-widest">Auditado Mensalmente</span>
-               </div>
-             </div>
+        {/* Global Trends Section */}
+        <section id="trends" className="py-32 px-6">
+          <div className="max-w-7xl mx-auto text-center space-y-16">
+            <div className="space-y-4">
+              <h3 className="text-3xl md:text-6xl font-headline font-bold text-white tracking-tight uppercase">Vigilância <span className="text-primary">Omnisciente.</span></h3>
+              <p className="text-white/40 font-medium max-w-2xl mx-auto text-lg">O Nexus utiliza o **Navegador Neural** para vasculhar portais globais e identificar o impacto de cada fato no seu bolso.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {[
+                { icon: Globe, title: "Geopolítica", color: "blue" },
+                { icon: Zap, title: "Energy & Commodities", color: "orange" },
+                { icon: ShieldAlert, title: "Cisnes Negros", color: "rose" },
+                { icon: BrainCircuit, title: "Rumores IA", color: "emerald" }
+              ].map((f, i) => (
+                <div key={i} className="bg-white/5 border border-white/10 rounded-[2.5rem] p-10 space-y-6 hover:border-primary/40 transition-all group">
+                  <div className={cn(
+                    "p-4 rounded-2xl w-fit mx-auto",
+                    f.color === 'blue' ? 'bg-primary/20 text-primary' : 
+                    f.color === 'orange' ? 'bg-accent/20 text-accent' : 
+                    f.color === 'rose' ? 'bg-rose-500/20 text-rose-500' : 'bg-emerald-500/20 text-emerald-400'
+                  )}>
+                    <f.icon className="h-10 w-10" />
+                  </div>
+                  <h4 className="text-xl font-bold text-white uppercase">{f.title}</h4>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
         {/* Final CTA */}
-        <section className="py-40 px-6 text-center space-y-12">
-           <h2 className="text-5xl md:text-7xl font-headline font-bold text-white tracking-tighter uppercase">Pronto para assumir o <span className="led-text-blue">Comando?</span></h2>
-           <Link href="/register">
-             <Button className="h-20 px-12 rounded-[2.5rem] bg-primary text-background font-bold text-2xl shadow-[0_0_80px_rgba(37,99,235,0.6)] hover:scale-105 transition-all uppercase">
-               ENTRAR NO TERMINAL AGORA
-             </Button>
-           </Link>
-           <p className="text-[10px] text-white/30 font-bold uppercase tracking-[0.5em]">Nexus AI Sentinel - Autonomous Intelligence Core v5.5</p>
+        <section className="py-40 px-6 text-center space-y-12 relative overflow-hidden">
+           <div className="absolute inset-0 bg-primary/5 blur-[150px] rounded-full pointer-events-none" />
+           <h2 className="text-5xl md:text-8xl font-headline font-bold text-white tracking-tighter uppercase relative z-10">
+             O Futuro da <span className="led-text-blue">Análise</span> é Autônomo.
+           </h2>
+           <p className="text-xl text-white/40 max-w-2xl mx-auto uppercase tracking-widest font-bold">
+             Junte-se a 2.450+ estrategistas de elite no Nexus AI Terminal.
+           </p>
+           <div className="relative z-10">
+             <Link href="/register">
+               <Button className="h-24 px-16 rounded-[2.5rem] bg-primary text-background font-bold text-3xl shadow-[0_0_80px_rgba(37,99,235,0.6)] hover:scale-105 transition-all uppercase">
+                 ASSUMIR COMANDO AGORA
+               </Button>
+             </Link>
+           </div>
+           <p className="text-[10px] text-white/30 font-bold uppercase tracking-[0.5em]">Nexus AI Sentinel - Autonomous Intelligence Core v5.6</p>
         </section>
       </main>
 
       <footer className="py-10 border-t border-white/10 px-6 text-center">
-        <p className="text-[10px] text-white/40 font-medium uppercase">&copy; 2026 Nexus AI Sentinel. Todos os direitos reservados. Inteligência para o novo mundo.</p>
+        <p className="text-[10px] text-white/40 font-medium uppercase">&copy; 2026 Nexus AI Sentinel. Inteligência soberana para o novo mundo financeiro.</p>
       </footer>
     </div>
   );

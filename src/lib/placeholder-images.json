@@ -11,6 +11,18 @@
       "description": "Interface de busca em tempo real cruzando dados financeiros.",
       "imageUrl": "https://picsum.photos/seed/grounding/600/400",
       "imageHint": "financial data search"
+    },
+    {
+      "id": "feature-fii",
+      "description": "Edifícios corporativos modernos representando investimentos em FIIs.",
+      "imageUrl": "https://picsum.photos/seed/fii-buildings/800/600",
+      "imageHint": "modern office building"
+    },
+    {
+      "id": "feature-crypto",
+      "description": "Gráfico de velas e dados on-chain de criptomoedas.",
+      "imageUrl": "https://picsum.photos/seed/crypto-chart/800/600",
+      "imageHint": "cryptocurrency trading chart"
     }
   ]
 }
