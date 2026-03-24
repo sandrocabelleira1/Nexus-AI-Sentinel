@@ -1,7 +1,3 @@
-/**
- * Nexus AI Sentinel - Firestore Security Rules v2.3
- * Otimizado para suporte a varredura global e proteção de dados de usuário.
- */
 
 rules_version = '2';
 service cloud.firestore {
@@ -24,8 +20,8 @@ service cloud.firestore {
     // --- USER DATA RULES ---
 
     match /users/{userId} {
-      // Admins podem visualizar todos os perfis para relatórios
-      allow get, list: if isOwner(userId) || isAdmin();
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
       allow create, update: if isOwner(userId);
       
       match /consents/{consentId} {
@@ -35,45 +31,33 @@ service cloud.firestore {
       match /assets/{assetId} {
         allow get, list, create, update, delete: if isOwner(userId);
       }
-      
-      match /alerts/{alertId} {
-        allow get, list, create: if isOwner(userId);
-      }
-
-      match /chatSessions/{sessionId} {
-        allow get, list, create, update, delete: if isOwner(userId);
-        
-        match /messages/{messageId} {
-          allow get, list, create: if isOwner(userId);
-        }
-      }
     }
 
-    // --- GLOBAL DATA RULES (Client-Side Intelligence Persistence) ---
+    // --- GLOBAL DATA RULES ---
 
     match /global_intelligence_alerts/{id} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn();
+      allow create, update: if isSignedIn();
     }
 
     match /autonomous_insights/{id} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn();
+      allow create, update: if isSignedIn();
     }
 
     match /whale_transactions/{id} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn();
+      allow create, update: if isSignedIn();
     }
 
     match /market_entities/{id} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn();
+      allow create, update: if isSignedIn();
     }
 
     match /market_prices/{id} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn();
+      allow create, update: if isSignedIn();
     }
 
     // --- ADMIN RULES ---

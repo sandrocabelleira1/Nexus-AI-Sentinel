@@ -5,7 +5,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "UserProfile",
       "type": "object",
-      "description": "Represents a user's profile and general application settings within the Nexus AI Sentinel app. This entity stores core user data, excluding sensitive authentication credentials which are managed by an external system.",
+      "description": "Represents a user's profile and general application settings within the Nexus AI Sentinel app.",
       "properties": {
         "id": {
           "type": "string",
@@ -13,12 +13,12 @@
         },
         "email": {
           "type": "string",
-          "description": "The user's email address, used for identification. (Relationship: UserProfile 1:1 ExternalAuthSystem)",
+          "description": "The user's email address.",
           "format": "email"
         },
         "displayName": {
           "type": "string",
-          "description": "The user's preferred name for display within the application."
+          "description": "The user's preferred name for display."
         },
         "whatsapp": {
           "type": "string",
@@ -34,10 +34,7 @@
         },
         "preferredDisplayMode": {
           "type": "string",
-          "description": "The user's preferred mode for financial explanations ('Essential' for simplified, 'Full' for technical data).",
-          "items": {
-            "type": "string"
-          }
+          "description": "Simplified or Technical data mode."
         },
         "createdAt": {
           "type": "string",
@@ -66,36 +63,25 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "UserConsent",
       "type": "object",
-      "description": "Records a user's agreement to specific terms, policies, or disclaimers within the Nexus AI Sentinel app, particularly related to financial responsibility.",
+      "description": "Records a user's agreement to specific terms.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the UserConsent entity."
+          "description": "Unique identifier."
         },
         "userId": {
           "type": "string",
-          "description": "Reference to the UserProfile entity that granted consent. (Relationship: UserProfile 1:N UserConsent)"
+          "description": "Reference to the UserProfile."
         },
         "consentType": {
-          "type": "string",
-          "description": "The type of consent given (e.g., 'InvestmentDisclaimer', 'PrivacyPolicy', 'TermsOfService')."
+          "type": "string"
         },
         "consentVersion": {
-          "type": "string",
-          "description": "The version of the terms or policy to which the user consented. This helps track changes in agreements."
+          "type": "string"
         },
         "agreedAt": {
           "type": "string",
-          "description": "Timestamp when the user agreed to the terms.",
           "format": "date-time"
-        },
-        "ipAddress": {
-          "type": "string",
-          "description": "The IP address from which the consent was given, for auditing purposes."
-        },
-        "userAgent": {
-          "type": "string",
-          "description": "The user-agent string of the device/browser used when consent was given, for auditing purposes."
         }
       },
       "required": [
@@ -110,24 +96,18 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "AdminRole",
       "type": "object",
-      "description": "Represents an administrative role assignment for a user. The presence of this document grants elevated permissions.",
+      "description": "Represents an administrative role assignment.",
       "properties": {
-        "uid": {
-          "type": "string",
-          "description": "The UID of the administrator."
-        },
         "role": {
           "type": "string",
-          "enum": ["SUPER_ADMIN", "MODERATOR"],
-          "description": "The level of administrative access."
+          "enum": ["SUPER_ADMIN", "MODERATOR"]
         },
         "assignedAt": {
           "type": "string",
-          "format": "date-time",
-          "description": "When the role was assigned."
+          "format": "date-time"
         }
       },
-      "required": ["uid", "role", "assignedAt"]
+      "required": ["role", "assignedAt"]
     }
   },
   "auth": {
@@ -145,13 +125,7 @@
           "schema": {
             "$ref": "#/backend/entities/UserProfile"
           },
-          "description": "Stores core profile information and settings for a user. The document ID (`userId`) is the user's Firebase Authentication UID.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user (Firebase Authentication UID)."
-            }
-          ]
+          "description": "Core profile information."
         }
       },
       {
@@ -160,18 +134,7 @@
           "entityName": "UserConsent",
           "schema": {
             "$ref": "#/backend/entities/UserConsent"
-          },
-          "description": "Records a user's agreement to specific terms, policies, or disclaimers.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user (Firebase Authentication UID)."
-            },
-            {
-              "name": "consentId",
-              "description": "The unique identifier for a specific user consent record."
-            }
-          ]
+          }
         }
       },
       {
@@ -181,13 +144,7 @@
           "schema": {
             "$ref": "#/backend/entities/AdminRole"
           },
-          "description": "Designated collection for identifying global administrators. The presence of a document at this path signifies administrative status for the corresponding UID.",
-          "params": [
-            {
-              "name": "adminUid",
-              "description": "The unique identifier of an administrator (Firebase Authentication UID)."
-            }
-          ]
+          "description": "Identifies global administrators."
         }
       }
     ]
