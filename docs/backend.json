@@ -36,6 +36,11 @@
           "type": "string",
           "description": "Simplified or Technical data mode."
         },
+        "subscriptionTier": {
+          "type": "string",
+          "enum": ["SENTINEL", "PRO", "SOVEREIGN"],
+          "description": "O nível de assinatura tática do usuário."
+        },
         "createdAt": {
           "type": "string",
           "description": "Timestamp when the user profile was created.",
@@ -55,6 +60,7 @@
         "age",
         "address",
         "preferredDisplayMode",
+        "subscriptionTier",
         "createdAt",
         "updatedAt"
       ]

@@ -1,4 +1,6 @@
+
 export type AssetType = 'Ação' | 'Criptomoeda' | 'Fundo Imobiliário' | 'Commodity' | 'Moeda';
+export type SubscriptionTier = 'SENTINEL' | 'PRO' | 'SOVEREIGN';
 
 export interface UserProfile {
   id: string;
@@ -8,6 +10,7 @@ export interface UserProfile {
   age: number;
   address: string;
   preferredDisplayMode: string;
+  subscriptionTier: SubscriptionTier;
   createdAt: string;
   updatedAt: string;
 }
@@ -120,6 +123,7 @@ export interface MarketPrice {
   dataCom?: string;
   paymentDate?: string;
   vacancyRate?: number;
+  vacancyRateFinancial?: number;
   nexusVerdict?: string;
   // Visual Data v5.0
   sparkline?: number[];

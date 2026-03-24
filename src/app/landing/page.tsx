@@ -21,12 +21,18 @@ import {
   Coins,
   LineChart,
   Target,
-  Waves
+  Waves,
+  CheckCircle2,
+  AlertTriangle,
+  Crown,
+  Sparkles,
+  ShieldEllipsis
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 
 export default function LandingPage() {
   const heroImage = PlaceHolderImages.find(img => img.id === 'hero-nexus');
@@ -50,7 +56,7 @@ export default function LandingPage() {
         <div className="hidden md:flex items-center gap-8">
           <a href="#investments" className="text-xs font-bold text-white/60 hover:text-primary transition-colors tracking-widest uppercase">Investimentos</a>
           <a href="#crypto" className="text-xs font-bold text-white/60 hover:text-primary transition-colors tracking-widest uppercase">Cripto & Whales</a>
-          <a href="#trends" className="text-xs font-bold text-white/60 hover:text-primary transition-colors tracking-widest uppercase">Tendências</a>
+          <a href="#pricing" className="text-xs font-bold text-white/60 hover:text-primary transition-colors tracking-widest uppercase">Planos Táticos</a>
           <Link href="/login">
             <Button variant="outline" className="border-primary/40 text-primary rounded-xl font-bold text-xs px-6 h-10 uppercase">
               ACESSAR TERMINAL
@@ -73,7 +79,7 @@ export default function LandingPage() {
             </h2>
             
             <p className="text-lg md:text-xl text-white/50 max-w-3xl mx-auto font-medium leading-relaxed">
-              O único terminal que integra **B3, FIIs e Cripto** com inteligência de "Grounding". Detecte cisnes negros e baleias on-chain antes que o mercado reaja.
+              Vantagem competitiva através da antecipação. O Nexus AI não apenas monitora, ele detecta cisnes negros e baleias on-chain antes que o mercado reaja.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
@@ -111,6 +117,147 @@ export default function LandingPage() {
                   <Badge variant="outline" className="text-[8px] border-primary/40 text-primary">{item.v}</Badge>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Pricing Section - ESTRATÉGIA DE COMERCIALIZAÇÃO */}
+        <section id="pricing" className="py-32 px-6 relative overflow-hidden">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
+          
+          <div className="max-w-7xl mx-auto space-y-16 relative z-10 text-center">
+            <div className="space-y-4">
+              <h3 className="text-4xl md:text-7xl font-headline font-bold text-white tracking-tight uppercase">Planos de <span className="led-text-blue">Combate.</span></h3>
+              <p className="text-white/40 font-medium max-w-2xl mx-auto text-lg uppercase tracking-widest">Escolha sua patente na rede de inteligência neural.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+              {/* Tier 1: Sentinel (Gratuito) */}
+              <Card className="glass-panel border-white/10 rounded-[2.5rem] bg-[#080D18]/90 overflow-hidden group hover:border-white/20 transition-all flex flex-col h-full">
+                <CardHeader className="p-8 pb-0 text-left">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-white/40">
+                      <ShieldCheck className="h-6 w-6" />
+                    </div>
+                    <Badge variant="outline" className="text-[8px] border-white/20 text-white/40 uppercase tracking-widest">Nível 1</Badge>
+                  </div>
+                  <CardTitle className="text-2xl font-headline font-bold text-white uppercase mb-2">Nexus Sentinel</CardTitle>
+                  <CardDescription className="text-white/40 font-medium">Investidores iniciantes.</CardDescription>
+                  <div className="pt-6">
+                    <span className="text-4xl font-bold text-white tracking-tighter">GRATUITO</span>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-8 space-y-4 flex-1 text-left">
+                  <ul className="space-y-3">
+                    <li className="flex items-start gap-3 text-xs text-white/60 font-medium leading-relaxed">
+                      <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                      Dashboard de Sentimento Global (delay 15 min)
+                    </li>
+                    <li className="flex items-start gap-3 text-xs text-white/60 font-medium leading-relaxed">
+                      <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                      Registo manual de até 5 ativos
+                    </li>
+                    <li className="flex items-start gap-3 text-xs text-white/60 font-medium leading-relaxed">
+                      <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                      Notificações push padrão (sem WhatsApp)
+                    </li>
+                  </ul>
+                </CardContent>
+                <CardFooter className="p-8 pt-0">
+                  <Link href="/register" className="w-full">
+                    <Button variant="outline" className="w-full h-14 rounded-xl border-white/10 text-white font-bold uppercase hover:bg-white/5">INICIAR RECRUTAMENTO</Button>
+                  </Link>
+                </CardFooter>
+              </Card>
+
+              {/* Tier 2: Pro (R$ 19,90) */}
+              <Card className="glass-panel border-primary/40 rounded-[2.5rem] bg-[#080D18]/90 overflow-hidden relative shadow-[0_0_50px_rgba(37,99,235,0.2)] flex flex-col h-full scale-105 z-20">
+                <div className="absolute top-0 left-0 w-full h-1 bg-primary led-glow-blue" />
+                <CardHeader className="p-8 pb-0 text-left">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 rounded-xl bg-primary/20 border border-primary/40 text-primary led-glow-blue">
+                      <Zap className="h-6 w-6" />
+                    </div>
+                    <Badge className="bg-primary text-background text-[8px] font-bold uppercase tracking-widest px-3">PATENTE PRO</Badge>
+                  </div>
+                  <CardTitle className="text-2xl font-headline font-bold text-white uppercase mb-2">Nexus Pro</CardTitle>
+                  <CardDescription className="text-white/40 font-medium">Investidores ativos & caçadores de Yield.</CardDescription>
+                  <div className="pt-6 flex items-baseline gap-1">
+                    <span className="text-xs font-bold text-primary">R$</span>
+                    <span className="text-5xl font-bold text-white tracking-tighter">19,90</span>
+                    <span className="text-xs font-bold text-white/40">/mês</span>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-8 space-y-4 flex-1 text-left">
+                  <ul className="space-y-3">
+                    <li className="flex items-start gap-3 text-xs text-white font-bold leading-relaxed">
+                      <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                      Dados B3 e FIIs em TEMPO REAL (Brapi Pro)
+                    </li>
+                    <li className="flex items-start gap-3 text-xs text-white/60 font-medium leading-relaxed">
+                      <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                      Magic Number Calculator: Automação de metas
+                    </li>
+                    <li className="flex items-start gap-3 text-xs text-white/60 font-medium leading-relaxed">
+                      <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                      Whisper Radar (Básico): Rumores validados pela IA
+                    </li>
+                    <li className="flex items-start gap-3 text-xs text-white/60 font-medium leading-relaxed">
+                      <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                      WhatsApp Básico: 3 alertas críticos/semana
+                    </li>
+                  </ul>
+                </CardContent>
+                <CardFooter className="p-8 pt-0">
+                  <Link href="/register" className="w-full">
+                    <Button className="w-full h-14 rounded-xl bg-primary text-background font-bold uppercase shadow-lg hover:scale-105 transition-all">ASSUMIR POSTO PRO</Button>
+                  </Link>
+                </CardFooter>
+              </Card>
+
+              {/* Tier 3: Neural Sovereign (R$ 59,90) */}
+              <Card className="glass-panel border-accent/40 rounded-[2.5rem] bg-[#080D18]/90 overflow-hidden flex flex-col h-full shadow-[0_0_50px_rgba(249,115,22,0.1)]">
+                <CardHeader className="p-8 pb-0 text-left">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 rounded-xl bg-accent/20 border border-accent/40 text-accent">
+                      <Crown className="h-6 w-6" />
+                    </div>
+                    <Badge className="bg-accent text-background text-[8px] font-bold uppercase tracking-widest px-3">NÍVEL VIP</Badge>
+                  </div>
+                  <CardTitle className="text-2xl font-headline font-bold text-white uppercase mb-2">Neural Sovereign</CardTitle>
+                  <CardDescription className="text-white/40 font-medium">Baleias e Traders Profissionais.</CardDescription>
+                  <div className="pt-6 flex items-baseline gap-1">
+                    <span className="text-xs font-bold text-accent">R$</span>
+                    <span className="text-5xl font-bold text-white tracking-tighter">59,90</span>
+                    <span className="text-xs font-bold text-white/40">/mês</span>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-8 space-y-4 flex-1 text-left">
+                  <ul className="space-y-3">
+                    <li className="flex items-start gap-3 text-xs text-white font-bold leading-relaxed">
+                      <CheckCircle2 className="h-4 w-4 text-accent shrink-0" />
+                      Whale Flow Full: Monitoramento On-chain Realtime
+                    </li>
+                    <li className="flex items-start gap-3 text-xs text-white/60 font-medium leading-relaxed">
+                      <CheckCircle2 className="h-4 w-4 text-accent shrink-0" />
+                      Neural Consensus: Veredito Gemini sobre Relatórios
+                    </li>
+                    <li className="flex items-start gap-3 text-xs text-white/60 font-medium leading-relaxed">
+                      <CheckCircle2 className="h-4 w-4 text-accent shrink-0" />
+                      WhatsApp Sovereign: Alertas ilimitados de Baleias
+                    </li>
+                    <li className="flex items-start gap-3 text-xs text-white/60 font-medium leading-relaxed">
+                      <CheckCircle2 className="h-4 w-4 text-accent shrink-0" />
+                      Modo War Room: Mapa de Entidades completo
+                    </li>
+                  </ul>
+                </CardContent>
+                <CardFooter className="p-8 pt-0">
+                  <Link href="/register" className="w-full">
+                    <Button className="w-full h-14 rounded-xl bg-accent text-background font-bold uppercase shadow-lg hover:scale-105 transition-all">ELEVAR PARA SOVEREIGN</Button>
+                  </Link>
+                </CardFooter>
+              </Card>
             </div>
           </div>
         </section>

@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo, useEffect, useCallback } from "react";
@@ -5,7 +6,7 @@ import { WorldMood } from "@/components/dashboard/world-mood";
 import { WhaleFlow } from "@/components/dashboard/whale-flow";
 import { WarRoom } from "@/components/dashboard/war-room";
 import { WhispersRadar } from "@/components/dashboard/whispers-radar";
-import { UserAsset, GlobalIntelligenceAlert, MarketPrice, AutonomousInsight, WhaleTransaction, MarketEntity } from "@/lib/types";
+import { UserAsset, GlobalIntelligenceAlert, MarketPrice, AutonomousInsight, WhaleTransaction, MarketEntity, UserProfile } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { 
   TrendingUp, 
@@ -35,7 +36,9 @@ import {
   LogOut,
   ShieldEllipsis,
   User,
-  Info
+  Info,
+  Crown,
+  Lock
 } from "lucide-react";
 import { AssistantChat } from "@/components/ai/assistant-chat";
 import { Badge } from "@/components/ui/badge";
@@ -83,6 +86,13 @@ export default function NexusDashboard() {
   const auth = useAuth();
   const { user: currentUser } = useUser();
 
+  // Dados do perfil do usuário para verificar o Tier
+  const userProfileRef = useMemoFirebase(() => {
+    if (!firestore || !currentUser) return null;
+    return doc(firestore, "users", currentUser.uid);
+  }, [firestore, currentUser]);
+  const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
+
   // Verifica se o usuário é admin para mostrar o botão de admin
   const adminCheckRef = useMemoFirebase(() => {
     if (!firestore || !currentUser) return null;
@@ -90,7 +100,7 @@ export default function NexusDashboard() {
   }, [firestore, currentUser]);
   const { data: adminRole } = useDoc(adminCheckRef);
 
-  // Sincronização automática do perfil do usuário - Evita sobrescrever o nome escolhido
+  // Sincronização automática do perfil do usuário
   useEffect(() => {
     if (currentUser && firestore) {
       const userRef = doc(firestore, "users", currentUser.uid);
@@ -100,14 +110,18 @@ export default function NexusDashboard() {
         updatedAt: new Date().toISOString()
       };
       
-      // Apenas atualiza o nome se ele estiver presente no Auth e for diferente do padrão
       if (currentUser.displayName && currentUser.displayName !== "Estrategista Nexus") {
         syncData.displayName = currentUser.displayName;
       }
 
+      // Se for um novo usuário, define o tier Sentinel por padrão
+      if (userProfile && !userProfile.subscriptionTier) {
+        syncData.subscriptionTier = "SENTINEL";
+      }
+
       setDocumentNonBlocking(userRef, syncData, { merge: true });
     }
-  }, [currentUser, firestore]);
+  }, [currentUser, firestore, userProfile]);
 
   const alertsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
@@ -263,7 +277,19 @@ export default function NexusDashboard() {
               <Cpu className="h-5 w-5 md:h-6 md:w-6 text-primary" />
             </div>
             <div className="flex flex-col">
-              <h1 className="font-headline font-bold text-lg md:text-2xl led-text-blue tracking-tighter">NEXUS AI</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="font-headline font-bold text-lg md:text-2xl led-text-blue tracking-tighter">NEXUS AI</h1>
+                {userProfile?.subscriptionTier && (
+                  <Badge className={cn(
+                    "text-[8px] font-bold px-2 py-0.5 rounded-lg",
+                    userProfile.subscriptionTier === 'SOVEREIGN' ? 'bg-accent text-background' :
+                    userProfile.subscriptionTier === 'PRO' ? 'bg-primary text-background' :
+                    'bg-white/10 text-white/40'
+                  )}>
+                    {userProfile.subscriptionTier}
+                  </Badge>
+                )}
+              </div>
               {currentUser?.displayName && (
                 <div className="flex items-center gap-1">
                   <span className="text-[10px] text-primary/60 font-bold uppercase tracking-widest">COMANDANTE:</span>
@@ -278,6 +304,14 @@ export default function NexusDashboard() {
           </nav>
 
           <div className="flex items-center gap-2 md:gap-4">
+            {userProfile?.subscriptionTier !== 'SOVEREIGN' && (
+              <Link href="/landing#pricing">
+                <Button variant="outline" className="hidden xl:flex border-accent/40 text-accent text-[10px] font-bold px-4 h-10 rounded-xl hover:bg-accent/10">
+                  <Crown className="h-3 w-3 mr-2" /> UPGRADE SOVEREIGN
+                </Button>
+              </Link>
+            )}
+
             {adminRole && (
               <Link href="/admin">
                 <Button variant="ghost" size="sm" className="hidden md:flex rounded-xl bg-primary/10 border border-primary/30 text-primary text-[10px] font-bold px-4 h-10 hover:bg-primary/20">
@@ -442,24 +476,54 @@ export default function NexusDashboard() {
                 <div className="h-[400px]">
                   <WorldMood latestAlert={latestAlert} latestWhisper={latestWhisper} onAnalyze={handleDeepAnalysis} />
                 </div>
-                <div className="h-[400px]">
+                <div className="h-[400px] relative">
                   <WhispersRadar insights={whispers || []} onAnalyze={handleDeepAnalysis} />
+                  {userProfile?.subscriptionTier === 'SENTINEL' && (
+                    <div className="absolute inset-0 bg-background/60 backdrop-blur-sm z-30 flex flex-col items-center justify-center p-8 text-center rounded-[3rem]">
+                      <Lock className="h-10 w-10 text-primary mb-4" />
+                      <h4 className="text-sm font-bold text-white uppercase mb-2">WHISPER RADAR BLOQUEADO</h4>
+                      <p className="text-[10px] text-white/60 mb-6 uppercase tracking-widest leading-relaxed">Apenas patentes PRO e SOVEREIGN possuem acesso a rumores validados.</p>
+                      <Link href="/landing#pricing">
+                        <Button variant="outline" className="border-primary/40 text-primary rounded-xl font-bold text-[10px] px-6">UPGRADE AGORA</Button>
+                      </Link>
+                    </div>
+                  )}
                 </div>
               </div>
 
               <div className="w-full lg:col-span-3 flex flex-col gap-8 order-3 lg:order-3">
-                <div className="h-[400px]">
+                <div className="h-[400px] relative">
                   <WhaleFlow transactions={whaleTransactions || []} onAnalyze={handleDeepAnalysis} />
+                  {userProfile?.subscriptionTier === 'SENTINEL' && (
+                    <div className="absolute inset-0 bg-background/60 backdrop-blur-sm z-30 flex flex-col items-center justify-center p-8 text-center rounded-[3rem]">
+                      <Lock className="h-10 w-10 text-primary mb-4" />
+                      <h4 className="text-sm font-bold text-white uppercase mb-2">WHALE FLOW LIMITADO</h4>
+                      <p className="text-[10px] text-white/60 mb-6 uppercase tracking-widest leading-relaxed">Upgrade para SOVEREIGN para monitoramento on-chain em tempo real.</p>
+                      <Link href="/landing#pricing">
+                        <Button variant="outline" className="border-accent/40 text-accent rounded-xl font-bold text-[10px] px-6">UPGRADE SOVEREIGN</Button>
+                      </Link>
+                    </div>
+                  )}
                 </div>
-                <div className="h-[400px]">
+                <div className="h-[400px] relative">
                   <WarRoom entities={marketEntities || []} onAnalyze={handleDeepAnalysis} />
+                  {userProfile?.subscriptionTier !== 'SOVEREIGN' && (
+                    <div className="absolute inset-0 bg-background/60 backdrop-blur-sm z-30 flex flex-col items-center justify-center p-8 text-center rounded-[3rem]">
+                      <Lock className="h-10 w-10 text-primary mb-4" />
+                      <h4 className="text-sm font-bold text-white uppercase mb-2">MODO WAR ROOM EXCLUSIVO</h4>
+                      <p className="text-[10px] text-white/60 mb-6 uppercase tracking-widest leading-relaxed">Mapeie Governos e Instituições com a patente SOVEREIGN.</p>
+                      <Link href="/landing#pricing">
+                        <Button variant="outline" className="border-accent/40 text-accent rounded-xl font-bold text-[10px] px-6">UPGRADE SOVEREIGN</Button>
+                      </Link>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           )}
 
-          {activeTab === 'market' && <MarketExplorer prices={marketPrices || []} latestAlert={latestAlert} onAnalyze={handleDeepAnalysis} />}
-          {activeTab === 'portfolio' && <PortfolioView assets={userAssetsData || []} marketPrices={marketPrices || []} onUpdateAsset={handleUpdateAsset} onAnalyze={handleDeepAnalysis} />}
+          {activeTab === 'market' && <MarketExplorer prices={marketPrices || []} latestAlert={latestAlert} onAnalyze={handleDeepAnalysis} tier={userProfile?.subscriptionTier || 'SENTINEL'} />}
+          {activeTab === 'portfolio' && <PortfolioView assets={userAssetsData || []} marketPrices={marketPrices || []} onUpdateAsset={handleUpdateAsset} onAnalyze={handleDeepAnalysis} tier={userProfile?.subscriptionTier || 'SENTINEL'} />}
         </main>
 
         <AssistantChat assets={userAssetsData || []} displayMode={'Essencial'} userName={currentUser?.displayName} externalOpen={isChatOpen} onOpenChange={setIsChatOpen} initialQuery={chatInitialQuery} latestAlert={latestAlert} />
