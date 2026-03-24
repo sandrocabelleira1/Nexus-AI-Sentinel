@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useMemo } from "react";
@@ -42,9 +43,9 @@ export default function AdminDashboard() {
   const { data: adminRole, isLoading: isAdminLoading } = useDoc(adminCheckRef);
 
   const usersQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !user) return null;
     return query(collection(firestore, "users"), orderBy("createdAt", "desc"));
-  }, [firestore]);
+  }, [firestore, user]);
 
   const { data: users, isLoading: isUsersLoading } = useCollection<UserProfile>(usersQuery);
 

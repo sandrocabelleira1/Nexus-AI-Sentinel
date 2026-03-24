@@ -124,29 +124,29 @@ export default function NexusDashboard() {
   }, [currentUser, firestore, userProfile]);
 
   const alertsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !currentUser) return null;
     return query(collection(firestore, "global_intelligence_alerts"), orderBy("createdAt", "desc"), limit(20));
-  }, [firestore]);
+  }, [firestore, currentUser]);
 
   const whispersQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !currentUser) return null;
     return query(collection(firestore, "autonomous_insights"), orderBy("timestamp", "desc"), limit(20));
-  }, [firestore]);
+  }, [firestore, currentUser]);
 
   const whalesQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !currentUser) return null;
     return query(collection(firestore, "whale_transactions"), orderBy("timestamp", "desc"), limit(30));
-  }, [firestore]);
+  }, [firestore, currentUser]);
 
   const entitiesQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !currentUser) return null;
     return query(collection(firestore, "market_entities"), orderBy("influenceScore", "desc"), limit(15));
-  }, [firestore]);
+  }, [firestore, currentUser]);
 
   const pricesQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !currentUser) return null;
     return query(collection(firestore, "market_prices"), orderBy("updatedAt", "desc"), limit(500));
-  }, [firestore]);
+  }, [firestore, currentUser]);
 
   const userAssetsQuery = useMemoFirebase(() => {
     if (!firestore || !currentUser) return null;
