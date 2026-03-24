@@ -130,7 +130,9 @@ export default function NexusDashboard() {
   const latestWhisper = whispers?.[0];
 
   const triggerGlobalScan = useCallback(async () => {
-    if (isScanning || !firestore) return;
+    // Verificação de segurança: não inicia se já estiver escaneando ou se não houver usuário logado
+    if (isScanning || !firestore || !auth.currentUser) return;
+    
     setIsScanning(true);
     try {
       const userTickers = userAssetsData?.map(a => a.ticker).filter(Boolean) as string[] || [];
@@ -146,49 +148,60 @@ export default function NexusDashboard() {
       const whalesResult = results[2].status === 'fulfilled' ? results[2].value : null;
       const marketDataResult = results[3].status === 'fulfilled' ? results[3].value : null;
 
-      if (monitorResult?.alerts) {
-        monitorResult.alerts.forEach(alert => {
-          addDocumentNonBlocking(collection(firestore, "global_intelligence_alerts"), {
-            ...alert,
-            createdAt: new Date().toISOString()
+      // Verificação de segurança antes de cada bloco de escrita
+      if (auth.currentUser) {
+        if (monitorResult?.alerts) {
+          monitorResult.alerts.forEach(alert => {
+            if (auth.currentUser) {
+              addDocumentNonBlocking(collection(firestore, "global_intelligence_alerts"), {
+                ...alert,
+                createdAt: new Date().toISOString()
+              });
+            }
           });
-        });
-      }
+        }
 
-      if (whispersResult?.detected_whispers) {
-        whispersResult.detected_whispers.forEach(w => {
-          addDocumentNonBlocking(collection(firestore, "autonomous_insights"), {
-            ...w,
-            timestamp: new Date().toISOString()
+        if (whispersResult?.detected_whispers) {
+          whispersResult.detected_whispers.forEach(w => {
+            if (auth.currentUser) {
+              addDocumentNonBlocking(collection(firestore, "autonomous_insights"), {
+                ...w,
+                timestamp: new Date().toISOString()
+              });
+            }
           });
-        });
-      }
+        }
 
-      if (whalesResult?.detected_whales) {
-        whalesResult.detected_whales.forEach(tw => {
-          addDocumentNonBlocking(collection(firestore, "whale_transactions"), {
-            ...tw,
-            id: Math.random().toString(36).substr(2, 9),
-            timestamp: new Date().toISOString()
+        if (whalesResult?.detected_whales) {
+          whalesResult.detected_whales.forEach(tw => {
+            if (auth.currentUser) {
+              addDocumentNonBlocking(collection(firestore, "whale_transactions"), {
+                ...tw,
+                id: Math.random().toString(36).substr(2, 9),
+                timestamp: new Date().toISOString()
+              });
+            }
           });
-        });
-      }
+        }
 
-      if (marketDataResult?.assets) {
-        marketDataResult.assets.forEach(asset => {
-          setDocumentNonBlocking(doc(firestore, "market_prices", asset.ticker), {
-            ...asset,
-            id: asset.ticker,
-            updatedAt: new Date().toISOString()
-          }, { merge: true });
-        });
+        if (marketDataResult?.assets) {
+          marketDataResult.assets.forEach(asset => {
+            if (auth.currentUser) {
+              setDocumentNonBlocking(doc(firestore, "market_prices", asset.ticker), {
+                ...asset,
+                id: asset.ticker,
+                updatedAt: new Date().toISOString()
+              }, { merge: true });
+            }
+          });
+        }
       }
     } catch (e) { 
       console.error("Global Scan Error:", e); 
     } finally { 
       setIsScanning(false); 
     }
-  }, [isScanning, firestore, userAssetsData]);
+  }, [isScanning, firestore, userAssetsData, auth]);
 
   useEffect(() => {
     if (currentUser) {

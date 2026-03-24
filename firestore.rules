@@ -1,6 +1,6 @@
 /**
- * Nexus AI Sentinel - Firestore Security Rules v2.1
- * Atualizado para garantir permissões granulares em dados globais e usuários.
+ * Nexus AI Sentinel - Firestore Security Rules v2.2
+ * Otimizado para suporte a varredura global e proteção de dados de usuário.
  */
 
 rules_version = '2';
@@ -50,28 +50,28 @@ service cloud.firestore {
     // --- GLOBAL DATA RULES (Client-Side Intelligence Persistence) ---
 
     match /global_intelligence_alerts/{id} {
-      allow get, list: if isSignedIn();
-      allow create: if isSignedIn();
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
     }
 
     match /autonomous_insights/{id} {
-      allow get, list: if isSignedIn();
-      allow create: if isSignedIn();
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
     }
 
     match /whale_transactions/{id} {
-      allow get, list: if isSignedIn();
-      allow create: if isSignedIn();
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
     }
 
     match /market_entities/{id} {
-      allow get, list: if isSignedIn();
-      allow create: if isSignedIn();
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
     }
 
     match /market_prices/{id} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
     }
 
     // --- ADMIN RULES ---
