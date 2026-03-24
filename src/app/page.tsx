@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo, useEffect, useCallback } from "react";
@@ -77,6 +78,7 @@ export default function NexusDashboard() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'portfolio' | 'market'>('dashboard');
   const [isScanning, setIsScanning] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [chatInitialQuery, setChatInitialQuery] = useState<string | null>(null);
 
   const firestore = useFirestore();
@@ -255,11 +257,32 @@ export default function NexusDashboard() {
     }, { merge: true });
   };
 
+  const handleTabChange = (tab: 'dashboard' | 'portfolio' | 'market') => {
+    setActiveTab(tab);
+    setIsMenuOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const NavButtons = () => (
     <div className="flex flex-col lg:flex-row gap-2 w-full">
-      <button onClick={() => setActiveTab('dashboard')} className={cn("flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all w-full lg:w-auto", activeTab === 'dashboard' ? 'nav-item-active' : 'text-muted-foreground hover:bg-white/5')}><LayoutGrid className="h-4 w-4" /> DASHBOARD</button>
-      <button onClick={() => setActiveTab('market')} className={cn("flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all w-full lg:w-auto", activeTab === 'market' ? 'nav-item-active' : 'text-muted-foreground hover:bg-white/5')}><TrendingUp className="h-4 w-4" /> MARKET</button>
-      <button onClick={() => setActiveTab('portfolio')} className={cn("flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all w-full lg:w-auto", activeTab === 'portfolio' ? 'nav-item-active' : 'text-muted-foreground hover:bg-white/5')}><Wallet className="h-4 w-4" /> WALLET</button>
+      <button 
+        onClick={() => handleTabChange('dashboard')} 
+        className={cn("flex items-center gap-3 px-6 py-4 lg:px-4 lg:py-3 rounded-xl text-sm lg:text-xs font-bold transition-all w-full lg:w-auto", activeTab === 'dashboard' ? 'nav-item-active' : 'text-muted-foreground hover:bg-white/5')}
+      >
+        <LayoutGrid className="h-5 w-5 lg:h-4 lg:w-4" /> DASHBOARD
+      </button>
+      <button 
+        onClick={() => handleTabChange('market')} 
+        className={cn("flex items-center gap-3 px-6 py-4 lg:px-4 lg:py-3 rounded-xl text-sm lg:text-xs font-bold transition-all w-full lg:w-auto", activeTab === 'market' ? 'nav-item-active' : 'text-muted-foreground hover:bg-white/5')}
+      >
+        <TrendingUp className="h-5 w-5 lg:h-4 lg:w-4" /> MARKET
+      </button>
+      <button 
+        onClick={() => handleTabChange('portfolio')} 
+        className={cn("flex items-center gap-3 px-6 py-4 lg:px-4 lg:py-3 rounded-xl text-sm lg:text-xs font-bold transition-all w-full lg:w-auto", activeTab === 'portfolio' ? 'nav-item-active' : 'text-muted-foreground hover:bg-white/5')}
+      >
+        <Wallet className="h-5 w-5 lg:h-4 lg:w-4" /> WALLET
+      </button>
     </div>
   );
 
@@ -306,7 +329,7 @@ export default function NexusDashboard() {
               {isScanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Radar className="h-4 w-4" />}
             </Button>
             
-            <Sheet>
+            <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="text-white lg:hidden h-9 w-9">
                   <Menu className="h-5 w-5" />
@@ -317,20 +340,20 @@ export default function NexusDashboard() {
                    <NavButtons />
                    <div className="h-px bg-white/10 my-4" />
                    {adminRole && (
-                    <Link href="/admin">
+                    <Link href="/admin" onClick={() => setIsMenuOpen(false)}>
                       <Button variant="outline" className="w-full border-primary/40 text-primary rounded-xl h-12 font-bold text-xs">
                         <ShieldEllipsis className="h-4 w-4 mr-2" /> PAINEL ADMIN
                       </Button>
                     </Link>
                    )}
                    {effectiveTier !== 'SOVEREIGN' && (
-                      <Link href="/landing#pricing">
+                      <Link href="/landing#pricing" onClick={() => setIsMenuOpen(false)}>
                         <Button className="w-full bg-accent text-background rounded-xl h-12 font-bold text-xs">
                           <Crown className="h-4 w-4 mr-2" /> UPGRADE SOVEREIGN
                         </Button>
                       </Link>
                     )}
-                   <Button variant="ghost" onClick={() => signOut(auth)} className="w-full text-rose-500 hover:bg-rose-500/10 rounded-xl h-12 font-bold text-xs justify-start">
+                   <Button variant="ghost" onClick={() => { signOut(auth); setIsMenuOpen(false); }} className="w-full text-rose-500 hover:bg-rose-500/10 rounded-xl h-12 font-bold text-xs justify-start">
                      <LogOut className="h-4 w-4 mr-2" /> ENCERRAR SESSÃO
                    </Button>
                  </div>
@@ -343,7 +366,7 @@ export default function NexusDashboard() {
           </div>
         </header>
 
-        <main className="flex-1 max-w-[1800px] w-full mx-auto px-4 md:px-8 py-4 md:py-10 space-y-6 md:space-y-10 relative z-10 overflow-y-auto no-scrollbar">
+        <main className="flex-1 max-w-[1800px] w-full mx-auto px-4 md:px-8 py-4 md:py-10 space-y-6 md:space-y-10 relative z-10">
           {activeTab === 'dashboard' && (
             <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 md:gap-8 items-start">
               
