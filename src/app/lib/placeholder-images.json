@@ -1,0 +1,28 @@
+{
+  "placeholderImages": [
+    {
+      "id": "hero-nexus",
+      "description": "Visual tático de uma rede de satélites monitorando o planeta conectado em tempo real.",
+      "imageUrl": "https://picsum.photos/seed/nexus-satellite-world/1200/800",
+      "imageHint": "satellite earth network"
+    },
+    {
+      "id": "feature-grounding",
+      "description": "Interface de busca em tempo real cruzando dados financeiros.",
+      "imageUrl": "https://picsum.photos/seed/grounding/600/400",
+      "imageHint": "financial data search"
+    },
+    {
+      "id": "feature-fii",
+      "description": "Gráfico de tendência da bolsa de valores com indicadores técnicos e candles.",
+      "imageUrl": "https://picsum.photos/seed/stock-market-trend-analysis/800/600",
+      "imageHint": "stock market chart"
+    },
+    {
+      "id": "feature-crypto",
+      "description": "Gráfico de velas e dados on-chain de criptomoedas.",
+      "imageUrl": "https://picsum.photos/seed/crypto-chart/800/600",
+      "imageHint": "cryptocurrency trading chart"
+    }
+  ]
+}
