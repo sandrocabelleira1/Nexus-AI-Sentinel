@@ -14,9 +14,9 @@
     },
     {
       "id": "feature-fii",
-      "description": "Edifícios corporativos modernos representando investimentos em FIIs.",
-      "imageUrl": "https://picsum.photos/seed/fii-buildings/800/600",
-      "imageHint": "modern office building"
+      "description": "Painel de monitoramento de ativos da B3 com gráficos de candlestick e indicadores técnicos.",
+      "imageUrl": "https://picsum.photos/seed/financial-trading-analysis/800/600",
+      "imageHint": "stock chart"
     },
     {
       "id": "feature-crypto",

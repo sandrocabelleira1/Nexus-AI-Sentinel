@@ -1,3 +1,4 @@
+
 {
   "placeholderImages": [
     {
@@ -14,9 +15,9 @@
     },
     {
       "id": "feature-fii",
-      "description": "Gráfico de tendência da bolsa de valores com indicadores técnicos e candles.",
-      "imageUrl": "https://picsum.photos/seed/stock-market-trend-analysis/800/600",
-      "imageHint": "stock market chart"
+      "description": "Painel de monitoramento de ativos da B3 com gráficos de candlestick e indicadores técnicos.",
+      "imageUrl": "https://picsum.photos/seed/financial-trading-analysis/800/600",
+      "imageHint": "stock chart"
     },
     {
       "id": "feature-crypto",
