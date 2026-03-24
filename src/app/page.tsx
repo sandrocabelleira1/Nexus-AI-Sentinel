@@ -30,7 +30,8 @@ import {
   ExternalLink,
   Building2,
   Coins,
-  Menu
+  Menu,
+  ChevronLeft
 } from "lucide-react";
 import { AssistantChat } from "@/components/ai/assistant-chat";
 import { Badge } from "@/components/ui/badge";
@@ -47,12 +48,12 @@ import { fetchGlobalMarketData } from "@/ai/flows/global-market-data-engine";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 import {
   Sheet,
   SheetContent,
@@ -73,7 +74,7 @@ export default function NexusDashboard() {
 
   const alertsQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return query(collection(firestore, "global_intelligence_alerts"), orderBy("createdAt", "desc"), limit(50));
+    return query(collection(firestore, "global_intelligence_alerts"), orderBy("createdAt", "desc"), limit(20));
   }, [firestore]);
 
   const whispersQuery = useMemoFirebase(() => {
@@ -134,21 +135,23 @@ export default function NexusDashboard() {
     try {
       const userTickers = userAssetsData?.map(a => a.ticker).filter(Boolean) as string[] || [];
       const results = await Promise.allSettled([
-        monitorGlobalEvents({ context: "VARREDURA OMNISCIENTE TOTAL" }),
+        monitorGlobalEvents({ context: "VARREDURA OMNISCIENTE MULTIDIMENSIONAL TOTAL" }),
         runAutonomousWhisperScan(),
         runWhaleDiscovery(),
         fetchGlobalMarketData(userTickers)
       ]);
 
-      const geopoliticalResult = results[0].status === 'fulfilled' ? results[0].value : null;
+      const monitorResult = results[0].status === 'fulfilled' ? results[0].value : null;
       const whispersResult = results[1].status === 'fulfilled' ? results[1].value : null;
       const whalesResult = results[2].status === 'fulfilled' ? results[2].value : null;
       const marketDataResult = results[3].status === 'fulfilled' ? results[3].value : null;
 
-      if (geopoliticalResult) {
-        addDocumentNonBlocking(collection(firestore, "global_intelligence_alerts"), {
-          ...geopoliticalResult,
-          createdAt: new Date().toISOString()
+      if (monitorResult?.alerts) {
+        monitorResult.alerts.forEach(alert => {
+          addDocumentNonBlocking(collection(firestore, "global_intelligence_alerts"), {
+            ...alert,
+            createdAt: new Date().toISOString()
+          });
         });
       }
 
@@ -278,48 +281,78 @@ export default function NexusDashboard() {
                   </Button>
                 </div>
 
-                <ScrollArea className="flex-1">
-                  <div className="p-6 md:p-10 space-y-8">
-                    {latestAlert ? (
-                      <div className="space-y-8">
-                        <Badge className={cn(
-                          "text-white font-bold px-8 py-3 rounded-2xl text-sm led-glow-blue tracking-widest",
-                          latestAlert.marketAction === 'SELL' ? 'bg-rose-600' : 
-                          latestAlert.marketAction === 'BUY' ? 'bg-emerald-600' : 'bg-primary'
-                        )}>
-                          ORDEM NEXUS: {latestAlert.marketAction}
-                        </Badge>
+                <Carousel className="w-full h-full">
+                  <CarouselContent className="h-full">
+                    {globalAlerts && globalAlerts.length > 0 ? (
+                      globalAlerts.map((alert, index) => (
+                        <CarouselItem key={alert.id} className="h-full">
+                          <ScrollArea className="h-full">
+                            <div className="p-6 md:p-10 space-y-8">
+                              <div className="flex items-center justify-between">
+                                <Badge className={cn(
+                                  "text-white font-bold px-8 py-3 rounded-2xl text-sm led-glow-blue tracking-widest",
+                                  alert.marketAction === 'SELL' ? 'bg-rose-600' : 
+                                  alert.marketAction === 'BUY' ? 'bg-emerald-600' : 'bg-primary'
+                                )}>
+                                  ORDEM NEXUS: {alert.marketAction}
+                                </Badge>
+                                <span className="text-[10px] font-bold text-white/40 uppercase tracking-[0.3em]">
+                                  {index + 1} / {globalAlerts.length} • {alert.eventOrigin}
+                                </span>
+                              </div>
 
-                        <h2 className="text-3xl md:text-5xl font-headline font-bold text-white leading-tight tracking-tighter">
-                          {latestAlert.title}
-                        </h2>
-                        
-                        <div className="bg-white/5 border border-white/10 rounded-[2.5rem] p-8 space-y-6">
-                          <p className="text-lg md:text-xl text-white font-medium italic">
-                            "{latestAlert.essentialText}"
-                          </p>
-                          <p className="text-sm text-white/50 leading-relaxed font-light">
-                            {latestAlert.causalityExplanation}
-                          </p>
-                        </div>
+                              <h2 className="text-3xl md:text-5xl font-headline font-bold text-white leading-tight tracking-tighter">
+                                {alert.title}
+                              </h2>
+                              
+                              <div className="bg-white/5 border border-white/10 rounded-[2.5rem] p-8 space-y-6">
+                                <p className="text-lg md:text-xl text-white font-medium italic">
+                                  "{alert.essentialText}"
+                                </p>
+                                <p className="text-sm text-white/50 leading-relaxed font-light">
+                                  {alert.causalityExplanation}
+                                </p>
+                              </div>
 
-                        <Button 
-                          onClick={() => handleDeepAnalysis(`Execute comando Nexus de análise sobre: ${latestAlert.title}.`)} 
-                          className="w-full h-20 rounded-[2rem] bg-primary hover:bg-primary/90 font-bold text-xl flex items-center justify-center gap-4"
-                        >
-                          SOLICITAR ANÁLISE 360°
-                          <ChevronRight className="h-6 w-6" />
-                        </Button>
-                      </div>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="p-4 bg-white/5 border border-white/10 rounded-2xl">
+                                  <span className="text-[8px] font-bold text-white/40 uppercase tracking-widest block mb-1">Impacto Logístico</span>
+                                  <span className="text-xs text-white font-medium">{alert.eventOrigin === 'Logística' ? 'Crítico' : 'Monitorado'}</span>
+                                </div>
+                                <div className="p-4 bg-white/5 border border-white/10 rounded-2xl">
+                                  <span className="text-[8px] font-bold text-white/40 uppercase tracking-widest block mb-1">Risco Setorial</span>
+                                  <span className="text-xs text-white font-medium">{alert.riskLevel}</span>
+                                </div>
+                              </div>
+
+                              <Button 
+                                onClick={() => handleDeepAnalysis(`Execute comando Nexus de análise sobre: ${alert.title}.`)} 
+                                className="w-full h-20 rounded-[2rem] bg-primary hover:bg-primary/90 font-bold text-xl flex items-center justify-center gap-4"
+                              >
+                                SOLICITAR ANÁLISE 360°
+                                <ChevronRight className="h-6 w-6" />
+                              </Button>
+                            </div>
+                            <ScrollBar className="bg-white/5" />
+                          </ScrollArea>
+                        </CarouselItem>
+                      ))
                     ) : (
-                      <div className="flex flex-col items-center justify-center py-40 opacity-40">
-                        <Radar className="h-24 w-24 text-primary animate-ping" />
-                        <p className="text-center mt-8">Decodificando pulso global...</p>
-                      </div>
+                      <CarouselItem className="h-full">
+                        <div className="flex flex-col items-center justify-center h-full py-40 opacity-40">
+                          <Radar className="h-24 w-24 text-primary animate-ping" />
+                          <p className="text-center mt-8 font-bold tracking-[0.5em] uppercase">Mapeando eventos mundiais...</p>
+                        </div>
+                      </CarouselItem>
                     )}
-                  </div>
-                  <ScrollBar className="bg-white/5" />
-                </ScrollArea>
+                  </CarouselContent>
+                  {globalAlerts && globalAlerts.length > 1 && (
+                    <div className="absolute bottom-10 right-10 flex gap-4 z-30">
+                      <CarouselPrevious className="static translate-y-0 h-14 w-14 bg-white/5 border-white/10 hover:bg-primary/20 text-white rounded-2xl" />
+                      <CarouselNext className="static translate-y-0 h-14 w-14 bg-white/5 border-white/10 hover:bg-primary/20 text-white rounded-2xl" />
+                    </div>
+                  )}
+                </Carousel>
               </div>
             </div>
 
