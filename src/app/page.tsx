@@ -293,7 +293,7 @@ export default function NexusDashboard() {
         <div className="fixed inset-0 cyber-grid pointer-events-none opacity-20" />
 
         <header className="h-16 md:h-20 border-b border-white/10 px-4 md:px-8 flex items-center justify-between sticky top-0 bg-background/80 backdrop-blur-2xl z-50">
-          <div className="flex items-center gap-3 md:gap-5">
+          <Link href="/landing" className="flex items-center gap-3 md:gap-5 hover:opacity-80 transition-opacity">
             <div className="p-2 md:p-3 rounded-xl bg-primary/20 border border-primary/40 led-glow-blue">
               <Cpu className="h-4 w-4 md:h-6 md:w-6 text-primary" />
             </div>
@@ -318,7 +318,7 @@ export default function NexusDashboard() {
                 </div>
               )}
             </div>
-          </div>
+          </Link>
 
           <nav className="hidden lg:flex items-center bg-[#080D18] rounded-2xl p-1 border border-white/10 shadow-2xl">
             <NavButtons />
