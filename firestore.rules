@@ -1,5 +1,5 @@
 /**
- * Nexus AI Sentinel - Firestore Security Rules v2.2
+ * Nexus AI Sentinel - Firestore Security Rules v2.3
  * Otimizado para suporte a varredura global e proteção de dados de usuário.
  */
 
@@ -24,7 +24,9 @@ service cloud.firestore {
     // --- USER DATA RULES ---
 
     match /users/{userId} {
-      allow get, list, create, update: if isOwner(userId);
+      // Admins podem visualizar todos os perfis para relatórios
+      allow get, list: if isOwner(userId) || isAdmin();
+      allow create, update: if isOwner(userId);
       
       match /consents/{consentId} {
         allow get, list, create, update: if isOwner(userId);

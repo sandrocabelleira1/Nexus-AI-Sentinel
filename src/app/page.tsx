@@ -32,13 +32,14 @@ import {
   Coins,
   Menu,
   ChevronLeft,
-  LogOut
+  LogOut,
+  ShieldEllipsis
 } from "lucide-react";
 import { AssistantChat } from "@/components/ai/assistant-chat";
 import { Badge } from "@/components/ui/badge";
 import { PortfolioView } from "@/components/portfolio/portfolio-view";
 import { MarketExplorer } from "@/components/market/market-explorer";
-import { useCollection, useFirestore, useMemoFirebase, useUser, useAuth, addDocumentNonBlocking, setDocumentNonBlocking } from "@/firebase";
+import { useCollection, useFirestore, useMemoFirebase, useUser, useAuth, addDocumentNonBlocking, setDocumentNonBlocking, useDoc } from "@/firebase";
 import { collection, query, orderBy, limit, doc } from "firebase/firestore";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -63,6 +64,7 @@ import {
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { ConsentDialog } from "@/components/auth/consent-dialog";
 import { signOut } from "firebase/auth";
+import Link from "next/link";
 
 export default function NexusDashboard() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'portfolio' | 'market'>('dashboard');
@@ -74,6 +76,13 @@ export default function NexusDashboard() {
   const auth = useAuth();
   const { user: currentUser } = useUser();
 
+  // Verifica se o usuário é admin para mostrar o botão de admin
+  const adminCheckRef = useMemoFirebase(() => {
+    if (!firestore || !currentUser) return null;
+    return doc(firestore, "admin_roles", currentUser.uid);
+  }, [firestore, currentUser]);
+  const { data: adminRole } = useDoc(adminCheckRef);
+
   // Sincronização automática do perfil do usuário
   useEffect(() => {
     if (currentUser && firestore) {
@@ -83,7 +92,6 @@ export default function NexusDashboard() {
         email: currentUser.email,
         displayName: currentUser.displayName || "Estrategista Nexus",
         preferredDisplayMode: "Essential",
-        createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }, { merge: true });
     }
@@ -130,7 +138,6 @@ export default function NexusDashboard() {
   const latestWhisper = whispers?.[0];
 
   const triggerGlobalScan = useCallback(async () => {
-    // Verificação de segurança: não inicia se já estiver escaneando ou se não houver usuário logado
     if (isScanning || !firestore || !auth.currentUser) return;
     
     setIsScanning(true);
@@ -148,7 +155,6 @@ export default function NexusDashboard() {
       const whalesResult = results[2].status === 'fulfilled' ? results[2].value : null;
       const marketDataResult = results[3].status === 'fulfilled' ? results[3].value : null;
 
-      // Verificação de segurança antes de cada bloco de escrita
       if (auth.currentUser) {
         if (monitorResult?.alerts) {
           monitorResult.alerts.forEach(alert => {
@@ -254,6 +260,14 @@ export default function NexusDashboard() {
           </nav>
 
           <div className="flex items-center gap-2 md:gap-4">
+            {adminRole && (
+              <Link href="/admin">
+                <Button variant="ghost" size="sm" className="hidden md:flex rounded-xl bg-primary/10 border border-primary/30 text-primary text-[10px] font-bold px-4 h-10 hover:bg-primary/20">
+                  <ShieldEllipsis className="h-4 w-4 mr-2" /> ADMIN
+                </Button>
+              </Link>
+            )}
+            
             <Button variant="ghost" size="sm" onClick={triggerGlobalScan} disabled={isScanning} className="rounded-xl bg-accent/10 border border-accent/30 text-accent text-[10px] font-bold px-6 h-10 hover:bg-accent/20">
               {isScanning ? <Loader2 className="h-3 w-3 animate-spin" /> : <Radar className="h-3 w-3 mr-2" />} VARREDURA 5.5
             </Button>
@@ -271,6 +285,11 @@ export default function NexusDashboard() {
                 </SheetTrigger>
                 <SheetContent side="right" className="bg-background border-white/10 p-6 flex flex-col gap-6">
                    <NavButtons />
+                   {adminRole && (
+                    <Link href="/admin">
+                      <Button variant="outline" className="w-full border-primary/40 text-primary">PAINEL ADMIN</Button>
+                    </Link>
+                   )}
                 </SheetContent>
               </Sheet>
             </div>

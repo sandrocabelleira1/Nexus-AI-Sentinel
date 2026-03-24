@@ -1,5 +1,17 @@
 export type AssetType = 'Ação' | 'Criptomoeda' | 'Fundo Imobiliário' | 'Commodity' | 'Moeda';
 
+export interface UserProfile {
+  id: string;
+  email: string;
+  displayName: string;
+  whatsapp: string;
+  age: number;
+  address: string;
+  preferredDisplayMode: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface UserAsset {
   id: string;
   name: string;
