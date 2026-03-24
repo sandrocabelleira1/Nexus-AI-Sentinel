@@ -139,10 +139,21 @@ export default function LandingPage() {
       </header>
 
       <main>
-        {/* Hero Section with Evil Eye */}
+        {/* Hero Section with High Fidelity Evil Eye */}
         <section className="relative pt-32 pb-40 px-6 overflow-hidden">
-          {/* Evil Eye Background */}
-          <EvilEye />
+          {/* Evil Eye Background v3.0 - Parâmetros Requisitados */}
+          <EvilEye 
+            eyeColor="#0e13a0"
+            intensity={1.5}
+            pupilSize={0.6}
+            irisWidth={0.25}
+            glowIntensity={0.35}
+            scale={0.8}
+            noiseScale={1}
+            pupilFollow={1}
+            flameSpeed={1}
+            backgroundColor="#060010"
+          />
           
           <div className="max-w-7xl mx-auto text-center space-y-8 relative z-10">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 animate-flicker">

@@ -1,14 +1,38 @@
-
 "use client"
 
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Renderer, Camera, Transform, Mesh, Program, Color, Vec2, Plane } from 'ogl';
 
 /**
- * Componente EvilEye v2.0 - Renderizado com OGL (WebGL).
- * Proporciona uma estética neural de alta fidelidade que simboliza a onisciência do Nexus AI.
+ * Componente EvilEye v3.0 - High Fidelity WebGL (OGL).
+ * Simula o Olho de Vidro do Nexus AI com efeitos de chama e energia procedural.
  */
-export function EvilEye() {
+
+interface EvilEyeProps {
+  eyeColor?: string;
+  intensity?: number;
+  pupilSize?: number;
+  irisWidth?: number;
+  glowIntensity?: number;
+  scale?: number;
+  noiseScale?: number;
+  pupilFollow?: number;
+  flameSpeed?: number;
+  backgroundColor?: string;
+}
+
+export function EvilEye({
+  eyeColor = "#0e13a0",
+  intensity = 1.5,
+  pupilSize = 0.6,
+  irisWidth = 0.25,
+  glowIntensity = 0.35,
+  scale = 0.8,
+  noiseScale = 1.0,
+  pupilFollow = 1.0,
+  flameSpeed = 1.0,
+  backgroundColor = "#060010"
+}: EvilEyeProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mouse = useRef(new Vec2(0, 0));
   const targetMouse = useRef(new Vec2(0, 0));
@@ -17,7 +41,7 @@ export function EvilEye() {
     if (!containerRef.current) return;
 
     const container = containerRef.current;
-    const renderer = new Renderer({ dpr: 2, alpha: true });
+    const renderer = new Renderer({ dpr: window.devicePixelRatio, alpha: true });
     const gl = renderer.gl;
     container.appendChild(gl.canvas);
 
@@ -26,7 +50,7 @@ export function EvilEye() {
 
     const scene = new Transform();
 
-    // Shaders para o Olho Onisciente
+    // Shader de Fragmento Avançado (Efeito de Chama/Nebulosa)
     const vertex = `
       attribute vec3 position;
       attribute vec2 uv;
@@ -41,37 +65,79 @@ export function EvilEye() {
       precision highp float;
       uniform vec2 uMouse;
       uniform float uTime;
+      uniform vec3 uEyeColor;
+      uniform float uIntensity;
+      uniform float uPupilSize;
+      uniform float uIrisWidth;
+      uniform float uGlowIntensity;
+      uniform float uNoiseScale;
+      uniform float uFlameSpeed;
       varying vec2 vUv;
+
+      // Funções de ruído para o efeito de chama
+      vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+      vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+      vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); }
+
+      float snoise(vec2 v) {
+        const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
+        vec2 i  = floor(v + dot(v, C.yy) );
+        vec2 x0 = v -   i + dot(i, C.xx);
+        vec2 i1;
+        i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+        vec4 x12 = x0.xyxy + C.xxzz;
+        x12.xy -= i1;
+        i = mod289(i);
+        vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 ));
+        vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
+        m = m*m ;
+        m = m*m ;
+        vec3 x = 2.0 * fract(p * C.www) - 1.0;
+        vec3 h = abs(x) - 0.5;
+        vec3 ox = floor(x + 0.5);
+        vec3 a0 = x - ox;
+        m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
+        vec3 g;
+        g.x  = a0.x  * x0.x  + h.x  * x0.y;
+        g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+        return 130.0 * dot(m, g);
+      }
 
       void main() {
         vec2 p = vUv * 2.0 - 1.0;
-        p.x *= 2.0; // Proporção para formato de olho
+        p.x *= 1.8; // Aspect Ratio do Olho
 
-        // Distância do centro para formato de olho (elipse)
-        float d = length(p * vec2(0.5, 1.0));
-        float eyeMask = smoothstep(0.8, 0.78, d);
+        // Distorção por ruído (Chamas)
+        float n = snoise(p * uNoiseScale + uTime * uFlameSpeed);
+        float d = length(p + n * 0.15);
+        
+        // Máscara do Olho
+        float eyeMask = smoothstep(0.85, 0.75, d);
 
         // Movimento da pupila
-        vec2 pupilPos = uMouse * 0.4;
-        float pupilDist = length(p - pupilPos);
-        
-        // Íris
-        float iris = smoothstep(0.45, 0.43, pupilDist);
-        vec3 irisColor = mix(vec3(0.05, 0.1, 0.2), vec3(0.45, 0.7, 1.0), pupilDist * 2.0);
-        
-        // Pupila
-        float pupil = smoothstep(0.18, 0.16, pupilDist);
-        vec3 finalColor = mix(vec3(0.9, 0.9, 1.0), irisColor, iris);
-        finalColor = mix(finalColor, vec3(0.0, 0.0, 0.0), pupil);
+        vec2 pupilPos = uMouse * 0.35;
+        float distToPupil = length(p - pupilPos);
 
-        // Brilho tático
-        float highlight = smoothstep(0.08, 0.0, length(p - pupilPos - vec2(0.08, 0.08)));
-        finalColor += highlight * 0.4;
+        // Iris & Pupila
+        float iris = smoothstep(uIrisWidth + 0.2, uIrisWidth, distToPupil);
+        float pupil = smoothstep(uPupilSize * 0.3, uPupilSize * 0.25, distToPupil);
 
-        gl_FragColor = vec4(finalColor, eyeMask * 0.8);
+        // Cores Procedurais
+        vec3 color = uEyeColor * uIntensity;
+        vec3 flameColor = mix(color, vec3(1.0), n * 0.5 + 0.5);
+        
+        vec3 finalColor = mix(vec3(0.0), flameColor, iris);
+        finalColor = mix(finalColor, vec3(0.0), pupil);
+        
+        // Brilho Externo (Glow)
+        float glow = exp(-d * 2.0) * uGlowIntensity;
+        finalColor += color * glow;
+
+        gl_FragColor = vec4(finalColor, eyeMask * 0.9);
       }
     `;
 
+    const color = new Color(eyeColor);
     const geometry = new Plane(gl);
     const program = new Program(gl, {
       vertex,
@@ -79,11 +145,19 @@ export function EvilEye() {
       uniforms: {
         uMouse: { value: mouse.current },
         uTime: { value: 0 },
+        uEyeColor: { value: new Float32Array([color.r, color.g, color.b]) },
+        uIntensity: { value: intensity },
+        uPupilSize: { value: pupilSize },
+        uIrisWidth: { value: irisWidth },
+        uGlowIntensity: { value: glowIntensity },
+        uNoiseScale: { value: noiseScale },
+        uFlameSpeed: { value: flameSpeed },
       },
       transparent: true,
     });
 
     const mesh = new Mesh(gl, { geometry, program });
+    mesh.scale.set(scale, scale, 1);
     mesh.setParent(scene);
 
     function resize() {
@@ -109,12 +183,8 @@ export function EvilEye() {
     let request: number;
     const update = (t: number) => {
       request = requestAnimationFrame(update);
-
-      // Interpolação suave para o mouse (lerp)
-      mouse.current.lerp(targetMouse.current, 0.1);
-      program.uniforms.uMouse.value = mouse.current;
+      mouse.current.lerp(targetMouse.current, 0.08 * pupilFollow);
       program.uniforms.uTime.value = t * 0.001;
-
       renderer.render({ scene, camera });
     };
     request = requestAnimationFrame(update);
@@ -127,20 +197,21 @@ export function EvilEye() {
         container.removeChild(gl.canvas);
       }
     };
-  }, []);
+  }, [eyeColor, intensity, pupilSize, irisWidth, glowIntensity, scale, noiseScale, pupilFollow, flameSpeed]);
 
   return (
-    <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden z-0 opacity-40">
-      <div className="relative w-full h-full max-w-[1200px] max-h-[1200px] flex items-center justify-center">
-        {/* Anéis Orbitais Externos (CSS para contraste) */}
-        <div className="absolute w-[800px] h-[800px] rounded-full border border-primary/10 animate-[spin_30s_linear_infinite]" />
-        <div className="absolute w-[600px] h-[600px] rounded-full border border-primary/5 animate-[spin_25s_linear_reverse_infinite]" />
+    <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden z-0">
+      <div 
+        className="relative w-full h-full flex items-center justify-center"
+        style={{ backgroundColor: backgroundColor === 'transparent' ? 'transparent' : backgroundColor + '22' }}
+      >
+        <div ref={containerRef} className="w-full h-full max-w-[1400px] max-h-[800px]" />
         
-        {/* Container para o Canvas OGL */}
-        <div ref={containerRef} className="w-[600px] h-[400px] flex items-center justify-center" />
-
-        {/* Brilhos de Varredura */}
-        <div className="absolute w-full h-[1px] bg-primary/20 blur-xl animate-[bounce_10s_infinite] top-1/2 opacity-30" />
+        {/* Anéis de Varredura CSS */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-[80%] h-[80%] rounded-full border border-primary/5 animate-[spin_60s_linear_infinite] opacity-20" />
+          <div className="w-[60%] h-[60%] rounded-full border border-primary/10 animate-[spin_40s_linear_reverse_infinite] opacity-10" />
+        </div>
       </div>
     </div>
   );
