@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useMemo } from "react";
@@ -37,6 +36,7 @@ import { MarketPrice } from "@/lib/types";
 import { BorderGlow } from "@/components/ui/border-glow";
 import { DecryptedText } from "@/components/ui/decrypted-text";
 import { SpotlightCard } from "@/components/ui/spotlight-card";
+import { EvilEye } from "@/components/ui/evil-eye";
 
 export default function LandingPage() {
   const { user } = useUser();
@@ -139,8 +139,11 @@ export default function LandingPage() {
       </header>
 
       <main>
-        {/* Hero Section */}
-        <section className="relative pt-20 pb-32 px-6 overflow-hidden">
+        {/* Hero Section with Evil Eye */}
+        <section className="relative pt-32 pb-40 px-6 overflow-hidden">
+          {/* Evil Eye Background */}
+          <EvilEye />
+          
           <div className="max-w-7xl mx-auto text-center space-y-8 relative z-10">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 animate-flicker">
               <Activity className="h-3 w-3 text-primary" />
@@ -178,7 +181,7 @@ export default function LandingPage() {
         <section className="py-12 border-y border-white/5 bg-black/40 relative overflow-hidden">
           <div className="absolute inset-0 cyber-grid opacity-5 pointer-events-none" />
           <div className="flex w-full overflow-hidden select-none">
-            <div className="flex gap-8 px-4 animate-marquee whitespace-nowrap items-center">
+            <div className="flex gap-8 px-4 animate-marquee whitespace-nowrap items-center" style={{ animationDuration: '100s' }}>
               {[...tickerItems, ...tickerItems].map((item, i) => (
                 <div key={i} className="inline-flex items-center gap-4 bg-[#080D18]/90 px-6 py-4 rounded-2xl border border-white/10 shadow-xl min-w-[280px]">
                   <div className="flex flex-col">
