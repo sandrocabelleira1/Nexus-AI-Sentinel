@@ -1,7 +1,7 @@
 
 "use client"
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   ShieldCheck, 
@@ -29,12 +29,15 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { createCheckoutPreference } from "@/app/actions/payments";
-import { useUser } from "@/firebase";
+import { useUser, useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { collection, query, limit } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { MarketPrice } from "@/lib/types";
 
 export default function LandingPage() {
   const { user } = useUser();
+  const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
   const [loadingTier, setLoadingTier] = useState<'PRO' | 'SOVEREIGN' | null>(null);
@@ -42,6 +45,38 @@ export default function LandingPage() {
   const heroImage = PlaceHolderImages.find(img => img.id === 'hero-nexus');
   const fiiImage = PlaceHolderImages.find(img => img.id === 'feature-fii');
   const cryptoImage = PlaceHolderImages.find(img => img.id === 'feature-crypto');
+
+  // Ticker Data Integration
+  const marketPricesQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, "market_prices"), limit(12));
+  }, [firestore]);
+
+  const { data: realMarketPrices } = useCollection<MarketPrice>(marketPricesQuery);
+
+  const tickerItems = useMemo(() => {
+    const mockData = [
+      { ticker: "PETR4", price: 38.45, change24h: 2.4, verdict: "COMPRA", currency: "BRL" },
+      { ticker: "MXRF11", price: 10.22, change24h: -0.5, verdict: "HOLD", currency: "BRL" },
+      { ticker: "BTC", price: 64230, change24h: 4.1, verdict: "WHALE BUY", currency: "USD" },
+      { ticker: "VALE3", price: 62.10, change24h: -1.2, verdict: "WATCH", currency: "BRL" },
+      { ticker: "ETH", price: 3450, change24h: 1.8, verdict: "ACCUMULATION", currency: "USD" },
+      { ticker: "HGLG11", price: 164.20, change24h: 0.2, verdict: "YIELD WIN", currency: "BRL" },
+      { ticker: "ITUB4", price: 32.15, change24h: 1.1, verdict: "COMPRA", currency: "BRL" },
+      { ticker: "SOL", price: 145.20, change24h: 5.4, verdict: "BULLISH", currency: "USD" },
+    ];
+
+    if (realMarketPrices && realMarketPrices.length > 0) {
+      return realMarketPrices.map(p => ({
+        ticker: p.ticker,
+        price: p.price,
+        change24h: p.change24h,
+        verdict: p.nexusVerdict?.split('.')[0] || "ANALYSING",
+        currency: p.currency
+      }));
+    }
+    return mockData;
+  }, [realMarketPrices]);
 
   const handleUpgrade = async (tier: 'PRO' | 'SOVEREIGN') => {
     if (!user) {
@@ -133,23 +168,37 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Live Simulation Ticker */}
-        <section className="py-10 border-y border-white/5 bg-black/20">
-          <div className="max-w-[1800px] mx-auto overflow-hidden relative">
-            <div className="flex gap-10 animate-marquee whitespace-nowrap">
-              {[
-                { t: "PETR4", p: "R$ 38.45", c: "+2.4%", v: "COMPRA" },
-                { t: "MXRF11", p: "R$ 10.22", c: "-0.5%", v: "HOLD" },
-                { t: "BTC", p: "U$ 64,230", c: "+4.1%", v: "WHALE BUY" },
-                { t: "VALE3", p: "R$ 62.10", c: "-1.2%", v: "WATCH" },
-                { t: "ETH", p: "U$ 3,450", c: "+1.8%", v: "ACCUMULATION" },
-                { t: "HGLG11", p: "R$ 164.20", c: "+0.2%", v: "YIELD WIN" },
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-4 bg-white/5 px-6 py-3 rounded-2xl border border-white/10">
-                  <span className="font-bold text-white">{item.t}</span>
-                  <span className="text-xs text-white/40">{item.p}</span>
-                  <span className={cn("text-xs font-bold", item.c.startsWith('+') ? "text-emerald-400" : "text-rose-400")}>{item.c}</span>
-                  <Badge variant="outline" className="text-[8px] border-primary/40 text-primary">{item.v}</Badge>
+        {/* Live Dynamic Ticker */}
+        <section className="py-12 border-y border-white/5 bg-black/40 relative overflow-hidden">
+          <div className="absolute inset-0 cyber-grid opacity-5 pointer-events-none" />
+          <div className="flex w-full overflow-hidden select-none">
+            <div className="flex gap-8 px-4 animate-marquee whitespace-nowrap items-center">
+              {[...tickerItems, ...tickerItems].map((item, i) => (
+                <div key={i} className="inline-flex items-center gap-4 bg-[#080D18]/90 px-6 py-4 rounded-2xl border border-white/10 shadow-xl min-w-[280px]">
+                  <div className="flex flex-col">
+                    <span className="font-headline font-bold text-white text-lg tracking-tight">{item.ticker}</span>
+                    <span className="text-[9px] text-white/40 font-bold uppercase tracking-widest">{item.currency} Asset</span>
+                  </div>
+                  <div className="flex flex-col items-end flex-1">
+                    <div className="text-sm font-bold text-white">
+                      {item.price.toLocaleString(item.currency === 'USD' ? 'en-US' : 'pt-BR', { 
+                        style: 'currency', 
+                        currency: item.currency || 'BRL' 
+                      })}
+                    </div>
+                    <span className={cn(
+                      "text-xs font-bold", 
+                      item.change24h >= 0 ? "text-emerald-400" : "text-rose-400"
+                    )}>
+                      {item.change24h >= 0 ? '+' : ''}{item.change24h.toFixed(2)}%
+                    </span>
+                  </div>
+                  <Badge variant="outline" className={cn(
+                    "text-[8px] border-primary/40 text-primary font-bold uppercase tracking-widest px-3 py-1 bg-primary/5",
+                    item.verdict === 'COMPRA' || item.verdict === 'WHALE BUY' ? 'border-emerald-500/40 text-emerald-400 bg-emerald-500/5' : ''
+                  )}>
+                    {item.verdict}
+                  </Badge>
                 </div>
               ))}
             </div>
