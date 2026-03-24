@@ -38,13 +38,13 @@ export default function LandingPage() {
           <div className="p-2 rounded-xl bg-primary/20 border border-primary/40 led-glow-blue">
             <Cpu className="h-5 w-5 text-primary" />
           </div>
-          <h1 className="font-headline font-bold text-xl led-text-blue tracking-tighter">NEXUS AI</h1>
+          <h1 className="font-headline font-bold text-xl led-text-blue tracking-tighter uppercase">NEXUS AI</h1>
         </div>
         <div className="hidden md:flex items-center gap-8">
           <a href="#features" className="text-xs font-bold text-white/60 hover:text-primary transition-colors tracking-widest uppercase">Tecnologia</a>
           <a href="#security" className="text-xs font-bold text-white/60 hover:text-primary transition-colors tracking-widest uppercase">Segurança</a>
-          <Link href="/">
-            <Button variant="outline" className="border-primary/40 text-primary rounded-xl font-bold text-xs px-6">
+          <Link href="/login">
+            <Button variant="outline" className="border-primary/40 text-primary rounded-xl font-bold text-xs px-6 h-10 uppercase">
               ACESSAR TERMINAL
             </Button>
           </Link>
@@ -60,7 +60,7 @@ export default function LandingPage() {
               <span className="text-[10px] font-bold text-primary uppercase tracking-[0.3em]">Neural Grounding v5.5 Ativo</span>
             </div>
             
-            <h2 className="text-5xl md:text-8xl font-headline font-bold text-white tracking-tighter leading-[0.9] max-w-5xl mx-auto">
+            <h2 className="text-5xl md:text-8xl font-headline font-bold text-white tracking-tighter leading-[0.9] max-w-5xl mx-auto uppercase">
               O Olho de Vidro da <span className="led-text-blue">Nova Economia.</span>
             </h2>
             
@@ -69,13 +69,13 @@ export default function LandingPage() {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
-              <Link href="/">
-                <Button className="h-16 px-10 rounded-2xl bg-primary text-background font-bold text-lg shadow-[0_0_50px_rgba(37,99,235,0.4)] hover:scale-105 transition-all group">
+              <Link href="/register">
+                <Button className="h-16 px-10 rounded-2xl bg-primary text-background font-bold text-lg shadow-[0_0_50px_rgba(37,99,235,0.4)] hover:scale-105 transition-all group uppercase">
                   INICIAR PROTOCOLO 
                   <ArrowRight className="ml-3 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
-              <Button variant="ghost" className="h-16 px-10 rounded-2xl border border-white/10 text-white/60 font-bold hover:bg-white/5">
+              <Button variant="ghost" className="h-16 px-10 rounded-2xl border border-white/10 text-white/60 font-bold hover:bg-white/5 uppercase">
                 VER DEMONSTRAÇÃO
               </Button>
             </div>
@@ -105,7 +105,7 @@ export default function LandingPage() {
         <section id="features" className="py-32 px-6 bg-[#080D18]/50">
           <div className="max-w-7xl mx-auto space-y-20">
             <div className="text-center space-y-4">
-              <h3 className="text-3xl md:text-5xl font-headline font-bold text-white tracking-tight">Capacidade de Resposta <span className="text-primary">Instantânea.</span></h3>
+              <h3 className="text-3xl md:text-5xl font-headline font-bold text-white tracking-tight uppercase">Capacidade de Resposta <span className="text-primary">Instantânea.</span></h3>
               <p className="text-white/40 font-medium">Arquitetura neural desenhada para o investidor de elite.</p>
             </div>
 
@@ -138,7 +138,7 @@ export default function LandingPage() {
                   )}>
                     <f.icon className="h-8 w-8" />
                   </div>
-                  <h4 className="text-2xl font-bold text-white">{f.title}</h4>
+                  <h4 className="text-2xl font-bold text-white uppercase">{f.title}</h4>
                   <p className="text-white/40 leading-relaxed font-medium">
                     {f.desc}
                   </p>
@@ -152,8 +152,8 @@ export default function LandingPage() {
         <section className="py-32 px-6">
           <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
             <div className="space-y-8">
-              <Badge variant="outline" className="border-primary/40 text-primary px-4 py-1.5 rounded-xl font-bold tracking-widest">TECNOLOGIA PROPRIETÁRIA</Badge>
-              <h3 className="text-4xl md:text-6xl font-headline font-bold text-white leading-tight">Chega de dados <span className="led-text-blue">estáticos e atrasados.</span></h3>
+              <div className="inline-flex items-center rounded-full border border-primary/40 px-4 py-1.5 text-xs font-bold text-primary tracking-widest uppercase">TECNOLOGIA PROPRIETÁRIA</div>
+              <h3 className="text-4xl md:text-6xl font-headline font-bold text-white leading-tight uppercase">Chega de dados <span className="led-text-blue">estáticos e atrasados.</span></h3>
               <p className="text-lg text-white/50 leading-relaxed">
                 Enquanto outros terminais dependem de APIs que levam minutos para atualizar, o Nexus usa o **Navegador Neural**. Ele visita sites como Clube FII, Status Invest e Bloomberg para capturar a informação no segundo em que ela é publicada.
               </p>
@@ -164,7 +164,7 @@ export default function LandingPage() {
                   "Análise de Vacância Física de FIIs",
                   "Detecção de Cisnes Negros Geopolíticos"
                 ].map((item, i) => (
-                  <li key={i} className="flex items-center gap-3 text-white font-bold text-sm">
+                  <li key={i} className="flex items-center gap-3 text-white font-bold text-sm uppercase">
                     <ShieldCheck className="h-5 w-5 text-primary" /> {item}
                   </li>
                 ))}
@@ -197,7 +197,7 @@ export default function LandingPage() {
              <div className="absolute top-0 right-0 p-10 opacity-10">
                <Lock className="h-40 w-40 text-primary" />
              </div>
-             <h3 className="text-3xl md:text-5xl font-headline font-bold text-white">Privacidade de <span className="text-primary">Nível Militar.</span></h3>
+             <h3 className="text-3xl md:text-5xl font-headline font-bold text-white uppercase">Privacidade de <span className="text-primary">Nível Militar.</span></h3>
              <p className="text-white/50 text-lg max-w-2xl mx-auto font-medium">
                Suas chaves de API e dados de portfólio são criptografados e armazenados em infraestrutura isolada. O Nexus opera como seu estrategista privado, não como um coletor de dados.
              </p>
@@ -216,9 +216,9 @@ export default function LandingPage() {
 
         {/* Final CTA */}
         <section className="py-40 px-6 text-center space-y-12">
-           <h2 className="text-5xl md:text-7xl font-headline font-bold text-white tracking-tighter">Pronto para assumir o <span className="led-text-blue">Comando?</span></h2>
-           <Link href="/">
-             <Button className="h-20 px-12 rounded-[2.5rem] bg-primary text-background font-bold text-2xl shadow-[0_0_80px_rgba(37,99,235,0.6)] hover:scale-105 transition-all">
+           <h2 className="text-5xl md:text-7xl font-headline font-bold text-white tracking-tighter uppercase">Pronto para assumir o <span className="led-text-blue">Comando?</span></h2>
+           <Link href="/register">
+             <Button className="h-20 px-12 rounded-[2.5rem] bg-primary text-background font-bold text-2xl shadow-[0_0_80px_rgba(37,99,235,0.6)] hover:scale-105 transition-all uppercase">
                ENTRAR NO TERMINAL AGORA
              </Button>
            </Link>
@@ -227,14 +227,8 @@ export default function LandingPage() {
       </main>
 
       <footer className="py-10 border-t border-white/10 px-6 text-center">
-        <p className="text-[10px] text-white/40 font-medium">&copy; 2026 Nexus AI Sentinel. Todos os direitos reservados. Inteligência para o novo mundo.</p>
+        <p className="text-[10px] text-white/40 font-medium uppercase">&copy; 2026 Nexus AI Sentinel. Todos os direitos reservados. Inteligência para o novo mundo.</p>
       </footer>
     </div>
   );
-}
-
-function Badge({ className, variant, ...props }: any) {
-  return (
-    <div className={cn("inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors", className)} {...props} />
-  )
 }
