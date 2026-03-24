@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "UserProfile": {
@@ -18,6 +19,18 @@
         "displayName": {
           "type": "string",
           "description": "The user's preferred name for display within the application."
+        },
+        "whatsapp": {
+          "type": "string",
+          "description": "O número de WhatsApp do usuário para alertas críticos."
+        },
+        "age": {
+          "type": "number",
+          "description": "A idade do usuário."
+        },
+        "address": {
+          "type": "string",
+          "description": "O endereço residencial ou comercial do usuário."
         },
         "preferredDisplayMode": {
           "type": "string",
@@ -41,6 +54,9 @@
         "id",
         "email",
         "displayName",
+        "whatsapp",
+        "age",
+        "address",
         "preferredDisplayMode",
         "createdAt",
         "updatedAt"
@@ -235,7 +251,6 @@
           ]
         }
       }
-    ],
-    "reasoning": "The recommended Firestore structure for the Nexus AI Sentinel application is designed with a strong emphasis on authorization independence, structural segregation, and path-based ownership. This approach ensures security rules are simple, robust, and easily debuggable, aligning with all core design principles.\n\n**Core Design Principles Implementation:**\n\n1.  **Authorization Independence (CRITICAL):** This is achieved by placing all user-specific data within a hierarchical path structure rooted at `/users/{userId}/...`. The `{userId}` wildcard directly maps to `request.auth.uid` in security rules. For all subcollections (e.g., `consents`, `assets`, `alerts`, `chatSessions`, `messages`), the parent `userId` is implicitly available via the path. Additionally, relevant authorization context (like `userId` in `UserConsent`, `UserAsset`, `UserAlert`, `ChatSession`, and `ChatMessage`) is denormalized directly into the document's fields where it makes sense. This eliminates the need for expensive and complex `get()` operations in security rules to check parent document permissions, enabling atomic creation/updates and enhancing performance.\n\n2.  **Clarity of Intent (Debuggability):** The `/users/{userId}/` prefix explicitly declares that all data within these subcollections belongs to and is controlled by the authenticated user identified by `{userId}`. This makes authorization rules highly intuitive (e.g., `allow read, write: if request.auth.uid == userId;`).\n\n3.  **DBAC (No Custom Claims):** While no specific roles beyond 'user' are explicitly required by the current features, a `/admin_roles/{adminUid}` collection is included as a best practice. The mere existence of a document at this path signifies an administrative role for `adminUid`, allowing rule checks like `exists(/databases/$(database)/documents/admin_roles/$(request.auth.uid))`. This relies solely on `request.auth.uid` and database content, not custom claims.\n\n4.  **QAPs (Rules are not Filters):** Structural segregation directly supports secure `list` operations. Because all user-specific data is confined to `/users/{request.auth.uid}/...`, any `list` query automatically operates within the bounds of the currently authenticated user's data. There are no collections that mix data with different access requirements (e.g., public posts alongside private drafts). Therefore, a user querying `/users/{request.auth.uid}/assets` will only ever see their own assets, satisfying QAPs without needing complex database queries to filter results based on permissions.\n\n5.  **Invariants:** The structured paths (`/users/{userId}/...`) intrinsically maintain ownership by associating data with its creating user. Timestamps (`createdAt`, `updatedAt`) are standard fields in the entities, and denormalized `userId` fields (where applicable) further support integrity and authorization independence.\n\n**Denormalization Strategy for Authorization Independence:**\nEvery document in a subcollection under `/users/{userId}` (e.g., `UserConsent`, `UserAsset`, `UserAlert`, `ChatSession`, `ChatMessage`) will either implicitly inherit authorization from the `{userId}` in its path, or explicitly include a `userId` field matching the path parameter. This ensures that a security rule can always verify ownership by comparing `request.auth.uid` with the `{userId}` path wildcard (or the denormalized `userId` field in the document itself, if present) without ever needing to perform a `get()` operation on a parent document. For example, when creating a new `UserConsent` document, the rule can verify `request.auth.uid == userId` and also ensure `request.resource.data.userId == userId` in a single, atomic operation."
+    ]
   }
 }
