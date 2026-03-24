@@ -1,65 +1,157 @@
+/**
+ * Nexus AI Sentinel - Firestore Security Rules
+ *
+ * Core Philosophy:
+ * This ruleset implements a strict User-Ownership model. All user-generated data, including 
+ * profiles, legal consents, financial assets, and AI chat interactions, is stored within 
+ * a hierarchical structure under /users/{userId}. Access is strictly limited to the 
+ * authenticated owner matching the document's path.
+ *
+ * Data Structure:
+ * - /users/{userId}: Core profile and settings.
+ * - /users/{userId}/consents/{consentId}: Legal agreements (Disclaimer/Terms).
+ * - /users/{userId}/assets/{assetId}: Financial portfolio data.
+ * - /users/{userId}/alerts/{alertId}: AI-generated insights.
+ * - /users/{userId}/chatSessions/{sessionId}: AI conversation threads.
+ * - /users/{userId}/chatSessions/{sessionId}/messages/{messageId}: Chat history.
+ * - /admin_roles/{adminUid}: Global administrative status tracking.
+ *
+ * Key Security Decisions:
+ * 1. Ownership via Path: Authorization is derived primarily from the userId in the document path.
+ * 2. Relational Integrity: On creation, documents must include a field (e.g., userId or id) 
+ *    that matches the path variable to ensure consistency and prevent data spoofing.
+ * 3. Administrative Access: A dedicated top-level collection identifies admins, though 
+ *    regular users cannot list or modify this collection.
+ * 4. Structural Segregation: By nesting all data under a user-specific root, we ensure 
+ *    that list operations automatically scope to the current user's data.
+ * 5. Prototyping Flexibility: Rules enforce strict authorization (who can access) 
+ *    but allow flexible data shapes (what is stored) to support rapid development.
+ */
 
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // --- GLOBAL HELPER FUNCTIONS ---
+
+    /** 
+     * @description Checks if the request is from an authenticated user.
+     */
     function isSignedIn() {
       return request.auth != null;
     }
 
+    /** 
+     * @description Checks if the authenticated user's UID matches the provided userId.
+     */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    /** 
+     * @description Combined check for ownership and existence for destructive operations.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /** 
+     * @description Checks if the authenticated user has an entry in the admin_roles collection.
+     */
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/admin_roles/$(request.auth.uid));
+    }
+
+    // --- COLLECTION RULES ---
+
+    /**
+     * @description Rules for UserProfile. Stores identity and financial display preferences.
+     * @path /users/{userId}
+     * @allow (get, list, create, update, delete) if user is the owner.
+     * @deny (create) if the internal 'id' field does not match the auth UID.
+     * @principle Ownership and path-based relational integrity.
+     */
     match /users/{userId} {
-      allow get: if isOwner(userId);
+      allow get, list: if isOwner(userId);
       allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isOwner(userId);
-      allow delete: if isOwner(userId);
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+
+      /**
+       * @description Rules for UserConsent. Tracks agreement to investment disclaimers.
+       * @path /users/{userId}/consents/{consentId}
+       * @allow (create) if owner provides matching userId in data.
+       * @deny (update) if userId is being changed.
+       * @principle Authorization independence via denormalized userId.
+       */
+      match /consents/{consentId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isExistingOwner(userId);
+      }
+
+      /**
+       * @description Rules for UserAsset. User-defined financial assets.
+       * @path /users/{userId}/assets/{assetId}
+       * @allow (get, list) if authenticated owner.
+       * @deny (write) if user tries to modify an asset belonging to another userId path.
+       */
+      match /assets/{assetId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isExistingOwner(userId);
+      }
+
+      /**
+       * @description Rules for UserAlert. AI insights tailored for the user.
+       * @path /users/{userId}/alerts/{alertId}
+       * @allow (list) for the owner to see all their AI alerts.
+       */
+      match /alerts/{alertId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isExistingOwner(userId);
+      }
+
+      /**
+       * @description Rules for ChatSession. Parent container for AI assistant interactions.
+       * @path /users/{userId}/chatSessions/{sessionId}
+       * @allow (create) to start a new conversation.
+       */
+      match /chatSessions/{sessionId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isExistingOwner(userId);
+
+        /**
+         * @description Rules for ChatMessage. Individual messages within a session.
+         * @path /users/{userId}/chatSessions/{sessionId}/messages/{messageId}
+         * @allow (create) to add a message to an existing owner's session.
+         */
+        match /messages/{messageId} {
+          allow get, list: if isOwner(userId);
+          allow create: if isOwner(userId) && request.resource.data.userId == userId && request.resource.data.sessionId == sessionId;
+          allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId && request.resource.data.sessionId == resource.data.sessionId;
+          allow delete: if isExistingOwner(userId);
+        }
+      }
     }
 
-    match /users/{userId}/assets/{assetId} {
-      allow read, write: if isOwner(userId);
-    }
-
-    match /global_intelligence_alerts/{alertId} {
-      allow read, write: if isSignedIn();
-    }
-
-    match /autonomous_insights/{insightId} {
-      allow read, write: if isSignedIn();
-    }
-
-    match /market_prices/{ticker} {
-      allow read, write: if isSignedIn();
-    }
-
-    match /whale_transactions/{txId} {
-      allow read, write: if isSignedIn();
-    }
-
-    match /market_entities/{entityId} {
-      allow read, write: if isSignedIn();
-    }
-    
-    match /global_intelligence_alerts {
-       allow list: if isSignedIn();
-    }
-    
-    match /market_prices {
-       allow list: if isSignedIn();
-    }
-
-    match /autonomous_insights {
-       allow list: if isSignedIn();
-    }
-
-    match /whale_transactions {
-       allow list: if isSignedIn();
-    }
-
-    match /market_entities {
-       allow list: if isSignedIn();
+    /**
+     * @description Rules for AdminRole. Identifies global admins.
+     * @path /admin_roles/{adminUid}
+     * @allow (get) for signed-in users to verify their own role via rules.
+     * @deny (list, write) to prevent regular users from listing or promoting themselves.
+     * @principle Restricted administrative list access.
+     */
+    match /admin_roles/{adminUid} {
+      allow get: if isSignedIn();
+      allow list: if isAdmin();
+      allow create, update, delete: if false; // Admins managed via console/service account.
     }
   }
 }

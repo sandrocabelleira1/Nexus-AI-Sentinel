@@ -1,109 +1,101 @@
-
 {
   "entities": {
     "UserProfile": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "UserProfile",
       "type": "object",
-      "description": "Represents a user's profile and preferences within the Nexus AI application.",
+      "description": "Represents a user's profile and general application settings within the Nexus AI Sentinel app. This entity stores core user data, excluding sensitive authentication credentials which are managed by an external system.",
       "properties": {
-        "id": { "type": "string" },
-        "email": { "type": "string", "format": "email" },
-        "preferredDisplayMode": { "type": "string", "enum": ["Essencial", "Completo"] },
-        "createdAt": { "type": "string", "format": "date-time" },
-        "updatedAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["id", "email", "preferredDisplayMode", "createdAt", "updatedAt"]
-    },
-    "Asset": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Asset",
-      "type": "object",
-      "description": "Represents a financial asset manually registered by a user.",
-      "properties": {
-        "id": { "type": "string" },
-        "userId": { "type": "string" },
-        "name": { "type": "string" },
-        "tickerSymbol": { "type": "string" },
-        "assetType": { "type": "string" },
-        "quantity": { "type": "number" },
-        "investedValue": { "type": "number" },
-        "location": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["id", "userId", "name", "tickerSymbol", "assetType", "quantity", "location"]
-    },
-    "WhaleTransaction": {
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "blockchain": { "type": "string" },
-        "symbol": { "type": "string" },
-        "amount": { "type": "number" },
-        "amountUsd": { "type": "number" },
-        "fromAddress": { "type": "string" },
-        "toAddress": { "type": "string" },
-        "transactionType": { "type": "string", "enum": ["exchange_deposit", "exchange_withdrawal", "wallet_transfer"] },
-        "timestamp": { "type": "string", "format": "date-time" }
-      }
-    },
-    "MarketEntity": {
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "name": { "type": "string" },
-        "type": { "type": "string", "enum": ["Government", "Institution", "Exchange", "Whale"] },
-        "influenceScore": { "type": "number" },
-        "lastAction": { "type": "string" },
-        "currentBalanceUsd": { "type": "number" }
-      }
-    },
-    "GlobalIntelligenceAlert": {
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "title": { "type": "string" },
-        "eventOrigin": { "type": "string" },
-        "causalityExplanation": { "type": "string" },
-        "priority": { "type": "number" },
-        "marketAction": { "type": "string" },
-        "essentialText": { "type": "string" },
-        "affectedAssetTickerSymbols": { "type": "array", "items": { "type": "string" } },
-        "createdAt": { "type": "string", "format": "date-time" }
-      }
-    },
-    "AutonomousInsight": {
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "topic": { "type": "string" },
-        "foundation_score": { "type": "number" },
-        "market_impact": { "type": "string" },
-        "scenarios": {
-          "type": "object",
-          "properties": {
-            "optimistic": { "type": "object", "properties": { "desc": { "type": "string" }, "prob": { "type": "string" } } },
-            "baseline": { "type": "object", "properties": { "desc": { "type": "string" }, "prob": { "type": "string" } } },
-            "risk": { "type": "object", "properties": { "desc": { "type": "string" }, "prob": { "type": "string" } } }
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserProfile entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address, used for identification. (Relationship: UserProfile 1:1 ExternalAuthSystem)",
+          "format": "email"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "The user's preferred name for display within the application."
+        },
+        "preferredDisplayMode": {
+          "type": "string",
+          "description": "The user's preferred mode for financial explanations ('Essential' for simplified, 'Full' for technical data).",
+          "items": {
+            "type": "string"
           }
         },
-        "timestamp": { "type": "string", "format": "date-time" }
-      }
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp when the user profile was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp when the user profile was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "displayName",
+        "preferredDisplayMode",
+        "createdAt",
+        "updatedAt"
+      ]
     },
-    "MarketPrice": {
+    "UserConsent": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserConsent",
       "type": "object",
+      "description": "Records a user's agreement to specific terms, policies, or disclaimers within the Nexus AI Sentinel app, particularly related to financial responsibility.",
       "properties": {
-        "id": { "type": "string" },
-        "ticker": { "type": "string" },
-        "price": { "type": "number" },
-        "change24h": { "type": "number" },
-        "category": { "type": "string", "enum": ["crypto", "stocks", "fiis", "index"] },
-        "updatedAt": { "type": "string", "format": "date-time" }
-      }
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserConsent entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the UserProfile entity that granted consent. (Relationship: UserProfile 1:N UserConsent)"
+        },
+        "consentType": {
+          "type": "string",
+          "description": "The type of consent given (e.g., 'InvestmentDisclaimer', 'PrivacyPolicy', 'TermsOfService')."
+        },
+        "consentVersion": {
+          "type": "string",
+          "description": "The version of the terms or policy to which the user consented. This helps track changes in agreements."
+        },
+        "agreedAt": {
+          "type": "string",
+          "description": "Timestamp when the user agreed to the terms.",
+          "format": "date-time"
+        },
+        "ipAddress": {
+          "type": "string",
+          "description": "The IP address from which the consent was given, for auditing purposes."
+        },
+        "userAgent": {
+          "type": "string",
+          "description": "The user-agent string of the device/browser used when consent was given, for auditing purposes."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "consentType",
+        "consentVersion",
+        "agreedAt"
+      ]
     }
   },
   "auth": {
-    "providers": ["password", "anonymous"]
+    "providers": [
+      "password",
+      "anonymous"
+    ]
   },
   "firestore": {
     "structure": [
@@ -111,51 +103,139 @@
         "path": "/users/{userId}",
         "definition": {
           "entityName": "UserProfile",
-          "description": "User profiles."
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores core profile information and settings for a user. The document ID (`userId`) is the user's Firebase Authentication UID. The 'id' field within the document must match this UID for explicit ownership and authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user (Firebase Authentication UID)."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/consents/{consentId}",
+        "definition": {
+          "entityName": "UserConsent",
+          "schema": {
+            "$ref": "#/backend/entities/UserConsent"
+          },
+          "description": "Records a user's agreement to specific terms, policies, or disclaimers. The 'userId' field in the document must match the path parameter `{userId}` for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user (Firebase Authentication UID)."
+            },
+            {
+              "name": "consentId",
+              "description": "The unique identifier for a specific user consent record."
+            }
+          ]
         }
       },
       {
         "path": "/users/{userId}/assets/{assetId}",
         "definition": {
-          "entityName": "Asset",
-          "description": "User assets."
+          "entityName": "UserAsset",
+          "schema": {
+            "$ref": "#/backend/entities/UserAsset"
+          },
+          "description": "Stores a user's manually registered financial assets and their storage locations. Includes denormalized 'userId' for authorization independence via path, ensuring the asset belongs to the user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user (Firebase Authentication UID)."
+            },
+            {
+              "name": "assetId",
+              "description": "The unique identifier for a specific user asset."
+            }
+          ]
         }
       },
       {
-        "path": "/whale_transactions/{txId}",
+        "path": "/users/{userId}/alerts/{alertId}",
         "definition": {
-          "entityName": "WhaleTransaction",
-          "description": "Large blockchain transactions."
+          "entityName": "UserAlert",
+          "schema": {
+            "$ref": "#/backend/entities/UserAlert"
+          },
+          "description": "Stores AI-generated alerts and predictive insights tailored for a specific user. Includes denormalized 'userId' for authorization independence via path, linking the alert directly to the user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user (Firebase Authentication UID)."
+            },
+            {
+              "name": "alertId",
+              "description": "The unique identifier for a specific AI-generated alert."
+            }
+          ]
         }
       },
       {
-        "path": "/market_entities/{entityId}",
+        "path": "/users/{userId}/chatSessions/{sessionId}",
         "definition": {
-          "entityName": "MarketEntity",
-          "description": "Institutional actors and governments."
+          "entityName": "ChatSession",
+          "schema": {
+            "$ref": "#/backend/entities/ChatSession"
+          },
+          "description": "Represents a unique chat session between a user and the AI assistant. Includes denormalized 'userId' for authorization independence via path.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user (Firebase Authentication UID)."
+            },
+            {
+              "name": "sessionId",
+              "description": "The unique identifier for a specific AI chat session."
+            }
+          ]
         }
       },
       {
-        "path": "/global_intelligence_alerts/{alertId}",
+        "path": "/users/{userId}/chatSessions/{sessionId}/messages/{messageId}",
         "definition": {
-          "entityName": "GlobalIntelligenceAlert",
-          "description": "Predictive alerts."
+          "entityName": "ChatMessage",
+          "schema": {
+            "$ref": "#/backend/entities/ChatMessage"
+          },
+          "description": "Individual messages within a user's AI chat session. Inherits authorization from its parent chat session and includes 'userId' for path-based security and 'sessionId' for referential integrity.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user (Firebase Authentication UID)."
+            },
+            {
+              "name": "sessionId",
+              "description": "The unique identifier for the parent AI chat session."
+            },
+            {
+              "name": "messageId",
+              "description": "The unique identifier for a specific message within the chat session."
+            }
+          ]
         }
       },
       {
-        "path": "/autonomous_insights/{insightId}",
+        "path": "/admin_roles/{adminUid}",
         "definition": {
-          "entityName": "AutonomousInsight",
-          "description": "AI-detected whispers."
-        }
-      },
-      {
-        "path": "/market_prices/{ticker}",
-        "definition": {
-          "entityName": "MarketPrice",
-          "description": "Real-time asset prices tracked by Nexus."
+          "entityName": "AdminRole",
+          "schema": {
+            "$ref": "#/backend/entities/AdminRole"
+          },
+          "description": "Designated collection for identifying global administrators. The presence of a document at this path signifies administrative status for the corresponding UID, enabling simple DBAC checks without custom claims.",
+          "params": [
+            {
+              "name": "adminUid",
+              "description": "The unique identifier of an administrator (Firebase Authentication UID)."
+            }
+          ]
         }
       }
-    ]
+    ],
+    "reasoning": "The recommended Firestore structure for the Nexus AI Sentinel application is designed with a strong emphasis on authorization independence, structural segregation, and path-based ownership. This approach ensures security rules are simple, robust, and easily debuggable, aligning with all core design principles.\n\n**Core Design Principles Implementation:**\n\n1.  **Authorization Independence (CRITICAL):** This is achieved by placing all user-specific data within a hierarchical path structure rooted at `/users/{userId}/...`. The `{userId}` wildcard directly maps to `request.auth.uid` in security rules. For all subcollections (e.g., `consents`, `assets`, `alerts`, `chatSessions`, `messages`), the parent `userId` is implicitly available via the path. Additionally, relevant authorization context (like `userId` in `UserConsent`, `UserAsset`, `UserAlert`, `ChatSession`, and `ChatMessage`) is denormalized directly into the document's fields where it makes sense. This eliminates the need for expensive and complex `get()` operations in security rules to check parent document permissions, enabling atomic creation/updates and enhancing performance.\n\n2.  **Clarity of Intent (Debuggability):** The `/users/{userId}/` prefix explicitly declares that all data within these subcollections belongs to and is controlled by the authenticated user identified by `{userId}`. This makes authorization rules highly intuitive (e.g., `allow read, write: if request.auth.uid == userId;`).\n\n3.  **DBAC (No Custom Claims):** While no specific roles beyond 'user' are explicitly required by the current features, a `/admin_roles/{adminUid}` collection is included as a best practice. The mere existence of a document at this path signifies an administrative role for `adminUid`, allowing rule checks like `exists(/databases/$(database)/documents/admin_roles/$(request.auth.uid))`. This relies solely on `request.auth.uid` and database content, not custom claims.\n\n4.  **QAPs (Rules are not Filters):** Structural segregation directly supports secure `list` operations. Because all user-specific data is confined to `/users/{request.auth.uid}/...`, any `list` query automatically operates within the bounds of the currently authenticated user's data. There are no collections that mix data with different access requirements (e.g., public posts alongside private drafts). Therefore, a user querying `/users/{request.auth.uid}/assets` will only ever see their own assets, satisfying QAPs without needing complex database queries to filter results based on permissions.\n\n5.  **Invariants:** The structured paths (`/users/{userId}/...`) intrinsically maintain ownership by associating data with its creating user. Timestamps (`createdAt`, `updatedAt`) are standard fields in the entities, and denormalized `userId` fields (where applicable) further support integrity and authorization independence.\n\n**Denormalization Strategy for Authorization Independence:**\nEvery document in a subcollection under `/users/{userId}` (e.g., `UserConsent`, `UserAsset`, `UserAlert`, `ChatSession`, `ChatMessage`) will either implicitly inherit authorization from the `{userId}` in its path, or explicitly include a `userId` field matching the path parameter. This ensures that a security rule can always verify ownership by comparing `request.auth.uid` with the `{userId}` path wildcard (or the denormalized `userId` field in the document itself, if present) without ever needing to perform a `get()` operation on a parent document. For example, when creating a new `UserConsent` document, the rule can verify `request.auth.uid == userId` and also ensure `request.resource.data.userId == userId` in a single, atomic operation."
   }
 }
