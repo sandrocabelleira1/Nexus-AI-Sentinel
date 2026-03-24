@@ -93,12 +93,18 @@ export default function NexusDashboard() {
   }, [firestore, currentUser]);
   const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
 
-  // Verifica se o usuário é admin para mostrar o botão de admin
+  // Verifica se o usuário é admin para mostrar o botão de admin e conceder acesso total
   const adminCheckRef = useMemoFirebase(() => {
     if (!firestore || !currentUser) return null;
     return doc(firestore, "admin_roles", currentUser.uid);
   }, [firestore, currentUser]);
   const { data: adminRole } = useDoc(adminCheckRef);
+
+  // Calcula o Tier efetivo: Admins sempre são SOVEREIGN
+  const effectiveTier = useMemo(() => {
+    if (adminRole) return 'SOVEREIGN';
+    return userProfile?.subscriptionTier || 'SENTINEL';
+  }, [adminRole, userProfile]);
 
   // Sincronização automática do perfil do usuário
   useEffect(() => {
@@ -279,14 +285,14 @@ export default function NexusDashboard() {
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
                 <h1 className="font-headline font-bold text-lg md:text-2xl led-text-blue tracking-tighter">NEXUS AI</h1>
-                {userProfile?.subscriptionTier && (
+                {effectiveTier && (
                   <Badge className={cn(
                     "text-[8px] font-bold px-2 py-0.5 rounded-lg",
-                    userProfile.subscriptionTier === 'SOVEREIGN' ? 'bg-accent text-background' :
-                    userProfile.subscriptionTier === 'PRO' ? 'bg-primary text-background' :
+                    effectiveTier === 'SOVEREIGN' ? 'bg-accent text-background' :
+                    effectiveTier === 'PRO' ? 'bg-primary text-background' :
                     'bg-white/10 text-white/40'
                   )}>
-                    {userProfile.subscriptionTier}
+                    {effectiveTier}
                   </Badge>
                 )}
               </div>
@@ -304,7 +310,7 @@ export default function NexusDashboard() {
           </nav>
 
           <div className="flex items-center gap-2 md:gap-4">
-            {userProfile?.subscriptionTier !== 'SOVEREIGN' && (
+            {effectiveTier !== 'SOVEREIGN' && (
               <Link href="/landing#pricing">
                 <Button variant="outline" className="hidden xl:flex border-accent/40 text-accent text-[10px] font-bold px-4 h-10 rounded-xl hover:bg-accent/10">
                   <Crown className="h-3 w-3 mr-2" /> UPGRADE SOVEREIGN
@@ -478,7 +484,7 @@ export default function NexusDashboard() {
                 </div>
                 <div className="h-[400px] relative">
                   <WhispersRadar insights={whispers || []} onAnalyze={handleDeepAnalysis} />
-                  {userProfile?.subscriptionTier === 'SENTINEL' && (
+                  {effectiveTier === 'SENTINEL' && (
                     <div className="absolute inset-0 bg-background/60 backdrop-blur-sm z-30 flex flex-col items-center justify-center p-8 text-center rounded-[3rem]">
                       <Lock className="h-10 w-10 text-primary mb-4" />
                       <h4 className="text-sm font-bold text-white uppercase mb-2">WHISPER RADAR BLOQUEADO</h4>
@@ -494,7 +500,7 @@ export default function NexusDashboard() {
               <div className="w-full lg:col-span-3 flex flex-col gap-8 order-3 lg:order-3">
                 <div className="h-[400px] relative">
                   <WhaleFlow transactions={whaleTransactions || []} onAnalyze={handleDeepAnalysis} />
-                  {userProfile?.subscriptionTier === 'SENTINEL' && (
+                  {effectiveTier === 'SENTINEL' && (
                     <div className="absolute inset-0 bg-background/60 backdrop-blur-sm z-30 flex flex-col items-center justify-center p-8 text-center rounded-[3rem]">
                       <Lock className="h-10 w-10 text-primary mb-4" />
                       <h4 className="text-sm font-bold text-white uppercase mb-2">WHALE FLOW LIMITADO</h4>
@@ -507,7 +513,7 @@ export default function NexusDashboard() {
                 </div>
                 <div className="h-[400px] relative">
                   <WarRoom entities={marketEntities || []} onAnalyze={handleDeepAnalysis} />
-                  {userProfile?.subscriptionTier !== 'SOVEREIGN' && (
+                  {effectiveTier !== 'SOVEREIGN' && (
                     <div className="absolute inset-0 bg-background/60 backdrop-blur-sm z-30 flex flex-col items-center justify-center p-8 text-center rounded-[3rem]">
                       <Lock className="h-10 w-10 text-primary mb-4" />
                       <h4 className="text-sm font-bold text-white uppercase mb-2">MODO WAR ROOM EXCLUSIVO</h4>
@@ -522,8 +528,8 @@ export default function NexusDashboard() {
             </div>
           )}
 
-          {activeTab === 'market' && <MarketExplorer prices={marketPrices || []} latestAlert={latestAlert} onAnalyze={handleDeepAnalysis} tier={userProfile?.subscriptionTier || 'SENTINEL'} />}
-          {activeTab === 'portfolio' && <PortfolioView assets={userAssetsData || []} marketPrices={marketPrices || []} onUpdateAsset={handleUpdateAsset} onAnalyze={handleDeepAnalysis} tier={userProfile?.subscriptionTier || 'SENTINEL'} />}
+          {activeTab === 'market' && <MarketExplorer prices={marketPrices || []} latestAlert={latestAlert} onAnalyze={handleDeepAnalysis} tier={effectiveTier} />}
+          {activeTab === 'portfolio' && <PortfolioView assets={userAssetsData || []} marketPrices={marketPrices || []} onUpdateAsset={handleUpdateAsset} onAnalyze={handleDeepAnalysis} tier={effectiveTier} />}
         </main>
 
         <AssistantChat assets={userAssetsData || []} displayMode={'Essencial'} userName={currentUser?.displayName} externalOpen={isChatOpen} onOpenChange={setIsChatOpen} initialQuery={chatInitialQuery} latestAlert={latestAlert} />
