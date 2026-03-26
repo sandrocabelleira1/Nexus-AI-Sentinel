@@ -1,4 +1,3 @@
-
 "use client"
 
 import { Renderer, Program, Mesh, Triangle, Texture } from 'ogl';
@@ -52,7 +51,9 @@ function generateNoiseTexture(size = 256): Uint8Array {
         v += amp * noise(x, y, f, o * 31);
         totalAmp += amp; amp *= 0.65;
       }
-      v = Math.max(0, Math.min(1, (v / totalAmp - 0.5) * 2.2 + 0.5));
+      v /= totalAmp;
+      v = (v - 0.5) * 2.2 + 0.5;
+      v = Math.max(0, Math.min(1, v));
       const val = Math.round(v * 255);
       const i = (y * size + x) * 4;
       data[i] = data[i+1] = data[i+2] = val; data[i+3] = 255;
@@ -113,7 +114,7 @@ void main() {
 }
 `;
 
-export function EvilEye({
+export default function EvilEye({
   eyeColor = '#2563eb',
   intensity = 1.5,
   pupilSize = 0.6,

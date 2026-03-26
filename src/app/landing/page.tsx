@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState, useMemo } from "react";
@@ -37,7 +36,7 @@ import { MarketPrice } from "@/lib/types";
 import { BorderGlow } from "@/components/ui/border-glow";
 import { DecryptedText } from "@/components/ui/decrypted-text";
 import { SpotlightCard } from "@/components/ui/spotlight-card";
-import { EvilEye } from "@/components/ui/evil-eye";
+import EvilEye from "@/components/ui/evil-eye";
 
 export default function LandingPage() {
   const { user } = useUser();
@@ -139,14 +138,14 @@ export default function LandingPage() {
           <div className="absolute inset-0 z-0">
             <EvilEye 
               eyeColor="#2563eb"
-              intensity={1.8}
-              pupilSize={0.55}
-              irisWidth={0.28}
-              glowIntensity={0.4}
-              scale={0.9}
-              noiseScale={1.2}
+              intensity={1.5}
+              pupilSize={0.6}
+              irisWidth={0.25}
+              glowIntensity={0.35}
+              scale={0.8}
+              noiseScale={1.0}
               pupilFollow={1.0}
-              flameSpeed={1.2}
+              flameSpeed={1.0}
               backgroundColor="#000000"
             />
           </div>
