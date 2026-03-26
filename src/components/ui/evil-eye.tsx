@@ -127,8 +127,9 @@ export function EvilEye({
 }: EvilEyeProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<Renderer | null>(null);
-  const programRef = useRef<any>(null);
+  const programRef = useRef<Program | null>(null);
   const mouseRef = useRef({ x: 0, y: 0, tx: 0, ty: 0 });
+  const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -180,17 +181,16 @@ export function EvilEye({
     const mesh = new Mesh(gl, { geometry: new Triangle(gl), program });
     container.appendChild(gl.canvas);
 
-    let frameId: number;
     const update = (time: number) => {
-      if (!rendererRef.current) return;
+      if (!rendererRef.current || !programRef.current) return;
       mouseRef.current.x += (mouseRef.current.tx - mouseRef.current.x) * 0.05;
       mouseRef.current.y += (mouseRef.current.ty - mouseRef.current.y) * 0.05;
-      program.uniforms.uMouse.value = [mouseRef.current.x, mouseRef.current.y];
-      program.uniforms.uTime.value = time * 0.001;
-      renderer.render({ scene: mesh });
-      frameId = requestAnimationFrame(update);
+      programRef.current.uniforms.uMouse.value = [mouseRef.current.x, mouseRef.current.y];
+      programRef.current.uniforms.uTime.value = time * 0.001;
+      rendererRef.current.render({ scene: mesh });
+      rafRef.current = requestAnimationFrame(update);
     };
-    frameId = requestAnimationFrame(update);
+    rafRef.current = requestAnimationFrame(update);
 
     const onMouseMove = (e: MouseEvent) => {
       if (!container) return;
@@ -200,9 +200,9 @@ export function EvilEye({
     };
     const onMouseLeave = () => { mouseRef.current.tx = mouseRef.current.ty = 0; };
     const resize = () => {
-      if (!rendererRef.current || !container) return;
-      renderer.setSize(container.offsetWidth, container.offsetHeight);
-      program.uniforms.uResolution.value = [gl.canvas.width, gl.canvas.height, gl.canvas.width / gl.canvas.height];
+      if (!rendererRef.current || !container || !programRef.current) return;
+      rendererRef.current.setSize(container.offsetWidth, container.offsetHeight);
+      programRef.current.uniforms.uResolution.value = [gl.canvas.width, gl.canvas.height, gl.canvas.width / gl.canvas.height];
     };
 
     container.addEventListener('mousemove', onMouseMove);
@@ -211,16 +211,18 @@ export function EvilEye({
     resize();
 
     return () => {
-      cancelAnimationFrame(frameId);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
       window.removeEventListener('resize', resize);
       container.removeEventListener('mousemove', onMouseMove);
       container.removeEventListener('mouseleave', onMouseLeave);
       if (container.contains(gl.canvas)) container.removeChild(gl.canvas);
       gl.getExtension('WEBGL_lose_context')?.loseContext();
       rendererRef.current = null;
+      programRef.current = null;
     };
   }, []);
 
+  // Effect to update uniforms without recreating the context
   useEffect(() => {
     if (programRef.current) {
       const p = programRef.current;
