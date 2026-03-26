@@ -217,6 +217,72 @@ export default function LandingPage() {
           </div>
         </section>
 
+        <section id="investments" className="py-32 px-6 relative overflow-hidden">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div className="space-y-8">
+              <Badge variant="outline" className="text-primary border-primary/20 bg-primary/5 px-4 py-1 text-xs font-bold uppercase tracking-widest">Domínio B3</Badge>
+              <h3 className="text-4xl md:text-6xl font-headline font-bold text-white tracking-tight uppercase leading-[1.1]">Dominância em <br/><span className="led-text-blue">Renda Variável.</span></h3>
+              <p className="text-white/50 text-lg leading-relaxed font-medium">O Nexus processa dados fundamentalistas de Fundos Imobiliários e Ações em tempo real, entregando o Veredito de Compra baseado em múltiplos e fluxo institucional.</p>
+              <ul className="space-y-4">
+                <li className="flex items-center gap-3 text-white/80 font-bold uppercase text-xs tracking-wider"><CheckCircle2 className="h-5 w-5 text-primary" /> Radar de Dividend Yield AM</li>
+                <li className="flex items-center gap-3 text-white/80 font-bold uppercase text-xs tracking-wider"><CheckCircle2 className="h-5 w-5 text-primary" /> Telemetria de Vacância em FIIs</li>
+                <li className="flex items-center gap-3 text-white/80 font-bold uppercase text-xs tracking-wider"><CheckCircle2 className="h-5 w-5 text-primary" /> Alvo de Preço-Justo Nexus</li>
+              </ul>
+            </div>
+            <SpotlightCard className="aspect-square lg:aspect-video rounded-[3rem] border-white/5 shadow-2xl overflow-hidden relative group">
+              <img 
+                src={fiiImage?.imageUrl} 
+                alt="Nexus Analytics" 
+                className="w-full h-full object-cover opacity-60 group-hover:scale-110 transition-transform duration-1000"
+                data-ai-hint="financial trading"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#080D18] via-transparent to-transparent" />
+              <div className="absolute bottom-10 left-10 right-10 p-8 rounded-3xl bg-black/40 backdrop-blur-md border border-white/10">
+                <div className="flex items-center gap-4 mb-2">
+                  <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[10px] font-bold text-white uppercase tracking-widest">Sinal de Entrada PETR4</span>
+                </div>
+                <p className="text-sm text-white/80 font-medium italic">"Fluxo de baleias institucionais detectado em 38.45. Probabilidade de upside: 12%."</p>
+              </div>
+            </SpotlightCard>
+          </div>
+        </section>
+
+        <section id="crypto" className="py-32 px-6 bg-white/[0.02] relative overflow-hidden">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div className="order-2 lg:order-1 relative">
+              <SpotlightCard className="aspect-square rounded-[3rem] border-white/5 shadow-2xl overflow-hidden relative group">
+                <img 
+                  src={cryptoImage?.imageUrl} 
+                  alt="Crypto Whale Tracking" 
+                  className="w-full h-full object-cover opacity-60 group-hover:scale-110 transition-transform duration-1000"
+                  data-ai-hint="cryptocurrency whale"
+                />
+                <div className="absolute inset-0 bg-gradient-to-tr from-[#080D18] via-transparent to-transparent" />
+                <div className="absolute top-10 left-10 bg-accent/20 border border-accent/40 backdrop-blur-md px-6 py-3 rounded-2xl">
+                  <span className="text-[10px] font-bold text-accent uppercase tracking-[0.3em]">Whale Alert: BTC</span>
+                </div>
+              </SpotlightCard>
+              <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-accent/20 blur-[100px] rounded-full pointer-events-none" />
+            </div>
+            <div className="order-1 lg:order-2 space-y-8">
+              <Badge variant="outline" className="text-accent border-accent/20 bg-accent/5 px-4 py-1 text-xs font-bold uppercase tracking-widest">On-Chain Sniper</Badge>
+              <h3 className="text-4xl md:text-6xl font-headline font-bold text-white tracking-tight uppercase leading-[1.1]">Rastreio de <br/><span className="led-text-accent">Baleias Globais.</span></h3>
+              <p className="text-white/50 text-lg leading-relaxed font-medium">Antecipe movimentos bruscos no BTC e ETH. O Nexus monitora transações acima de US$ 1M nas redes Ethereum e Bitcoin, identificando depósitos em exchanges antes do despejo.</p>
+              <div className="grid grid-cols-2 gap-6">
+                <div className="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-2">
+                  <div className="text-3xl font-headline font-bold text-white uppercase tracking-tighter">Realtime</div>
+                  <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest">Monitoramento On-chain</p>
+                </div>
+                <div className="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-2">
+                  <div className="text-3xl font-headline font-bold text-white uppercase tracking-tighter">Alerts</div>
+                  <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest">Push de Liquidez</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section id="pricing" className="py-32 px-6 relative overflow-hidden">
           <div className="max-w-7xl mx-auto space-y-16 relative z-10 text-center">
             <div className="space-y-4">
@@ -299,11 +365,10 @@ export default function LandingPage() {
                       {loadingTier === 'SOVEREIGN' ? <Loader2 className="h-5 w-5 animate-spin" /> : "ELEVAR PARA SOVEREIGN"}
                     </Button>
                   </CardFooter>
-                </Card>
-              </BorderGlow>
+                </BorderGlow>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
 
         <footer className="py-10 border-t border-white/10 px-6 text-center relative z-10">
           <p className="text-[10px] text-white/40 font-medium uppercase">&copy; 2026 Nexus AI Sentinel. Inteligência soberana para o novo mundo financeiro.</p>

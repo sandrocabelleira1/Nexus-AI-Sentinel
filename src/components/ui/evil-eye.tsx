@@ -222,7 +222,6 @@ export function EvilEye({
     };
   }, []);
 
-  // Effect to update uniforms without recreating the context
   useEffect(() => {
     if (programRef.current) {
       const p = programRef.current;
