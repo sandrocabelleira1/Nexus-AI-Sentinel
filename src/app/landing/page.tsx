@@ -365,10 +365,11 @@ export default function LandingPage() {
                       {loadingTier === 'SOVEREIGN' ? <Loader2 className="h-5 w-5 animate-spin" /> : "ELEVAR PARA SOVEREIGN"}
                     </Button>
                   </CardFooter>
-                </BorderGlow>
-              </div>
+                </Card>
+              </BorderGlow>
             </div>
-          </section>
+          </div>
+        </section>
 
         <footer className="py-10 border-t border-white/10 px-6 text-center relative z-10">
           <p className="text-[10px] text-white/40 font-medium uppercase">&copy; 2026 Nexus AI Sentinel. Inteligência soberana para o novo mundo financeiro.</p>
