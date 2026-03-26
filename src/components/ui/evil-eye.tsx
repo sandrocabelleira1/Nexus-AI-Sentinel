@@ -1,4 +1,3 @@
-
 "use client"
 
 import { Renderer, Program, Mesh, Triangle, Texture } from 'ogl';
@@ -127,7 +126,7 @@ export function EvilEye({
 }: EvilEyeProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<Renderer | null>(null);
-  const programRef = useRef<Program | null>(null);
+  const programRef = useRef<any>(null);
   const mouseRef = useRef({ x: 0, y: 0, tx: 0, ty: 0 });
 
   useEffect(() => {
@@ -138,7 +137,7 @@ export function EvilEye({
     try {
       renderer = new Renderer({ alpha: true, premultipliedAlpha: false });
     } catch (e) {
-      console.warn("WebGL blocked or unavailable.");
+      console.warn("WebGL context for EvilEye could not be created.");
       return;
     }
     
@@ -182,6 +181,7 @@ export function EvilEye({
 
     let frameId: number;
     const update = (time: number) => {
+      if (!rendererRef.current) return;
       mouseRef.current.x += (mouseRef.current.tx - mouseRef.current.x) * 0.05;
       mouseRef.current.y += (mouseRef.current.ty - mouseRef.current.y) * 0.05;
       program.uniforms.uMouse.value = [mouseRef.current.x, mouseRef.current.y];
@@ -192,12 +192,14 @@ export function EvilEye({
     frameId = requestAnimationFrame(update);
 
     const onMouseMove = (e: MouseEvent) => {
+      if (!container) return;
       const rect = container.getBoundingClientRect();
       mouseRef.current.tx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       mouseRef.current.ty = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
     };
     const onMouseLeave = () => { mouseRef.current.tx = mouseRef.current.ty = 0; };
     const resize = () => {
+      if (!rendererRef.current || !container) return;
       renderer.setSize(container.offsetWidth, container.offsetHeight);
       program.uniforms.uResolution.value = [gl.canvas.width, gl.canvas.height, gl.canvas.width / gl.canvas.height];
     };
@@ -214,6 +216,7 @@ export function EvilEye({
       container.removeEventListener('mouseleave', onMouseLeave);
       if (container.contains(gl.canvas)) container.removeChild(gl.canvas);
       gl.getExtension('WEBGL_lose_context')?.loseContext();
+      rendererRef.current = null;
     };
   }, []);
 
@@ -223,10 +226,15 @@ export function EvilEye({
       p.uniforms.uPupilSize.value = pupilSize;
       p.uniforms.uIrisWidth.value = irisWidth;
       p.uniforms.uIntensity.value = intensity;
-      p.uniforms.uEyeColor.value = hexToVec3(eyeColor);
+      p.uniforms.uGlowIntensity.value = glowIntensity;
+      p.uniforms.uScale.value = scale;
+      p.uniforms.uNoiseScale.value = noiseScale;
+      p.uniforms.uPupilFollow.value = pupilFollow;
       p.uniforms.uFlameSpeed.value = flameSpeed;
+      p.uniforms.uEyeColor.value = hexToVec3(eyeColor);
+      p.uniforms.uBgColor.value = hexToVec3(backgroundColor);
     }
-  }, [eyeColor, intensity, pupilSize, irisWidth, flameSpeed]);
+  }, [eyeColor, intensity, pupilSize, irisWidth, glowIntensity, scale, noiseScale, pupilFollow, flameSpeed, backgroundColor]);
 
   return <div ref={containerRef} className="w-full h-full" />;
 }

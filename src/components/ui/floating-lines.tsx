@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useEffect, useRef } from 'react';
@@ -167,6 +166,14 @@ type WavePosition = {
   rotate: number;
 };
 
+const DEFAULT_GRADIENT = ['#3b82f6', '#8b5cf6', '#d946ef'];
+const DEFAULT_WAVES: Array<'top' | 'middle' | 'bottom'> = ['top', 'middle', 'bottom'];
+const DEFAULT_LINE_COUNT = [6, 6, 6];
+const DEFAULT_LINE_DISTANCE = [5, 5, 5];
+const DEFAULT_TOP_WAVE = { x: 10.0, y: 0.5, rotate: -0.4 };
+const DEFAULT_MIDDLE_WAVE = { x: 5.0, y: 0.0, rotate: 0.2 };
+const DEFAULT_BOTTOM_WAVE = { x: 2.0, y: -0.7, rotate: 0.4 };
+
 type FloatingLinesProps = {
   linesGradient?: string[];
   enabledWaves?: Array<'top' | 'middle' | 'bottom'>;
@@ -201,13 +208,13 @@ function hexToVec3(hex: string): Vector3 {
 }
 
 export default function FloatingLines({
-  linesGradient = ['#3b82f6', '#8b5cf6', '#d946ef'],
-  enabledWaves = ['top', 'middle', 'bottom'],
-  lineCount = [6, 6, 6],
-  lineDistance = [5, 5, 5],
-  topWavePosition,
-  middleWavePosition,
-  bottomWavePosition = { x: 2.0, y: -0.7, rotate: -1 },
+  linesGradient = DEFAULT_GRADIENT,
+  enabledWaves = DEFAULT_WAVES,
+  lineCount = DEFAULT_LINE_COUNT,
+  lineDistance = DEFAULT_LINE_DISTANCE,
+  topWavePosition = DEFAULT_TOP_WAVE,
+  middleWavePosition = DEFAULT_MIDDLE_WAVE,
+  bottomWavePosition = DEFAULT_BOTTOM_WAVE,
   animationSpeed = 1,
   interactive = true,
   bendRadius = 5.0,
@@ -235,7 +242,7 @@ export default function FloatingLines({
     try {
       renderer = new WebGLRenderer({ antialias: true, alpha: true });
     } catch (e) {
-      console.warn("WebGL blocked or unavailable.");
+      console.warn("WebGL context creation failed.");
       return;
     }
     
@@ -290,6 +297,7 @@ export default function FloatingLines({
     let frameId: number;
 
     const render = () => {
+      if (!rendererRef.current) return;
       material.uniforms.iTime.value = clock.getElapsedTime();
       
       if (interactive) {
@@ -310,12 +318,14 @@ export default function FloatingLines({
     render();
 
     const handleResize = () => {
+      if (!container || !rendererRef.current) return;
       renderer.setSize(container.clientWidth, container.clientHeight);
       material.uniforms.iResolution.value.set(renderer.domElement.width, renderer.domElement.height, 1);
     };
     window.addEventListener('resize', handleResize);
 
     const handleMouseMove = (e: PointerEvent) => {
+      if (!rendererRef.current) return;
       const rect = renderer.domElement.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
@@ -348,10 +358,10 @@ export default function FloatingLines({
       if (renderer.domElement.parentElement) {
         renderer.domElement.parentElement.removeChild(renderer.domElement);
       }
+      rendererRef.current = null;
     };
-  }, []); // Run ONLY once on mount
+  }, []);
 
-  // Update uniforms when props change without recreating renderer
   useEffect(() => {
     if (materialRef.current) {
       const m = materialRef.current;
@@ -363,6 +373,24 @@ export default function FloatingLines({
       m.uniforms.parallax.value = parallax;
       m.uniforms.parallaxStrength.value = parallaxStrength;
       
+      const tc = Array.isArray(lineCount) ? lineCount[0] || 6 : lineCount;
+      const mc = Array.isArray(lineCount) ? lineCount[1] || 6 : lineCount;
+      const bc = Array.isArray(lineCount) ? lineCount[2] || 6 : lineCount;
+      m.uniforms.topLineCount.value = tc;
+      m.uniforms.middleLineCount.value = mc;
+      m.uniforms.bottomLineCount.value = bc;
+
+      const td = (Array.isArray(lineDistance) ? lineDistance[0] || 5 : lineDistance) * 0.01;
+      const md = (Array.isArray(lineDistance) ? lineDistance[1] || 5 : lineDistance) * 0.01;
+      const bd = (Array.isArray(lineDistance) ? lineDistance[2] || 5 : lineDistance) * 0.01;
+      m.uniforms.topLineDistance.value = td;
+      m.uniforms.middleLineDistance.value = md;
+      m.uniforms.bottomLineDistance.value = bd;
+
+      m.uniforms.topWavePosition.value.set(topWavePosition.x, topWavePosition.y, topWavePosition.rotate);
+      m.uniforms.middleWavePosition.value.set(middleWavePosition.x, middleWavePosition.y, middleWavePosition.rotate);
+      m.uniforms.bottomWavePosition.value.set(bottomWavePosition.x, bottomWavePosition.y, bottomWavePosition.rotate);
+      
       if (linesGradient) {
         const stops = linesGradient.slice(0, MAX_GRADIENT_STOPS);
         m.uniforms.lineGradientCount.value = stops.length;
@@ -372,7 +400,7 @@ export default function FloatingLines({
         });
       }
     }
-  }, [linesGradient, enabledWaves, animationSpeed, interactive, parallax, parallaxStrength]);
+  }, [linesGradient, enabledWaves, lineCount, lineDistance, topWavePosition, middleWavePosition, bottomWavePosition, animationSpeed, interactive, parallax, parallaxStrength]);
 
   return <div ref={containerRef} className="floating-lines-container" style={{ mixBlendMode }} />;
 }
