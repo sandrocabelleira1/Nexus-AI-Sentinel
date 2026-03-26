@@ -159,7 +159,7 @@ export default function LandingPage() {
             <h2 className="text-5xl md:text-8xl font-headline font-bold text-white tracking-tighter leading-[0.9] max-w-5xl mx-auto uppercase">
               O Olho de Vidro da <br/>
               <span className="led-text-blue">
-                <DecryptedText text="Nova Economia." />
+                <DecryptedText text="Nova Economia" />
               </span>
             </h2>
             
