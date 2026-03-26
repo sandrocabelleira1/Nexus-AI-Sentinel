@@ -3,24 +3,14 @@
 import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { 
-  ShieldCheck, 
   Cpu, 
-  Globe, 
-  TrendingUp, 
-  Zap, 
-  Radar, 
   ArrowRight, 
-  ShieldAlert, 
   Activity,
-  BrainCircuit,
-  Lock,
-  ChevronRight,
-  Building2,
-  Coins,
-  Waves,
   CheckCircle2,
   Crown,
-  Loader2
+  Loader2,
+  ShieldCheck,
+  Zap
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -48,7 +38,6 @@ export default function LandingPage() {
   const fiiImage = PlaceHolderImages.find(img => img.id === 'feature-fii');
   const cryptoImage = PlaceHolderImages.find(img => img.id === 'feature-crypto');
 
-  // Ticker Data Integration
   const marketPricesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
     return query(collection(firestore, "market_prices"), limit(12));
@@ -82,7 +71,7 @@ export default function LandingPage() {
 
   const handleUpgrade = async (tier: 'PRO' | 'SOVEREIGN') => {
     if (!user) {
-      router.push('/login?redirect=/landing');
+      router.push('/login');
       return;
     }
 
@@ -135,7 +124,7 @@ export default function LandingPage() {
 
       <main className="relative z-10">
         <section className="relative pt-32 pb-40 px-6 overflow-hidden min-h-[800px] flex items-center justify-center">
-          <div className="absolute inset-0 z-0">
+          <div className="absolute inset-0 z-0 flex items-center justify-center overflow-hidden">
             <EvilEye 
               eyeColor="#2563eb"
               intensity={1.5}
