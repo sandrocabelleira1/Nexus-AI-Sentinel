@@ -73,10 +73,6 @@ import { AuthGuard } from "@/components/auth/auth-guard";
 import { ConsentDialog } from "@/components/auth/consent-dialog";
 import { signOut } from "firebase/auth";
 import Link from "next/link";
-import FloatingLines from "@/components/ui/floating-lines";
-
-// Stable constants for WebGL background
-const DASHBOARD_GRADIENT = ['#1e40af', '#6d28d9', '#be185d'];
 
 export default function NexusDashboard() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'portfolio' | 'market'>('dashboard');
@@ -240,12 +236,6 @@ export default function NexusDashboard() {
     <AuthGuard>
       <ConsentDialog />
       <div className="min-h-screen relative selection:bg-primary selection:text-white flex flex-col">
-        <FloatingLines 
-          linesGradient={DASHBOARD_GRADIENT}
-          animationSpeed={0.3}
-          mixBlendMode="screen"
-        />
-
         <div className="fixed inset-0 cyber-grid pointer-events-none opacity-20" />
 
         <header className="h-16 md:h-20 border-b border-white/10 px-4 md:px-8 flex items-center justify-between sticky top-0 bg-background/80 backdrop-blur-2xl z-50">

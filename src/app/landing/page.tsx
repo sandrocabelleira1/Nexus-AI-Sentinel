@@ -38,10 +38,6 @@ import { BorderGlow } from "@/components/ui/border-glow";
 import { DecryptedText } from "@/components/ui/decrypted-text";
 import { SpotlightCard } from "@/components/ui/spotlight-card";
 import { EvilEye } from "@/components/ui/evil-eye";
-import FloatingLines from "@/components/ui/floating-lines";
-
-// Stable constants to prevent re-initializing WebGL components
-const LANDING_GRADIENT = ['#2563eb', '#7c3aed', '#db2777'];
 
 export default function LandingPage() {
   const { user } = useUser();
@@ -108,12 +104,6 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-background relative overflow-x-hidden">
-      <FloatingLines 
-        linesGradient={LANDING_GRADIENT}
-        animationSpeed={0.5}
-        mixBlendMode="screen"
-      />
-
       <div className="fixed inset-0 cyber-grid pointer-events-none opacity-20" />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[800px] bg-primary/10 blur-[150px] rounded-full pointer-events-none" />
 
