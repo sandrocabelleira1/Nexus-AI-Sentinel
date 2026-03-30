@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useMemo } from "react";
@@ -93,8 +94,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background relative overflow-x-hidden">
       <div className="fixed inset-0 cyber-grid pointer-events-none opacity-20" />
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[800px] bg-primary/10 blur-[150px] rounded-full pointer-events-none" />
-
+      
       <header className="h-20 border-b border-white/10 px-6 md:px-12 flex items-center justify-between sticky top-0 bg-background/80 backdrop-blur-xl z-50">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-primary/20 border border-primary/40 led-glow-blue">
@@ -124,7 +124,7 @@ export default function LandingPage() {
 
       <main className="relative z-10">
         <section className="relative pt-32 pb-40 px-6 overflow-hidden min-h-[800px] flex items-center justify-center">
-          <div className="absolute inset-0 z-0 flex items-center justify-center overflow-hidden">
+          <div className="absolute inset-0 z-0 flex items-center justify-center overflow-hidden pointer-events-none">
             <EvilEye 
               eyeColor="#2563eb"
               intensity={1.5}
@@ -146,7 +146,7 @@ export default function LandingPage() {
             </div>
             
             <h2 className="text-5xl md:text-8xl font-headline font-bold text-white tracking-tighter leading-[0.9] max-w-5xl mx-auto uppercase">
-              O Olho de Vidro da <br/>
+              O Olho Onisciente da <br/>
               <span className="led-text-blue">
                 <DecryptedText text="Nova Economia" />
               </span>

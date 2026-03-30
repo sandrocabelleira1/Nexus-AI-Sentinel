@@ -1,7 +1,8 @@
+
 "use client"
 
 import { Renderer, Program, Mesh, Triangle, Texture } from 'ogl';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface EvilEyeProps {
   eyeColor?: string;
@@ -131,16 +132,26 @@ export default function EvilEye({
   const programRef = useRef<Program | null>(null);
   const mouseRef = useRef({ x: 0, y: 0, tx: 0, ty: 0 });
   const rafRef = useRef<number | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted || !containerRef.current) return;
+    
+    // Prevent multiple initializations
+    if (rendererRef.current) return;
+
     const container = containerRef.current;
     
     let renderer: Renderer;
     try {
       renderer = new Renderer({ alpha: true, premultipliedAlpha: false });
     } catch (e) {
-      console.warn("WebGL context for EvilEye could not be created.");
+      console.error("EvilEye: WebGL initialization failed", e);
       return;
     }
     
@@ -194,7 +205,6 @@ export default function EvilEye({
     rafRef.current = requestAnimationFrame(update);
 
     const onMouseMove = (e: MouseEvent) => {
-      if (!container) return;
       const rect = container.getBoundingClientRect();
       mouseRef.current.tx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       mouseRef.current.ty = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
@@ -221,8 +231,9 @@ export default function EvilEye({
       rendererRef.current = null;
       programRef.current = null;
     };
-  }, []);
+  }, [mounted]);
 
+  // Handle dynamic updates via uniforms instead of re-initializing
   useEffect(() => {
     if (programRef.current) {
       const p = programRef.current;
