@@ -1,3 +1,4 @@
+
 "use client"
 
 import React, { useState, useEffect } from "react";
@@ -23,7 +24,7 @@ export default function LoginPage() {
   // Redireciona se o usuário já estiver logado
   useEffect(() => {
     if (user) {
-      router.push("/");
+      router.push("/dashboard");
     }
   }, [user, router]);
 
@@ -49,9 +50,9 @@ export default function LoginPage() {
 
       <div className="w-full max-w-md space-y-8 relative z-10">
         <div className="text-center space-y-4">
-          <div className="inline-flex p-4 rounded-2xl bg-primary/20 border border-primary/40 led-glow-blue mx-auto">
+          <Link href="/" className="inline-flex p-4 rounded-2xl bg-primary/20 border border-primary/40 led-glow-blue mx-auto hover:scale-105 transition-transform">
             <Cpu className="h-8 w-8 text-primary" />
-          </div>
+          </Link>
           <h1 className="text-3xl font-headline font-bold text-white tracking-tighter led-text-blue">NEXUS AI SENTINEL</h1>
           <p className="text-white/40 text-sm font-medium uppercase tracking-widest">Acesso ao Terminal de Comando</p>
         </div>

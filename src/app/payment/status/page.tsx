@@ -64,9 +64,9 @@ function PaymentStatusContent() {
             <h1 className="text-3xl font-headline font-bold text-white uppercase tracking-tighter">Patente Elevada</h1>
             <p className="text-white/60 font-medium">Sua conta foi atualizada para o nível <span className="text-primary font-bold">{tier}</span>. O Nexus agora opera com capacidade total para você.</p>
           </div>
-          <Link href="/" className="block">
+          <Link href="/dashboard" className="block">
             <Button className="w-full h-14 bg-primary text-background font-bold rounded-xl gap-2 hover:scale-105 transition-all">
-              RETORNAR AO DASHBOARD <ArrowRight className="h-4 w-4" />
+              IR PARA O TERMINAL <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
         </>
@@ -80,7 +80,7 @@ function PaymentStatusContent() {
             <p className="text-white/60 font-medium">Não foi possível confirmar seu pagamento. Se o valor foi debitado, contate o suporte tático do Nexus.</p>
           </div>
           <div className="flex flex-col gap-3">
-            <Link href="/landing#pricing">
+            <Link href="/#pricing">
               <Button variant="outline" className="w-full h-14 border-white/10 text-white font-bold rounded-xl">TENTAR NOVAMENTE</Button>
             </Link>
             <Link href="/">
