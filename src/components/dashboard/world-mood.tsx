@@ -1,7 +1,7 @@
 
 "use client"
 
-import { Globe, Activity, Target, Brain, Zap, Gauge, Info } from "lucide-react";
+import { Globe, Brain, Zap, Info } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
 import { GlobalIntelligenceAlert, AutonomousInsight } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -24,9 +24,10 @@ export function WorldMood({ latestAlert, latestWhisper, onAnalyze }: WorldMoodPr
 
   useEffect(() => {
     setMounted(true);
+    // Otimização: Intervalo maior (15s) e score mais estável para evitar re-renders constantes
     const interval = setInterval(() => {
       setMood(prev => {
-        const delta = (Math.random() * 2 - 1);
+        const delta = (Math.random() * 4 - 2);
         const newScore = Math.min(100, Math.max(0, prev.score + delta));
         let label = 'ESTÁVEL';
         if (newScore > 85) label = 'EUFORIA';
@@ -35,7 +36,7 @@ export function WorldMood({ latestAlert, latestWhisper, onAnalyze }: WorldMoodPr
         else if (newScore < 50) label = 'CAUTELA';
         return { score: newScore, label };
       });
-    }, 8000);
+    }, 15000);
     return () => clearInterval(interval);
   }, []);
 
@@ -45,7 +46,6 @@ export function WorldMood({ latestAlert, latestWhisper, onAnalyze }: WorldMoodPr
     return "Neural Sphere em vigilância silenciosa. Sem anomalias críticas.";
   }, [latestAlert, latestWhisper]);
 
-  // Reduzido para mobile, mantido original para desktop
   const radius = 60; 
   const stroke = 4;
   const normalizedRadius = radius - stroke * 2;
@@ -56,7 +56,7 @@ export function WorldMood({ latestAlert, latestWhisper, onAnalyze }: WorldMoodPr
 
   return (
     <div className="bg-[#080D18]/95 border border-white/10 rounded-[2rem] md:rounded-[3rem] p-5 md:p-6 h-full flex flex-col relative overflow-hidden group shadow-2xl transition-all hover:border-primary/40">
-      <div className="absolute top-0 left-0 w-full h-[1px] bg-primary/20 shadow-[0_0_15px_hsl(var(--primary))] animate-[bounce_4s_infinite] opacity-30" />
+      <div className="absolute top-0 left-0 w-full h-[1px] bg-primary/20 shadow-[0_0_15px_hsl(var(--primary))] animate-[bounce_6s_infinite] opacity-30" />
       
       <div className="flex items-center justify-between w-full mb-3 md:mb-4 z-10">
         <div className="flex items-center gap-2">
@@ -82,7 +82,7 @@ export function WorldMood({ latestAlert, latestWhisper, onAnalyze }: WorldMoodPr
         </Popover>
       </div>
       
-      <ScrollArea className="flex-1 no-scrollbar">
+      <div className="flex-1 overflow-hidden">
         <div className="flex flex-col items-center justify-center py-2 space-y-4 md:space-y-6">
           <div className="relative flex items-center justify-center group-hover:scale-105 transition-transform duration-1000">
             <svg height={radius * 2} width={radius * 2} className="transform -rotate-90 drop-shadow-[0_0_15px_rgba(37,99,235,0.3)]">
@@ -92,17 +92,16 @@ export function WorldMood({ latestAlert, latestWhisper, onAnalyze }: WorldMoodPr
                 fill="transparent"
                 strokeWidth={stroke}
                 strokeDasharray={circumference + ' ' + circumference}
-                style={{ strokeDashoffset }}
+                style={{ strokeDashoffset, transition: 'stroke-dashoffset 2s ease-in-out' }}
                 strokeLinecap="round"
                 r={normalizedRadius}
                 cx={radius}
                 cy={radius}
-                className="transition-all duration-1000 ease-in-out"
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
               <div className="flex items-start">
-                <span className="text-2xl md:text-3xl font-headline font-bold text-white leading-none tracking-tighter led-text-blue animate-flicker">
+                <span className="text-2xl md:text-3xl font-headline font-bold text-white leading-none tracking-tighter led-text-blue">
                   {mood.score.toFixed(0)}
                 </span>
                 <span className="text-primary font-bold text-[8px] md:text-[10px] mt-0.5 ml-0.5">%</span>
@@ -136,7 +135,7 @@ export function WorldMood({ latestAlert, latestWhisper, onAnalyze }: WorldMoodPr
             </div>
           </div>
         </div>
-      </ScrollArea>
+      </div>
 
       <div className="absolute -bottom-6 -right-6 opacity-[0.05] pointer-events-none">
         <Globe size={80} className="text-white" />

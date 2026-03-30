@@ -26,7 +26,8 @@ function hexToVec3(hex: string): [number, number, number] {
   ];
 }
 
-function generateNoiseTexture(size = 256): Uint8Array {
+// Otimizado: Textura de ruído menor (64x64) para reduzir consumo de memória
+function generateNoiseTexture(size = 64): Uint8Array {
   const data = new Uint8Array(size * size * 4);
   function hash(x: number, y: number, s: number): number {
     let n = x * 374761393 + y * 668265263 + s * 1274126177;
@@ -47,15 +48,14 @@ function generateNoiseTexture(size = 256): Uint8Array {
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
       let v = 0, amp = 0.4, totalAmp = 0;
-      for (let o = 0; o < 8; o++) {
-        const f = 32 * (1 << o);
+      for (let o = 0; o < 4; o++) { // Reduzido para 4 oitavas para performance
+        const f = 16 * (1 << o);
         v += amp * noise(x, y, f, o * 31);
         totalAmp += amp; amp *= 0.65;
       }
       v /= totalAmp;
       v = (v - 0.5) * 2.2 + 0.5;
-      v = Math.max(0, Math.min(1, v));
-      const val = Math.round(v * 255);
+      const val = Math.round(Math.max(0, Math.min(1, v)) * 255);
       const i = (y * size + x) * 4;
       data[i] = data[i+1] = data[i+2] = val; data[i+3] = 255;
     }
@@ -147,11 +147,11 @@ export default function EvilEye({
     let renderer: Renderer;
     
     try {
-      // Otimização para mobile: Detectar pixelRatio e limitar a 2.0 para evitar sobrecarga de GPU
-      const dpr = Math.min(window.devicePixelRatio || 1, 2.0);
+      // Otimização: Forçar DPR 1.0 para dispositivos móveis para não sobrecarregar GPU
+      const dpr = 1.0; 
       renderer = new Renderer({ alpha: true, premultipliedAlpha: false, dpr });
     } catch (e) {
-      console.error("EvilEye: WebGL initialization failed", e);
+      console.warn("EvilEye: WebGL initialization failed", e);
       return;
     }
     
@@ -159,9 +159,9 @@ export default function EvilEye({
     gl.clearColor(0, 0, 0, 0);
     rendererRef.current = renderer;
 
-    const noiseData = generateNoiseTexture(256);
+    const noiseData = generateNoiseTexture(64);
     const noiseTexture = new Texture(gl, {
-      image: noiseData, width: 256, height: 256,
+      image: noiseData, width: 64, height: 64,
       generateMipmaps: false, flipY: false,
     });
     noiseTexture.minFilter = gl.LINEAR;
@@ -210,7 +210,6 @@ export default function EvilEye({
       mouseRef.current.ty = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
     };
     
-    // Suporte para touch (Smartphone)
     const onTouchMove = (e: TouchEvent) => {
       if (e.touches[0]) {
         const rect = container.getBoundingClientRect();
@@ -219,8 +218,6 @@ export default function EvilEye({
       }
     };
 
-    const onMouseLeave = () => { mouseRef.current.tx = mouseRef.current.ty = 0; };
-    
     const resize = () => {
       if (!rendererRef.current || !container || !programRef.current) return;
       rendererRef.current.setSize(container.offsetWidth, container.offsetHeight);
@@ -229,7 +226,6 @@ export default function EvilEye({
 
     container.addEventListener('mousemove', onMouseMove);
     container.addEventListener('touchmove', onTouchMove, { passive: true });
-    container.addEventListener('mouseleave', onMouseLeave);
     window.addEventListener('resize', resize);
     resize();
 
@@ -238,7 +234,6 @@ export default function EvilEye({
       window.removeEventListener('resize', resize);
       container.removeEventListener('mousemove', onMouseMove);
       container.removeEventListener('touchmove', onTouchMove);
-      container.removeEventListener('mouseleave', onMouseLeave);
       if (container.contains(gl.canvas)) container.removeChild(gl.canvas);
       gl.getExtension('WEBGL_lose_context')?.loseContext();
       rendererRef.current = null;
