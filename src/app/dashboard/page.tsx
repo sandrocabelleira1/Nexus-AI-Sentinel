@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo, useEffect, useCallback } from "react";
@@ -162,7 +161,7 @@ export default function NexusDashboard() {
     try {
       const userTickers = userAssetsData?.map(a => a.ticker).filter(Boolean) as string[] || [];
       const results = await Promise.allSettled([
-        monitorGlobalEvents({ context: "VIGILÂNCIA OMNISCIENTE TOTAL 5.5 - BUSCA MASSIVA HOJE" }),
+        monitorGlobalEvents({ context: "VIGILÂNCIA OMNISCIENTE TOTAL 5.6 - SINCRONIZAÇÃO DE PRECISÃO" }),
         runAutonomousWhisperScan(),
         runWhaleDiscovery(),
         fetchGlobalMarketData(userTickers)
@@ -197,7 +196,7 @@ export default function NexusDashboard() {
   useEffect(() => {
     if (currentUser) {
       triggerGlobalScan();
-      const interval = setInterval(triggerGlobalScan, 600000);
+      const interval = setInterval(triggerGlobalScan, 300000); // 5 minutos para maior precisão
       return () => clearInterval(interval);
     }
   }, [currentUser, triggerGlobalScan]);

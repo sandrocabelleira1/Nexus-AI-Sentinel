@@ -1,8 +1,7 @@
 'use server';
 /**
- * @fileOverview Nexus Global Market Data Engine v5.5.
- * Monitoramento de alta precisão + Geração de Séries Temporais para Gráficos e Candles.
- * Busca ativa de dividendos e múltiplos via Web Grounding Hardened.
+ * @fileOverview Nexus Global Market Data Engine v5.6.
+ * Sincronização Hardened: Prioridade Total para APIs de Preço Realtime.
  */
 
 import { ai } from '@/ai/genkit';
@@ -108,29 +107,29 @@ const specializedMarketGroundingPrompt = ai.definePrompt({
   name: 'specializedMarketGroundingPrompt',
   input: { schema: z.object({ tickers: z.array(z.string()), currentDate: z.string() }) },
   system: `### PERSONA: NEXUS (ANALISTA DE ELITE)
-Sua missão é extrair PREÇOS E DADOS FUNDAMENTALISTAS atualizados (Clube FII, Status Invest, Investidor10, CoinMarketCap).
+Sua missão é extrair DADOS FUNDAMENTALISTAS atualizados (Clube FII, Status Invest, Investidor10, CoinMarketCap).
 Navegue ativamente para encontrar Dividendos, Data Com, P/VP e Vacância.
 
-### REGRAS DE PREÇO:
-NÃO RETORNE PREÇO 0. Se a API falhar, use o preço que encontrar nos sites de cotação agora.
-Criptos estão em USD. B3 está em BRL.`,
+### REGRAS CRÍTICAS:
+1. NÃO tente adivinhar preços se os dados de API forem fornecidos.
+2. Use a busca web APENAS para os fundamentos que não estão nas APIs.`,
   config: { googleSearchRetrieval: {} },
   prompt: `### TAREFA (DATA: {{{currentDate}}}):
 Extraia dividendos recentes, P/L, P/VP e vacância para: {{#each tickers}}{{{this}}}, {{/each}}.
-Capture o PREÇO ATUAL real de cada um via busca web.
-Gere também uma série temporal realista baseada no preço capturado.`,
+Identifique também o sentimento de mercado atual para cada um.`,
 });
 
 const structurePrompt = ai.definePrompt({
   name: 'marketStructurePrompt',
   input: { schema: z.object({ rawData: z.string() }) },
   output: { schema: MarketDataOutputSchema },
-  prompt: `Converta os dados brutos em JSON estruturado v5.5. 
+  prompt: `Converta os dados brutos em JSON estruturado v5.6. 
   
-  DIRETRIZES TÁTICAS:
-  1. **Preço Crítico**: Se 'price' for 0 em uma API, use obrigatoriamente o preço do Web Grounding. NUNCA exiba 0.
-  2. **Fundamentos**: Preencha 'pvpRatio', 'dividendAmount', 'vacancyRate' baseados nos sites especializados.
-  3. **Veredito**: Crie uma análise curta (2 frases) sobre o custo-benefício atual do ativo.
+  DIRETRIZES TÁTICAS DE PRECISÃO:
+  1. **Preço Soberano**: Priorize OBRIGATORIAMENTE os valores em API_BINANCE, API_BRAPI e API_USD. 
+  2. **Conversão**: Criptos estão sempre em USD. B3 está em BRL.
+  3. **USDBRL**: Se houver dados em API_USD, inclua um ativo com ticker 'USDBRL', categoria 'currency', preço igual ao valor da API e moeda 'BRL'.
+  4. **BTC**: O preço do BTC deve vir de API_BINANCE (BTCUSDT).
   
   Dados Brutos Capturados: {{{rawData}}}`,
 });
@@ -160,6 +159,24 @@ export async function fetchGlobalMarketData(customTickers?: string[]): Promise<M
     `;
 
     const { output } = await structurePrompt({ rawData: context });
+    
+    // Fallback de segurança para garantir que USDBRL esteja presente mesmo se o LLM falhar
+    if (output && !output.assets.find(a => a.ticker === 'USDBRL') && usdRate.price) {
+      output.assets.push({
+        ticker: 'USDBRL',
+        name: 'Dólar Comercial',
+        price: usdRate.price,
+        currency: 'BRL',
+        change24h: 0,
+        category: 'currency',
+        region: 'Global',
+        exchange: 'AwesomeAPI',
+        sparkline: [],
+        candles: [],
+        nexusVerdict: 'Cotação oficial do dólar comercial sincronizada.'
+      });
+    }
+
     return output ? JSON.parse(JSON.stringify(output)) : null;
   } catch (error: any) {
     console.error("Market Engine Error:", error.message);
