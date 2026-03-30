@@ -123,8 +123,8 @@ export default function LandingPage() {
       </header>
 
       <main className="relative z-10">
-        <section className="relative pt-32 pb-40 px-6 overflow-hidden min-h-[800px] flex items-center justify-center">
-          <div className="absolute inset-0 z-0 flex items-center justify-center overflow-hidden pointer-events-none">
+        <section className="relative pt-20 md:pt-32 pb-20 md:pb-40 px-6 overflow-hidden min-h-[600px] md:min-h-[800px] flex items-center justify-center">
+          <div className="absolute inset-0 z-0 flex items-center justify-center overflow-hidden pointer-events-none opacity-60 md:opacity-100">
             <EvilEye 
               eyeColor="#2563eb"
               intensity={1.5}
@@ -145,26 +145,26 @@ export default function LandingPage() {
               <span className="text-[10px] font-bold text-primary uppercase tracking-[0.3em]">Omnisciente v5.6 Ativo</span>
             </div>
             
-            <h2 className="text-5xl md:text-8xl font-headline font-bold text-white tracking-tighter leading-[0.9] max-w-5xl mx-auto uppercase">
+            <h2 className="text-4xl md:text-8xl font-headline font-bold text-white tracking-tighter leading-[0.9] max-w-5xl mx-auto uppercase">
               O Olho Onisciente da <br/>
               <span className="led-text-blue">
                 <DecryptedText text="Nova Economia" />
               </span>
             </h2>
             
-            <p className="text-lg md:text-xl text-white/50 max-w-3xl mx-auto font-medium leading-relaxed">
+            <p className="text-base md:text-xl text-white/50 max-w-3xl mx-auto font-medium leading-relaxed px-4">
               Vantagem competitiva através da antecipação. O Nexus AI não apenas monitora, ele detecta cisnes negros e baleias on-chain antes que o mercado reaja.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
-              <Link href={user ? "/" : "/register"}>
-                <Button className="h-16 px-10 rounded-2xl bg-primary text-background font-bold text-lg shadow-[0_0_50px_rgba(37,99,235,0.4)] hover:scale-105 transition-all group uppercase">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8 px-6">
+              <Link href={user ? "/" : "/register"} className="w-full sm:w-auto">
+                <Button className="w-full sm:h-16 px-10 rounded-2xl bg-primary text-background font-bold text-lg shadow-[0_0_50px_rgba(37,99,235,0.4)] hover:scale-105 transition-all group uppercase h-14">
                   {user ? "ACESSAR SISTEMA" : "INICIAR PROTOCOLO"}
                   <ArrowRight className="ml-3 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
-              <Link href="/login">
-                <Button variant="ghost" className="h-16 px-10 rounded-2xl border border-white/10 text-white/60 font-bold hover:bg-white/5 uppercase">
+              <Link href="/login" className="w-full sm:w-auto">
+                <Button variant="ghost" className="w-full sm:h-16 px-10 rounded-2xl border border-white/10 text-white/60 font-bold hover:bg-white/5 uppercase h-14">
                   LOGIN ESTRATEGISTA
                 </Button>
               </Link>
@@ -205,7 +205,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="investments" className="py-32 px-6 relative overflow-hidden">
+        <section id="investments" className="py-20 md:py-32 px-6 relative overflow-hidden">
           <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div className="space-y-8">
               <Badge variant="outline" className="text-primary border-primary/20 bg-primary/5 px-4 py-1 text-xs font-bold uppercase tracking-widest">Domínio B3</Badge>
@@ -217,7 +217,7 @@ export default function LandingPage() {
                 <li className="flex items-center gap-3 text-white/80 font-bold uppercase text-xs tracking-wider"><CheckCircle2 className="h-5 w-5 text-primary" /> Alvo de Preço-Justo Nexus</li>
               </ul>
             </div>
-            <SpotlightCard className="aspect-square lg:aspect-video rounded-[3rem] border-white/5 shadow-2xl overflow-hidden relative group">
+            <SpotlightCard className="aspect-square lg:aspect-video rounded-[2rem] md:rounded-[3rem] border-white/5 shadow-2xl overflow-hidden relative group">
               <img 
                 src={fiiImage?.imageUrl} 
                 alt="Nexus Analytics" 
@@ -225,21 +225,21 @@ export default function LandingPage() {
                 data-ai-hint="financial trading"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#080D18] via-transparent to-transparent" />
-              <div className="absolute bottom-10 left-10 right-10 p-8 rounded-3xl bg-black/40 backdrop-blur-md border border-white/10">
+              <div className="absolute bottom-6 md:bottom-10 left-6 md:left-10 right-6 md:right-10 p-6 md:p-8 rounded-2xl md:rounded-3xl bg-black/40 backdrop-blur-md border border-white/10">
                 <div className="flex items-center gap-4 mb-2">
                   <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                   <span className="text-[10px] font-bold text-white uppercase tracking-widest">Sinal de Entrada PETR4</span>
                 </div>
-                <p className="text-sm text-white/80 font-medium italic">"Fluxo de baleias institucionais detectado em 38.45. Probabilidade de upside: 12%."</p>
+                <p className="text-xs md:text-sm text-white/80 font-medium italic">"Fluxo de baleias institucionais detectado em 38.45. Probabilidade de upside: 12%."</p>
               </div>
             </SpotlightCard>
           </div>
         </section>
 
-        <section id="crypto" className="py-32 px-6 bg-white/[0.02] relative overflow-hidden">
+        <section id="crypto" className="py-20 md:py-32 px-6 bg-white/[0.02] relative overflow-hidden">
           <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div className="order-2 lg:order-1 relative">
-              <SpotlightCard className="aspect-square rounded-[3rem] border-white/5 shadow-2xl overflow-hidden relative group">
+              <SpotlightCard className="aspect-square rounded-[2rem] md:rounded-[3rem] border-white/5 shadow-2xl overflow-hidden relative group">
                 <img 
                   src={cryptoImage?.imageUrl} 
                   alt="Crypto Whale Tracking" 
@@ -247,7 +247,7 @@ export default function LandingPage() {
                   data-ai-hint="cryptocurrency whale"
                 />
                 <div className="absolute inset-0 bg-gradient-to-tr from-[#080D18] via-transparent to-transparent" />
-                <div className="absolute top-10 left-10 bg-accent/20 border border-accent/40 backdrop-blur-md px-6 py-3 rounded-2xl">
+                <div className="absolute top-6 md:top-10 left-6 md:left-10 bg-accent/20 border border-accent/40 backdrop-blur-md px-4 md:px-6 py-2 md:py-3 rounded-xl md:rounded-2xl">
                   <span className="text-[10px] font-bold text-accent uppercase tracking-[0.3em]">Whale Alert: BTC</span>
                 </div>
               </SpotlightCard>
@@ -257,25 +257,25 @@ export default function LandingPage() {
               <Badge variant="outline" className="text-accent border-accent/20 bg-accent/5 px-4 py-1 text-xs font-bold uppercase tracking-widest">On-Chain Sniper</Badge>
               <h3 className="text-4xl md:text-6xl font-headline font-bold text-white tracking-tight uppercase leading-[1.1]">Rastreio de <br/><span className="led-text-accent">Baleias Globais.</span></h3>
               <p className="text-white/50 text-lg leading-relaxed font-medium">Antecipe movimentos bruscos no BTC e ETH. O Nexus monitora transações acima de US$ 1M nas redes Ethereum e Bitcoin, identificando depósitos em exchanges antes do despejo.</p>
-              <div className="grid grid-cols-2 gap-6">
-                <div className="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-2">
-                  <div className="text-3xl font-headline font-bold text-white uppercase tracking-tighter">Realtime</div>
-                  <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest">Monitoramento On-chain</p>
+              <div className="grid grid-cols-2 gap-4 md:gap-6">
+                <div className="p-4 md:p-6 rounded-2xl md:rounded-3xl bg-white/5 border border-white/10 space-y-2">
+                  <div className="text-2xl md:text-3xl font-headline font-bold text-white uppercase tracking-tighter">Realtime</div>
+                  <p className="text-[8px] md:text-[10px] text-white/40 font-bold uppercase tracking-widest">Monitoramento On-chain</p>
                 </div>
-                <div className="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-2">
-                  <div className="text-3xl font-headline font-bold text-white uppercase tracking-tighter">Alerts</div>
-                  <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest">Push de Liquidez</p>
+                <div className="p-4 md:p-6 rounded-2xl md:rounded-3xl bg-white/5 border border-white/10 space-y-2">
+                  <div className="text-2xl md:text-3xl font-headline font-bold text-white uppercase tracking-tighter">Alerts</div>
+                  <p className="text-[8px] md:text-[10px] text-white/40 font-bold uppercase tracking-widest">Push de Liquidez</p>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        <section id="pricing" className="py-32 px-6 relative overflow-hidden">
+        <section id="pricing" className="py-20 md:py-32 px-6 relative overflow-hidden">
           <div className="max-w-7xl mx-auto space-y-16 relative z-10 text-center">
             <div className="space-y-4">
               <h3 className="text-4xl md:text-7xl font-headline font-bold text-white tracking-tight uppercase">Planos de <span className="led-text-blue">Combate.</span></h3>
-              <p className="text-white/40 font-medium max-w-2xl mx-auto text-lg uppercase tracking-widest">Escolha sua patente na rede de inteligência neural.</p>
+              <p className="text-white/40 font-medium max-w-2xl mx-auto text-base md:text-lg uppercase tracking-widest">Escolha sua patente na rede de inteligência neural.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
@@ -295,7 +295,7 @@ export default function LandingPage() {
                   <CardContent className="p-8 space-y-4 flex-1 text-left">
                     <ul className="space-y-3">
                       <li className="flex items-start gap-3 text-xs text-white/60 font-medium leading-relaxed"><CheckCircle2 className="h-4 w-4 text-primary shrink-0" /> Dashboard de Sentimento Global (delay 15 min)</li>
-                      <li className="flex items-start gap-3 text-xs text-white/60 font-medium leading-relaxed"><CheckCircle2 className="h-4 w-4 text-primary shrink-0" /> Registo manual de até 5 ativos</li>
+                      <li className="flex items-start gap-3 text-xs text-white/60 font-medium leading-relaxed"><CheckCircle2 className="h-4 w-4 text-primary shrink-0" /> Registro manual de até 5 ativos</li>
                     </ul>
                   </CardContent>
                   <CardFooter className="p-8 pt-0">

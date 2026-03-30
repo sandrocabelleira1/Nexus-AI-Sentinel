@@ -141,15 +141,15 @@ export default function EvilEye({
 
   useEffect(() => {
     if (!mounted || !containerRef.current) return;
-    
-    // Prevent multiple initializations
     if (rendererRef.current) return;
 
     const container = containerRef.current;
-    
     let renderer: Renderer;
+    
     try {
-      renderer = new Renderer({ alpha: true, premultipliedAlpha: false });
+      // Otimização para mobile: Detectar pixelRatio e limitar a 2.0 para evitar sobrecarga de GPU
+      const dpr = Math.min(window.devicePixelRatio || 1, 2.0);
+      renderer = new Renderer({ alpha: true, premultipliedAlpha: false, dpr });
     } catch (e) {
       console.error("EvilEye: WebGL initialization failed", e);
       return;
@@ -209,7 +209,18 @@ export default function EvilEye({
       mouseRef.current.tx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       mouseRef.current.ty = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
     };
+    
+    // Suporte para touch (Smartphone)
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches[0]) {
+        const rect = container.getBoundingClientRect();
+        mouseRef.current.tx = ((e.touches[0].clientX - rect.left) / rect.width) * 2 - 1;
+        mouseRef.current.ty = -(((e.touches[0].clientY - rect.top) / rect.height) * 2 - 1);
+      }
+    };
+
     const onMouseLeave = () => { mouseRef.current.tx = mouseRef.current.ty = 0; };
+    
     const resize = () => {
       if (!rendererRef.current || !container || !programRef.current) return;
       rendererRef.current.setSize(container.offsetWidth, container.offsetHeight);
@@ -217,6 +228,7 @@ export default function EvilEye({
     };
 
     container.addEventListener('mousemove', onMouseMove);
+    container.addEventListener('touchmove', onTouchMove, { passive: true });
     container.addEventListener('mouseleave', onMouseLeave);
     window.addEventListener('resize', resize);
     resize();
@@ -225,6 +237,7 @@ export default function EvilEye({
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       window.removeEventListener('resize', resize);
       container.removeEventListener('mousemove', onMouseMove);
+      container.removeEventListener('touchmove', onTouchMove);
       container.removeEventListener('mouseleave', onMouseLeave);
       if (container.contains(gl.canvas)) container.removeChild(gl.canvas);
       gl.getExtension('WEBGL_lose_context')?.loseContext();
@@ -233,7 +246,6 @@ export default function EvilEye({
     };
   }, [mounted]);
 
-  // Handle dynamic updates via uniforms instead of re-initializing
   useEffect(() => {
     if (programRef.current) {
       const p = programRef.current;
