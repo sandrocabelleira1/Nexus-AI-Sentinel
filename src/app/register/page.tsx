@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Cpu, Loader2, UserPlus } from "lucide-react";
+import { Cpu, Loader2, UserPlus, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useAuth, initiateEmailSignUp, useUser, useFirestore, setDocumentNonBlocking } from "@/firebase";
 import { useRouter } from "next/navigation";
@@ -52,6 +52,7 @@ export default function RegisterPage() {
             age: Number(age),
             address: address,
             preferredDisplayMode: "Essential",
+            subscriptionTier: "SENTINEL",
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
           }, { merge: true });
@@ -64,10 +65,20 @@ export default function RegisterPage() {
       })
       .catch((error: any) => {
         setIsLoading(false);
+        let message = "Falha ao criar conta. Verifique os dados.";
+        
+        if (error.code === 'auth/email-already-in-use') {
+          message = "Este estrategista já faz parte da rede. Por favor, faça login.";
+        } else if (error.code === 'auth/weak-password') {
+          message = "A senha tática deve ter pelo menos 6 caracteres.";
+        } else if (error.code === 'auth/invalid-email') {
+          message = "O formato do e-mail é inválido para o sistema.";
+        }
+
         toast({
           variant: "destructive",
           title: "Erro no Protocolo",
-          description: error.message || "Falha ao criar conta. Verifique os dados.",
+          description: message,
         });
       });
   };
@@ -102,7 +113,7 @@ export default function RegisterPage() {
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     disabled={isLoading}
-                    placeholder="Ex: John Doe"
+                    placeholder="Ex: Sandro Madeira"
                   />
                 </div>
                 <div className="space-y-2">
