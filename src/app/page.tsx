@@ -19,11 +19,11 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { createCheckoutPreference } from "@/app/actions/payments";
-import { useUser, useCollection, useFirestore, useMemoFirebase } from "@/firebase";
-import { collection, query, limit } from "firebase/firestore";
+import { useUser, useCollection, useFirestore, useMemoFirebase, useDoc } from "@/firebase";
+import { collection, query, limit, doc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { MarketPrice } from "@/lib/types";
+import { MarketPrice, UserProfile } from "@/lib/types";
 import { BorderGlow } from "@/components/ui/border-glow";
 import { DecryptedText } from "@/components/ui/decrypted-text";
 import { SpotlightCard } from "@/components/ui/spotlight-card";
@@ -35,6 +35,12 @@ export default function LandingPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [loadingTier, setLoadingTier] = useState<'PRO' | 'SOVEREIGN' | null>(null);
+
+  const userProfileRef = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return doc(firestore, "users", user.uid);
+  }, [firestore, user]);
+  const { data: userProfile } = useDoc<UserProfile>(userProfileRef);
 
   const fiiImage = PlaceHolderImages.find(img => img.id === 'feature-fii');
   const cryptoImage = PlaceHolderImages.find(img => img.id === 'feature-crypto');
@@ -72,19 +78,34 @@ export default function LandingPage() {
 
   const handleUpgrade = async (tier: 'PRO' | 'SOVEREIGN') => {
     if (!user) {
-      router.push('/login');
+      toast({
+        title: "Acesso Necessário",
+        description: "Você precisa iniciar seu protocolo de recrutamento antes de elevar sua patente.",
+      });
+      router.push('/register');
+      return;
+    }
+
+    if (userProfile?.subscriptionTier === tier) {
+      toast({
+        title: "Patente Já Adquirida",
+        description: `Você já possui o nível ${tier}. Continue sua análise no terminal.`,
+      });
+      router.push('/dashboard');
       return;
     }
 
     setLoadingTier(tier);
     try {
-      const { initPoint } = await createCheckoutPreference(tier, user.uid);
-      if (initPoint) window.location.href = initPoint;
+      const { initPoint } = await createCheckoutPreference(tier, user.uid, user.email || undefined);
+      if (initPoint) {
+        window.location.href = initPoint;
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Erro no Checkout",
-        description: error.message || "Não foi possível iniciar o pagamento.",
+        description: error.message || "Não foi possível iniciar o pagamento tático.",
       });
     } finally {
       setLoadingTier(null);
@@ -108,7 +129,7 @@ export default function LandingPage() {
           <a href="#pricing" className="text-xs font-bold text-white/60 hover:text-primary transition-colors tracking-widest uppercase">Planos Táticos</a>
           {user ? (
             <Link href="/dashboard">
-              <Button className="bg-primary text-background rounded-xl font-bold text-xs px-6 h-10 uppercase">
+              <Button className="bg-primary text-background rounded-xl font-bold text-xs px-6 h-10 uppercase shadow-lg hover:scale-105 transition-all">
                 IR PARA O TERMINAL
               </Button>
             </Link>
@@ -307,7 +328,9 @@ export default function LandingPage() {
                   </CardContent>
                   <CardFooter className="p-8 pt-0">
                     <Link href={user ? "/dashboard" : "/register"} className="w-full">
-                      <Button variant="outline" className="w-full h-14 rounded-xl border-white/10 text-white font-bold uppercase hover:bg-white/5">INICIAR RECRUTAMENTO</Button>
+                      <Button variant="outline" className="w-full h-14 rounded-xl border-white/10 text-white font-bold uppercase hover:bg-white/5">
+                        {user ? "VER MEU TERMINAL" : "INICIAR RECRUTAMENTO"}
+                      </Button>
                     </Link>
                   </CardFooter>
                 </Card>
@@ -331,8 +354,13 @@ export default function LandingPage() {
                     </ul>
                   </CardContent>
                   <CardFooter className="p-8 pt-0">
-                    <Button onClick={() => handleUpgrade('PRO')} disabled={loadingTier !== null} className="w-full h-14 rounded-xl bg-primary text-background font-bold uppercase shadow-lg hover:scale-105 transition-all">
-                      {loadingTier === 'PRO' ? <Loader2 className="h-5 w-5 animate-spin" /> : "ASSUMIR POSTO PRO"}
+                    <Button 
+                      onClick={() => handleUpgrade('PRO')} 
+                      disabled={loadingTier !== null || userProfile?.subscriptionTier === 'PRO' || userProfile?.subscriptionTier === 'SOVEREIGN'} 
+                      className="w-full h-14 rounded-xl bg-primary text-background font-bold uppercase shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:hover:scale-100"
+                    >
+                      {loadingTier === 'PRO' ? <Loader2 className="h-5 w-5 animate-spin" /> : 
+                       (userProfile?.subscriptionTier === 'PRO' || userProfile?.subscriptionTier === 'SOVEREIGN') ? "PATENTE JÁ ATIVA" : "ASSUMIR POSTO PRO"}
                     </Button>
                   </CardFooter>
                 </Card>
@@ -356,8 +384,13 @@ export default function LandingPage() {
                     </ul>
                   </CardContent>
                   <CardFooter className="p-8 pt-0">
-                    <Button onClick={() => handleUpgrade('SOVEREIGN')} disabled={loadingTier !== null} className="w-full h-14 rounded-xl bg-accent text-background font-bold uppercase shadow-lg hover:scale-105 transition-all">
-                      {loadingTier === 'SOVEREIGN' ? <Loader2 className="h-5 w-5 animate-spin" /> : "ELEVAR PARA SOVEREIGN"}
+                    <Button 
+                      onClick={() => handleUpgrade('SOVEREIGN')} 
+                      disabled={loadingTier !== null || userProfile?.subscriptionTier === 'SOVEREIGN'} 
+                      className="w-full h-14 rounded-xl bg-accent text-background font-bold uppercase shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:hover:scale-100"
+                    >
+                      {loadingTier === 'SOVEREIGN' ? <Loader2 className="h-5 w-5 animate-spin" /> : 
+                       (userProfile?.subscriptionTier === 'SOVEREIGN') ? "PATENTE JÁ ATIVA" : "ELEVAR PARA SOVEREIGN"}
                     </Button>
                   </CardFooter>
                 </Card>
