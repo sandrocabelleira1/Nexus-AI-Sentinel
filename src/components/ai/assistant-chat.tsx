@@ -4,12 +4,11 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { X, Send, Bot, Sparkles, Terminal, ShieldCheck } from "lucide-react";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { X, Send, Sparkles, Terminal, ShieldCheck } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { askPortfolioAssistant } from "@/app/actions/assistant";
 import { useUser } from "@/firebase";
 import { UserAsset, DisplayMode, GlobalIntelligenceAlert } from "@/lib/types";
-import { cn } from "@/lib/utils";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -26,7 +25,7 @@ interface AssistantChatProps {
   latestAlert?: GlobalIntelligenceAlert | null;
 }
 
-export function AssistantChat({ assets, displayMode, userName, externalOpen, onOpenChange, initialQuery, latestAlert }: AssistantChatProps) {
+export function AssistantChat({ displayMode, userName, externalOpen, onOpenChange, initialQuery }: AssistantChatProps) {
   const { user } = useUser();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
