@@ -1,5 +1,4 @@
 
-'use server';
 /**
  * @fileOverview A Genkit flow that proactively monitors global events and generates predictions.
  */
