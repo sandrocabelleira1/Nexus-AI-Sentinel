@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { X, Send, Bot, Sparkles, Terminal, ShieldCheck } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { interactivePortfolioAssistant } from "@/ai/flows/interactive-portfolio-assistant";
+import { askPortfolioAssistant } from "@/app/actions/assistant";
+import { useUser } from "@/firebase";
 import { UserAsset, DisplayMode, GlobalIntelligenceAlert } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +27,7 @@ interface AssistantChatProps {
 }
 
 export function AssistantChat({ assets, displayMode, userName, externalOpen, onOpenChange, initialQuery, latestAlert }: AssistantChatProps) {
+  const { user } = useUser();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -39,7 +41,7 @@ export function AssistantChat({ assets, displayMode, userName, externalOpen, onO
       setMessages([
         { 
           role: 'assistant', 
-          content: `Saudações, Comandante ${name}. O Nexus está em vigilância total. Analisei seu portfólio e os sinais globais. Qual sua ordem estratégica para agora?` 
+          content: `Saudações, Comandante ${name}. Posso ajudar a explorar os ativos da sua carteira. Confira os dados e as fontes antes de decidir. O que deseja analisar?` 
         }
       ]);
     }
@@ -62,29 +64,25 @@ export function AssistantChat({ assets, displayMode, userName, externalOpen, onO
     setMessages(prev => [...prev, { role: 'user', content: text }]);
     setIsLoading(true);
 
-    const alertContext = latestAlert 
-      ? `ALERTA CRÍTICO ATUAL: ${latestAlert.title}. ANÁLISE NEXUS: ${latestAlert.causalityExplanation}. MARKET SIGNAL: ${latestAlert.marketAction}.`
-      : "Monitoramento global em curso. Sem anomalias críticas imediatas no radar.";
-
     try {
-      const result = await interactivePortfolioAssistant({
-        message: text,
-        userAssets: assets.map(a => ({ name: a.name, type: a.type, location: a.location })),
-        globalEvents: alertContext,
-        displayMode: displayMode
-      });
+      if (!user) throw new Error("Login necessário");
+      const result = await askPortfolioAssistant(
+        await user.getIdToken(),
+        text,
+        displayMode
+      );
 
       const responseText = displayMode === 'Essencial' 
         ? result?.display_modes?.essential?.text 
         : result?.display_modes?.full?.technical_analysis;
 
-      setMessages(prev => [...prev, { role: 'assistant', content: responseText || "Análise completa. Minha recomendação tática é manter vigilância sobre os ativos citados." }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: responseText || "Não consegui gerar uma análise confiável agora. Tente novamente mais tarde." }]);
     } catch (error) {
-      setMessages(prev => [...prev, { role: 'assistant', content: "Erro na conexão com o Core do Nexus. Tente novamente, estrategista." }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: "Não foi possível concluir a consulta. Verifique seu acesso ou tente mais tarde." }]);
     } finally {
       setIsLoading(false);
     }
-  }, [assets, displayMode, isLoading, latestAlert]);
+  }, [displayMode, isLoading, user]);
 
   useEffect(() => {
     if (initialQuery && isOpen && initialQuery !== lastProcessedQuery) {
@@ -133,7 +131,7 @@ export function AssistantChat({ assets, displayMode, userName, externalOpen, onO
                     {msg.role === 'assistant' && (
                       <div className="flex items-center gap-2 mb-2 opacity-50">
                         <ShieldCheck className="h-3 w-3 text-primary" />
-                        <span className="text-[8px] font-bold uppercase tracking-widest text-primary">Nexus Verified</span>
+                        <span className="text-[8px] font-bold uppercase tracking-widest text-primary">Resposta gerada por IA</span>
                       </div>
                     )}
                     <div className="whitespace-pre-wrap">{msg.content}</div>
