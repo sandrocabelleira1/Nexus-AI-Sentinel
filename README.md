@@ -38,7 +38,11 @@ No App Hosting, mantenha essas credenciais no Secret Manager e conceda acesso ap
 
 O cliente se autentica com Firebase Authentication. As regras impedem que ele altere diretamente seu plano. Os valores exibidos para PRO e SOVEREIGN são **mensais**, conforme a decisão do projeto, mas a implementação anterior criava somente uma cobrança única. Por isso, os botões pagos estão desativados até existir uma integração recorrente completa com confirmação de cada fatura, tratamento de falhas, cancelamento e estorno. Não libere planos com base em parâmetros de URL. Consulte o [roteiro de assinaturas mensais](docs/assinaturas-mensais.md).
 
-As regras `firestore.rules` precisam ser publicadas no **mesmo projeto Firebase** junto com a versão corrigida do aplicativo. O Admin SDK não depende das regras do cliente e a conta de execução precisa de acesso ao Firestore. Revise planos antigos, estornos e o conteúdo já existente nas coleções globais.
+As regras `firestore.rules` foram publicadas no projeto Firebase em 17/10/2026. A versão corrigida do aplicativo ainda precisa ser implantada no App Hosting. O Admin SDK não depende das regras do cliente e a conta de execução precisa de acesso ao Firestore. Revise planos antigos, estornos e o conteúdo já existente nas coleções globais.
+
+## Assistente de IA
+
+O navegador envia o ID token Firebase a uma ação de servidor. A ação verifica a identidade, lê a carteira do Firestore e limita as consultas a cinco por dia por conta, com intervalo mínimo de 30 segundos. Respostas da IA são experimentais e precisam ser conferidas nas fontes.
 
 ## Atualização do feed global
 
@@ -50,4 +54,4 @@ A migração oficial do espaço do Firebase Studio para o Google AI Studio deve 
 
 ## Situação
 
-O projeto ainda requer revisão em ambiente de homologação antes de publicar as alterações de segurança. As assinaturas mensais não estão implementadas. Nenhum resultado exibido deve ser tratado como dado financeiro auditado.
+As regras de acesso já foram publicadas, mas o aplicativo ainda requer revisão em ambiente de homologação antes da implantação da versão nova. As assinaturas mensais não estão implementadas. Nenhum resultado exibido deve ser tratado como dado financeiro auditado.
