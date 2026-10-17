@@ -1,4 +1,4 @@
-'use server';
+
 /**
  * @fileOverview Motor de Inteligência Estratégica Nexus AI v5.5.
  * Sentinela Omnisciente: Vigilância Total Multidimensional e Ininterrupta.

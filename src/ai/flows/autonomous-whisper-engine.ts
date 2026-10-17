@@ -1,4 +1,4 @@
-'use server';
+
 /**
  * @fileOverview Nexus Autonomous Whisper & Speculation Engine v5.0.
  * Detecta rumores, vazamentos e sinais fracos via varredura web profunda.
