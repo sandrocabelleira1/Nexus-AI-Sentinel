@@ -1,5 +1,4 @@
 
-'use server';
 /**
  * @fileOverview A Genkit flow for Nexus AI to provide multi-modal financial insights.
  */
