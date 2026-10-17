@@ -37,7 +37,7 @@ No App Hosting, mantenha essas credenciais no Secret Manager e conceda acesso ap
 
 ## Autorização e assinaturas
 
-O cliente se autentica com Firebase Authentication. As regras impedem que ele altere diretamente seu plano. Os valores exibidos para PRO e SOVEREIGN são **mensais**, conforme a decisão do projeto, mas a implementação anterior criava somente uma cobrança única. Por isso, os botões pagos estão desativados até existir uma integração recorrente completa com confirmação de cada fatura, tratamento de falhas, cancelamento e estorno. Não libere planos com base em parâmetros de URL.
+O cliente se autentica com Firebase Authentication. As regras impedem que ele altere diretamente seu plano. Os valores exibidos para PRO e SOVEREIGN são **mensais**, conforme a decisão do projeto, mas a implementação anterior criava somente uma cobrança única. Por isso, os botões pagos estão desativados até existir uma integração recorrente completa com confirmação de cada fatura, tratamento de falhas, cancelamento e estorno. Não libere planos com base em parâmetros de URL. Consulte o [roteiro de assinaturas mensais](docs/assinaturas-mensais.md).
 
 As regras `firestore.rules` precisam ser publicadas no **mesmo projeto Firebase** junto com a versão corrigida do aplicativo. O Admin SDK não depende das regras do cliente e a conta de execução precisa de acesso ao Firestore. Revise planos antigos, estornos e o conteúdo já existente nas coleções globais.
 
