@@ -1,4 +1,4 @@
-'use server';
+
 /**
  * @fileOverview Nexus Global Market Data Engine v5.6.
  * Sincronização Hardened: Prioridade Total para APIs de Preço Realtime.

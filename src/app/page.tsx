@@ -97,7 +97,7 @@ export default function LandingPage() {
 
     setLoadingTier(tier);
     try {
-      const { initPoint } = await createCheckoutPreference(tier, user.uid, user.email || undefined);
+      const { initPoint } = await createCheckoutPreference(tier, await user.getIdToken());
       if (initPoint) {
         window.location.href = initPoint;
       }

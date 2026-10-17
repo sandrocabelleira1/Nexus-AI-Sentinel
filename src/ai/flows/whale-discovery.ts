@@ -1,4 +1,4 @@
-'use server';
+
 /**
  * @fileOverview Nexus Whale Discovery Engine (Multi-Asset Moralis Powered).
  * Captura dados reais on-chain de múltiplos ativos (ETH, USDT, USDC, WBTC) 
@@ -48,7 +48,7 @@ export async function runWhaleDiscovery(): Promise<WhaleDiscoveryOutput | null> 
   
   try {
     if (!apiKey) {
-      throw new Error("Moralis API Key não configurada. Ativando Modo de Simulação Neural.");
+      throw new Error("Moralis API Key não configurada.");
     }
 
     const tokensToMonitor = [
@@ -74,35 +74,10 @@ export async function runWhaleDiscovery(): Promise<WhaleDiscoveryOutput | null> 
     }).join('\n\n');
 
     const { output } = await structuringPrompt({ rawBlockchainData: rawData });
-    return output ? JSON.parse(JSON.stringify(output)) : generateFallbackWhales();
+    return output ? JSON.parse(JSON.stringify(output)) : null;
   } catch (error: any) {
     console.warn("Nexus Whale Discovery Fallback:", error.message);
-    return generateFallbackWhales();
+    return null;
   }
 }
 
-function generateFallbackWhales(): WhaleDiscoveryOutput {
-  const symbols = ['BTC', 'ETH', 'USDT', 'SOL'];
-  const types: Array<'exchange_deposit' | 'exchange_withdrawal' | 'wallet_transfer'> = ['exchange_deposit', 'exchange_withdrawal', 'wallet_transfer'];
-  
-  const mockWhales = Array.from({ length: 5 }).map(() => {
-    const symbol = symbols[Math.floor(Math.random() * symbols.length)];
-    const amount = Math.floor(Math.random() * 5000) + 500;
-    const amountUsd = amount * (symbol === 'BTC' ? 60000 : symbol === 'ETH' ? 3000 : 1);
-    const type = types[Math.floor(Math.random() * types.length)];
-    
-    return {
-      blockchain: 'Ethereum',
-      symbol,
-      amount,
-      amountUsd,
-      fromAddress: '0x' + Math.random().toString(16).slice(2, 10) + '...',
-      toAddress: '0x' + Math.random().toString(16).slice(2, 10) + '...',
-      transactionType: type,
-      nexus_logic: `Movimentação detectada via Projeção Neural. ${symbol} em fase de ${type === 'exchange_withdrawal' ? 'acumulação agressiva' : 'liquidez de mercado'}.`,
-      is_simulated: true,
-    };
-  });
-
-  return { detected_whales: mockWhales };
-}

@@ -43,12 +43,9 @@ import { AssistantChat } from "@/components/ai/assistant-chat";
 import { Badge } from "@/components/ui/badge";
 import { PortfolioView } from "@/components/portfolio/portfolio-view";
 import { MarketExplorer } from "@/components/market/market-explorer";
-import { useCollection, useFirestore, useMemoFirebase, useUser, useAuth, addDocumentNonBlocking, setDocumentNonBlocking, useDoc } from "@/firebase";
+import { useCollection, useFirestore, useMemoFirebase, useUser, useAuth, setDocumentNonBlocking, useDoc } from "@/firebase";
 import { collection, query, orderBy, limit, doc } from "firebase/firestore";
-import { monitorGlobalEvents } from "@/ai/flows/global-intelligence-monitor";
-import { runAutonomousWhisperScan } from "@/ai/flows/autonomous-whisper-engine";
-import { runWhaleDiscovery } from "@/ai/flows/whale-discovery";
-import { fetchGlobalMarketData } from "@/ai/flows/global-market-data-engine";
+import { runGlobalScan } from "@/app/actions/global-scan";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import {
@@ -102,7 +99,7 @@ export default function NexusDashboard() {
   }, [adminRole, userProfile]);
 
   useEffect(() => {
-    if (currentUser && firestore) {
+    if (currentUser && firestore && userProfile) {
       const userRef = doc(firestore, "users", currentUser.uid);
       const syncData: any = {
         id: currentUser.uid,
@@ -110,7 +107,6 @@ export default function NexusDashboard() {
         updatedAt: new Date().toISOString()
       };
       if (currentUser.displayName && currentUser.displayName !== "Estrategista Nexus") syncData.displayName = currentUser.displayName;
-      if (userProfile && !userProfile.subscriptionTier) syncData.subscriptionTier = "SENTINEL";
       setDocumentNonBlocking(userRef, syncData, { merge: true });
     }
   }, [currentUser, firestore, userProfile]);
@@ -156,50 +152,17 @@ export default function NexusDashboard() {
   const latestWhisper = whispers?.[0];
 
   const triggerGlobalScan = useCallback(async () => {
-    if (isScanning || !firestore || !auth.currentUser) return;
+    if (isScanning || !adminRole || !currentUser) return;
     setIsScanning(true);
     try {
-      const userTickers = userAssetsData?.map(a => a.ticker).filter(Boolean) as string[] || [];
-      const results = await Promise.allSettled([
-        monitorGlobalEvents({ context: "VIGILÂNCIA OMNISCIENTE TOTAL 5.6 - SINCRONIZAÇÃO DE PRECISÃO" }),
-        runAutonomousWhisperScan(),
-        runWhaleDiscovery(),
-        fetchGlobalMarketData(userTickers)
-      ]);
-
-      if (auth.currentUser) {
-        const monitorResult = results[0].status === 'fulfilled' ? results[0].value : null;
-        const whispersResult = results[1].status === 'fulfilled' ? results[1].value : null;
-        const whalesResult = results[2].status === 'fulfilled' ? results[2].value : null;
-        const marketDataResult = results[3].status === 'fulfilled' ? results[3].value : null;
-
-        if (monitorResult?.alerts) {
-          monitorResult.alerts.forEach(alert => addDocumentNonBlocking(collection(firestore, "global_intelligence_alerts"), { ...alert, createdAt: new Date().toISOString() }));
-        }
-        if (whispersResult?.detected_whispers) {
-          whispersResult.detected_whispers.forEach(w => addDocumentNonBlocking(collection(firestore, "autonomous_insights"), { ...w, timestamp: new Date().toISOString() }));
-        }
-        if (whalesResult?.detected_whales) {
-          whalesResult.detected_whales.forEach(tw => addDocumentNonBlocking(collection(firestore, "whale_transactions"), { ...tw, id: Math.random().toString(36).substr(2, 9), timestamp: new Date().toISOString() }));
-        }
-        if (marketDataResult?.assets) {
-          marketDataResult.assets.forEach(asset => setDocumentNonBlocking(doc(firestore, "market_prices", asset.ticker), { ...asset, id: asset.ticker, updatedAt: new Date().toISOString() }, { merge: true }));
-        }
-      }
-    } catch (e) { 
-      console.error("Global Scan Error:", e); 
-    } finally { 
-      setIsScanning(false); 
+      const tickers = userAssetsData?.map(asset => asset.ticker).filter((ticker): ticker is string => !!ticker) || [];
+      await runGlobalScan(await currentUser.getIdToken(), tickers);
+    } catch (error) {
+      console.error("Falha ao atualizar feed global:", error);
+    } finally {
+      setIsScanning(false);
     }
-  }, [isScanning, firestore, userAssetsData, auth]);
-
-  useEffect(() => {
-    if (currentUser) {
-      triggerGlobalScan();
-      const interval = setInterval(triggerGlobalScan, 300000); // 5 minutos para maior precisão
-      return () => clearInterval(interval);
-    }
-  }, [currentUser, triggerGlobalScan]);
+  }, [isScanning, adminRole, currentUser, userAssetsData]);
 
   const handleDeepAnalysis = (context: string) => {
     setChatInitialQuery(context);
@@ -255,9 +218,9 @@ export default function NexusDashboard() {
           </nav>
 
           <div className="flex items-center gap-2 md:gap-4">
-            <Button variant="ghost" size="icon" onClick={triggerGlobalScan} disabled={isScanning} className="rounded-xl bg-accent/10 border border-accent/30 text-accent h-9 w-9 md:h-10 md:w-10 hover:bg-accent/20">
+            {adminRole && <Button variant="ghost" size="icon" title="Atualizar feed global" onClick={triggerGlobalScan} disabled={isScanning} className="rounded-xl bg-accent/10 border border-accent/30 text-accent h-9 w-9 md:h-10 md:w-10 hover:bg-accent/20">
               {isScanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Radar className="h-4 w-4" />}
-            </Button>
+            </Button>}
             
             <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
               <SheetTrigger asChild>

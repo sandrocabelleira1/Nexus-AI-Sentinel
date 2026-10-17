@@ -22,7 +22,15 @@ service cloud.firestore {
     match /users/{userId} {
       allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
-      allow create, update: if isOwner(userId);
+      allow create: if isOwner(userId)
+        && request.resource.data.id == userId
+        && request.resource.data.subscriptionTier == 'SENTINEL';
+      allow update: if isAdmin() || (isOwner(userId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'email', 'displayName', 'whatsapp', 'age', 'address',
+          'preferredDisplayMode', 'updatedAt', 'id'
+        ])
+        && request.resource.data.id == userId);
       
       match /consents/{consentId} {
         allow get, list, create, update: if isOwner(userId);
@@ -37,33 +45,40 @@ service cloud.firestore {
 
     match /global_intelligence_alerts/{id} {
       allow read: if true;
-      allow create, update: if isSignedIn();
+      allow create, update, delete: if isAdmin();
     }
 
     match /autonomous_insights/{id} {
       allow read: if true;
-      allow create, update: if isSignedIn();
+      allow create, update, delete: if isAdmin();
     }
 
     match /whale_transactions/{id} {
       allow read: if true;
-      allow create, update: if isSignedIn();
+      allow create, update, delete: if isAdmin();
     }
 
     match /market_entities/{id} {
       allow read: if true;
-      allow create, update: if isSignedIn();
+      allow create, update, delete: if isAdmin();
     }
 
     match /market_prices/{id} {
       allow read: if true;
-      allow create, update: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // --- CHECKOUT ORDERS (WRITTEN BY THE SERVER ONLY) ---
+
+    match /checkout_orders/{orderId} {
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow list, write: if false;
     }
 
     // --- ADMIN RULES ---
 
     match /admin_roles/{adminUid} {
-      allow get: if isSignedIn();
+      allow get: if isOwner(adminUid) || isAdmin();
       allow list: if isAdmin();
     }
   }

@@ -22,7 +22,7 @@ interface WhaleFlowProps {
 export function WhaleFlow({ transactions, onAnalyze }: WhaleFlowProps) {
   useEffect(() => {
     const criticalTx = transactions[0];
-    if (criticalTx && criticalTx.amountUsd >= 1000000000) {
+    if (criticalTx && !criticalTx.is_simulated && criticalTx.amountUsd >= 1000000000) {
       if (window.navigator.vibrate) {
         window.navigator.vibrate([100, 30, 100]);
       }
@@ -78,7 +78,7 @@ export function WhaleFlow({ transactions, onAnalyze }: WhaleFlowProps) {
         <div className="space-y-4">
           {transactions.length > 0 ? (
             transactions.map((tx) => {
-              const isCritical = tx.amountUsd >= 1000000000;
+              const isCritical = !tx.is_simulated && tx.amountUsd >= 1000000000;
               const isExchangeDeposit = tx.transactionType === 'exchange_deposit';
               
               return (
@@ -95,7 +95,7 @@ export function WhaleFlow({ transactions, onAnalyze }: WhaleFlowProps) {
                       "text-[8px] font-bold uppercase px-2 py-0.5",
                       isExchangeDeposit ? "text-rose-400 border-rose-500/30" : "text-emerald-400 border-emerald-500/30"
                     )}>
-                      {isExchangeDeposit ? 'LIQUIDAÇÃO' : 'ACUMULAÇÃO'}
+                      {tx.is_simulated ? 'SIMULAÇÃO' : isExchangeDeposit ? 'LIQUIDAÇÃO' : 'ACUMULAÇÃO'}
                     </Badge>
                     <span className="text-[8px] text-white/40 font-bold">
                       {tx.timestamp ? formatDistanceToNow(new Date(tx.timestamp), { locale: ptBR, addSuffix: true }) : 'agora'}
