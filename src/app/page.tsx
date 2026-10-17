@@ -46,27 +46,16 @@ export default function LandingPage() {
   const { data: realMarketPrices } = useCollection<MarketPrice>(marketPricesQuery);
 
   const tickerItems = useMemo(() => {
-    const mockData = [
-      { ticker: "PETR4", price: 38.45, change24h: 2.4, verdict: "COMPRA", currency: "BRL" },
-      { ticker: "MXRF11", price: 10.22, change24h: -0.5, verdict: "HOLD", currency: "BRL" },
-      { ticker: "BTC", price: 64230, change24h: 4.1, verdict: "WHALE BUY", currency: "USD" },
-      { ticker: "VALE3", price: 62.10, change24h: -1.2, verdict: "WATCH", currency: "BRL" },
-      { ticker: "ETH", price: 3450, change24h: 1.8, verdict: "ACCUMULATION", currency: "USD" },
-      { ticker: "HGLG11", price: 164.20, change24h: 0.2, verdict: "YIELD WIN", currency: "BRL" },
-      { ticker: "ITUB4", price: 32.15, change24h: 1.1, verdict: "COMPRA", currency: "BRL" },
-      { ticker: "SOL", price: 145.20, change24h: 5.4, verdict: "BULLISH", currency: "USD" },
-    ];
-
-    if (realMarketPrices && realMarketPrices.length > 0) {
-      return realMarketPrices.map(p => ({
+    if (!realMarketPrices) return [];
+    return realMarketPrices
+      .filter(p => Number.isFinite(p.price) && Number.isFinite(p.change24h))
+      .map(p => ({
         ticker: p.ticker,
         price: p.price,
         change24h: p.change24h,
-        verdict: p.nexusVerdict?.split('.')[0] || "ANALYSING",
+        verdict: p.nexusVerdict?.split('.')[0] || "EM ANÁLISE",
         currency: p.currency
       }));
-    }
-    return mockData;
   }, [realMarketPrices]);
 
   return (
@@ -136,7 +125,7 @@ export default function LandingPage() {
             </h2>
             
             <p className="text-base md:text-xl text-white/50 max-w-3xl mx-auto font-medium leading-relaxed px-4">
-              Vantagem competitiva através da antecipação. O Nexus AI não apenas monitora, ele detecta cisnes negros e baleias on-chain antes que o mercado reaja.
+              Explore preços, alertas e transferências de criptoativos reunidos em um painel experimental com análise assistida por IA. Dados e sinais devem ser conferidos nas fontes antes de qualquer decisão.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8 px-6">
@@ -159,6 +148,9 @@ export default function LandingPage() {
 
         <section className="py-12 border-y border-white/5 bg-black/40 relative overflow-hidden">
           <div className="absolute inset-0 cyber-grid opacity-5 pointer-events-none" />
+          {tickerItems.length === 0 ? (
+            <p className="text-center text-white/50 text-sm px-6 py-4">Dados de mercado indisponíveis no momento.</p>
+          ) : (
           <div className="flex w-full overflow-hidden select-none">
             <div className="flex gap-8 px-4 animate-marquee whitespace-nowrap items-center" style={{ animationDuration: '100s' }}>
               {[...tickerItems, ...tickerItems].map((item, i) => (
@@ -188,6 +180,7 @@ export default function LandingPage() {
               ))}
             </div>
           </div>
+          )}
         </section>
 
         <section id="investments" className="py-20 md:py-32 px-6 relative overflow-hidden">
@@ -195,7 +188,7 @@ export default function LandingPage() {
             <div className="space-y-8">
               <Badge variant="outline" className="text-primary border-primary/20 bg-primary/5 px-4 py-1 text-xs font-bold uppercase tracking-widest">Domínio B3</Badge>
               <h3 className="text-4xl md:text-6xl font-headline font-bold text-white tracking-tight uppercase leading-[1.1]">Dominância em <br/><span className="led-text-blue">Renda Variável.</span></h3>
-              <p className="text-white/50 text-lg leading-relaxed font-medium">O Nexus processa dados fundamentalistas de Fundos Imobiliários e Ações em tempo real, entregando o Veredito de Compra baseado em múltiplos e fluxo institucional.</p>
+              <p className="text-white/50 text-lg leading-relaxed font-medium">O Nexus reúne dados de ações e fundos imobiliários e gera análises experimentais. Disponibilidade e atualização dependem das fontes externas.</p>
               <ul className="space-y-4">
                 <li className="flex items-center gap-3 text-white/80 font-bold uppercase text-xs tracking-wider"><CheckCircle2 className="h-5 w-5 text-primary" /> Radar de Dividend Yield AM</li>
                 <li className="flex items-center gap-3 text-white/80 font-bold uppercase text-xs tracking-wider"><CheckCircle2 className="h-5 w-5 text-primary" /> Telemetria de Vacância em FIIs</li>
@@ -241,7 +234,7 @@ export default function LandingPage() {
             <div className="order-1 lg:order-2 space-y-8">
               <Badge variant="outline" className="text-accent border-accent/20 bg-accent/5 px-4 py-1 text-xs font-bold uppercase tracking-widest">On-Chain Sniper</Badge>
               <h3 className="text-4xl md:text-6xl font-headline font-bold text-white tracking-tight uppercase leading-[1.1]">Rastreio de <br/><span className="led-text-accent">Baleias Globais.</span></h3>
-              <p className="text-white/50 text-lg leading-relaxed font-medium">Antecipe movimentos bruscos no BTC e ETH. O Nexus monitora transações acima de US$ 1M nas redes Ethereum e Bitcoin, identificando depósitos em exchanges antes do despejo.</p>
+              <p className="text-white/50 text-lg leading-relaxed font-medium">Acompanhe grandes transferências de criptoativos quando a fonte on-chain estiver disponível. Alertas não predizem movimentos de preço.</p>
               <div className="grid grid-cols-2 gap-4 md:gap-6">
                 <div className="p-4 md:p-6 rounded-2xl md:rounded-3xl bg-white/5 border border-white/10 space-y-2">
                   <div className="text-2xl md:text-3xl font-headline font-bold text-white uppercase tracking-tighter">Realtime</div>
@@ -307,7 +300,7 @@ export default function LandingPage() {
                   </CardHeader>
                   <CardContent className="p-8 space-y-4 flex-1 text-left">
                     <ul className="space-y-3">
-                      <li className="flex items-start gap-3 text-xs text-white font-bold leading-relaxed"><CheckCircle2 className="h-4 w-4 text-primary shrink-0" /> Dados B3 e FIIs em TEMPO REAL (Brapi Pro)</li>
+                      <li className="flex items-start gap-3 text-xs text-white font-bold leading-relaxed"><CheckCircle2 className="h-4 w-4 text-primary shrink-0" /> Dados B3 e FIIs sujeitos à disponibilidade da fonte</li>
                       <li className="flex items-start gap-3 text-xs text-white/60 font-medium leading-relaxed"><CheckCircle2 className="h-4 w-4 text-primary shrink-0" /> Whisper Radar (Básico): Rumores validados pela IA</li>
                     </ul>
                   </CardContent>
@@ -335,7 +328,7 @@ export default function LandingPage() {
                   </CardHeader>
                   <CardContent className="p-8 space-y-4 flex-1 text-left">
                     <ul className="space-y-3">
-                      <li className="flex items-start gap-3 text-xs text-white font-bold leading-relaxed"><CheckCircle2 className="h-4 w-4 text-accent shrink-0" /> Whale Flow Full: Monitoramento On-chain Realtime</li>
+                      <li className="flex items-start gap-3 text-xs text-white font-bold leading-relaxed"><CheckCircle2 className="h-4 w-4 text-accent shrink-0" /> Monitoramento on-chain sujeito à disponibilidade da fonte</li>
                       <li className="flex items-start gap-3 text-xs text-white/60 font-medium leading-relaxed"><CheckCircle2 className="h-4 w-4 text-accent shrink-0" /> Modo War Room: Mapa de Entidades completo</li>
                     </ul>
                   </CardContent>
