@@ -28,7 +28,6 @@ Use Node.js compatível com Next.js 15. Instale as dependências com `npm instal
 
 | Variável | Uso |
 | --- | --- |
-| `NEXT_PUBLIC_BASE_URL` | Origem HTTPS pública usada pelo retorno e webhook do checkout; `http://localhost:9002` em desenvolvimento |
 | `GEMINI_API_KEY` | Chave do Gemini usada pelo Genkit no servidor |
 | `MORALIS_API_KEY` | Consultas on-chain |
 | `BRAPI_API_KEY` | Consultas de ativos brasileiros |
