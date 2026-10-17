@@ -206,9 +206,9 @@ export default function LandingPage() {
               <div className="absolute bottom-6 md:bottom-10 left-6 md:left-10 right-6 md:right-10 p-6 md:p-8 rounded-2xl md:rounded-3xl bg-black/40 backdrop-blur-md border border-white/10">
                 <div className="flex items-center gap-4 mb-2">
                   <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-[10px] font-bold text-white uppercase tracking-widest">Sinal de Entrada PETR4</span>
+                  <span className="text-[10px] font-bold text-white uppercase tracking-widest">Exemplo ilustrativo</span>
                 </div>
-                <p className="text-xs md:text-sm text-white/80 font-medium italic">"Fluxo de baleias institucionais detectado em 38.45. Probabilidade de upside: 12%."</p>
+                <p className="text-xs md:text-sm text-white/80 font-medium italic">"Interface de análise demonstrativa. Confira dados e fontes antes de tomar decisões."</p>
               </div>
             </SpotlightCard>
           </div>
@@ -226,7 +226,7 @@ export default function LandingPage() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-tr from-[#080D18] via-transparent to-transparent" />
                 <div className="absolute top-6 md:top-10 left-6 md:left-10 bg-accent/20 border border-accent/40 backdrop-blur-md px-4 md:px-6 py-2 md:py-3 rounded-xl md:rounded-2xl">
-                  <span className="text-[10px] font-bold text-accent uppercase tracking-[0.3em]">Whale Alert: BTC</span>
+                  <span className="text-[10px] font-bold text-accent uppercase tracking-[0.3em]">Exemplo de alerta on-chain</span>
                 </div>
               </SpotlightCard>
               <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-accent/20 blur-[100px] rounded-full pointer-events-none" />
@@ -237,12 +237,12 @@ export default function LandingPage() {
               <p className="text-white/50 text-lg leading-relaxed font-medium">Acompanhe grandes transferências de criptoativos quando a fonte on-chain estiver disponível. Alertas não predizem movimentos de preço.</p>
               <div className="grid grid-cols-2 gap-4 md:gap-6">
                 <div className="p-4 md:p-6 rounded-2xl md:rounded-3xl bg-white/5 border border-white/10 space-y-2">
-                  <div className="text-2xl md:text-3xl font-headline font-bold text-white uppercase tracking-tighter">Realtime</div>
+                  <div className="text-2xl md:text-3xl font-headline font-bold text-white uppercase tracking-tighter">Sob demanda</div>
                   <p className="text-[8px] md:text-[10px] text-white/40 font-bold uppercase tracking-widest">Monitoramento On-chain</p>
                 </div>
                 <div className="p-4 md:p-6 rounded-2xl md:rounded-3xl bg-white/5 border border-white/10 space-y-2">
                   <div className="text-2xl md:text-3xl font-headline font-bold text-white uppercase tracking-tighter">Alerts</div>
-                  <p className="text-[8px] md:text-[10px] text-white/40 font-bold uppercase tracking-widest">Push de Liquidez</p>
+                  <p className="text-[8px] md:text-[10px] text-white/40 font-bold uppercase tracking-widest">Alertas no painel</p>
                 </div>
               </div>
             </div>
