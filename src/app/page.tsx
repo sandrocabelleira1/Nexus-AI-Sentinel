@@ -1,7 +1,7 @@
 
 "use client"
 
-import React, { useState, useMemo } from "react";
+import React, { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   Cpu, 
@@ -9,7 +9,6 @@ import {
   Activity,
   CheckCircle2,
   Crown,
-  Loader2,
   ShieldCheck,
   Zap
 } from "lucide-react";
@@ -18,11 +17,8 @@ import { cn } from "@/lib/utils";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { createCheckoutPreference } from "@/app/actions/payments";
 import { useUser, useCollection, useFirestore, useMemoFirebase, useDoc } from "@/firebase";
 import { collection, query, limit, doc } from "firebase/firestore";
-import { useRouter } from "next/navigation";
-import { useToast } from "@/hooks/use-toast";
 import { MarketPrice, UserProfile } from "@/lib/types";
 import { BorderGlow } from "@/components/ui/border-glow";
 import { DecryptedText } from "@/components/ui/decrypted-text";
@@ -32,9 +28,6 @@ import EvilEye from "@/components/ui/evil-eye";
 export default function LandingPage() {
   const { user } = useUser();
   const firestore = useFirestore();
-  const router = useRouter();
-  const { toast } = useToast();
-  const [loadingTier, setLoadingTier] = useState<'PRO' | 'SOVEREIGN' | null>(null);
 
   const userProfileRef = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -75,42 +68,6 @@ export default function LandingPage() {
     }
     return mockData;
   }, [realMarketPrices]);
-
-  const handleUpgrade = async (tier: 'PRO' | 'SOVEREIGN') => {
-    if (!user) {
-      toast({
-        title: "Acesso Necessário",
-        description: "Você precisa iniciar seu protocolo de recrutamento antes de elevar sua patente.",
-      });
-      router.push('/register');
-      return;
-    }
-
-    if (userProfile?.subscriptionTier === tier) {
-      toast({
-        title: "Patente Já Adquirida",
-        description: `Você já possui o nível ${tier}. Continue sua análise no terminal.`,
-      });
-      router.push('/dashboard');
-      return;
-    }
-
-    setLoadingTier(tier);
-    try {
-      const { initPoint } = await createCheckoutPreference(tier, await user.getIdToken());
-      if (initPoint) {
-        window.location.href = initPoint;
-      }
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Erro no Checkout",
-        description: error.message || "Não foi possível iniciar o pagamento tático.",
-      });
-    } finally {
-      setLoadingTier(null);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-background relative overflow-x-hidden">
@@ -304,6 +261,7 @@ export default function LandingPage() {
             <div className="space-y-4">
               <h3 className="text-4xl md:text-7xl font-headline font-bold text-white tracking-tight uppercase">Planos de <span className="led-text-blue">Combate.</span></h3>
               <p className="text-white/40 font-medium max-w-2xl mx-auto text-base md:text-lg uppercase tracking-widest">Escolha sua patente na rede de inteligência neural.</p>
+              <p className="text-amber-300 text-sm">Assinaturas mensais em preparação. A contratação está temporariamente indisponível.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
@@ -355,12 +313,10 @@ export default function LandingPage() {
                   </CardContent>
                   <CardFooter className="p-8 pt-0">
                     <Button 
-                      onClick={() => handleUpgrade('PRO')} 
-                      disabled={loadingTier !== null || userProfile?.subscriptionTier === 'PRO' || userProfile?.subscriptionTier === 'SOVEREIGN'} 
+                      disabled 
                       className="w-full h-14 rounded-xl bg-primary text-background font-bold uppercase shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:hover:scale-100"
                     >
-                      {loadingTier === 'PRO' ? <Loader2 className="h-5 w-5 animate-spin" /> : 
-                       (userProfile?.subscriptionTier === 'PRO' || userProfile?.subscriptionTier === 'SOVEREIGN') ? "PATENTE JÁ ATIVA" : "ASSUMIR POSTO PRO"}
+                      {(userProfile?.subscriptionTier === 'PRO' || userProfile?.subscriptionTier === 'SOVEREIGN') ? "PATENTE JÁ ATIVA" : "EM PREPARAÇÃO"}
                     </Button>
                   </CardFooter>
                 </Card>
@@ -385,12 +341,10 @@ export default function LandingPage() {
                   </CardContent>
                   <CardFooter className="p-8 pt-0">
                     <Button 
-                      onClick={() => handleUpgrade('SOVEREIGN')} 
-                      disabled={loadingTier !== null || userProfile?.subscriptionTier === 'SOVEREIGN'} 
+                      disabled 
                       className="w-full h-14 rounded-xl bg-accent text-background font-bold uppercase shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:hover:scale-100"
                     >
-                      {loadingTier === 'SOVEREIGN' ? <Loader2 className="h-5 w-5 animate-spin" /> : 
-                       (userProfile?.subscriptionTier === 'SOVEREIGN') ? "PATENTE JÁ ATIVA" : "ELEVAR PARA SOVEREIGN"}
+                      {userProfile?.subscriptionTier === 'SOVEREIGN' ? "PATENTE JÁ ATIVA" : "EM PREPARAÇÃO"}
                     </Button>
                   </CardFooter>
                 </Card>

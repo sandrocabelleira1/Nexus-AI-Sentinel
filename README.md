@@ -9,7 +9,7 @@ Aplicativo experimental de análise de mercado e carteira com interface em portu
 - Next.js 15, React 19 e TypeScript
 - Firebase Authentication, Cloud Firestore e App Hosting
 - Genkit e Gemini
-- Mercado Pago Checkout Pro
+- Mercado Pago: integração de assinaturas mensais em planejamento; checkout atual suspenso
 - Fontes de mercado: Brapi, Binance, AwesomeAPI e Moralis
 
 ## Estrutura
@@ -29,19 +29,17 @@ Use Node.js compatível com Next.js 15. Instale as dependências com `npm instal
 | Variável | Uso |
 | --- | --- |
 | `NEXT_PUBLIC_BASE_URL` | Origem HTTPS pública usada pelo retorno e webhook do checkout; `http://localhost:9002` em desenvolvimento |
-| `MP_ACCESS_TOKEN` | Token privado do Mercado Pago, somente no servidor |
-| `MP_WEBHOOK_SECRET` | Segredo de assinatura dos webhooks do Mercado Pago |
 | `GEMINI_API_KEY` | Chave do Gemini usada pelo Genkit no servidor |
 | `MORALIS_API_KEY` | Consultas on-chain |
 | `BRAPI_API_KEY` | Consultas de ativos brasileiros |
 
 No App Hosting, mantenha essas credenciais no Secret Manager e conceda acesso apenas à conta de execução do aplicativo. Não publique arquivos `.env`, chaves privadas ou tokens no GitHub. O Firebase Admin SDK usa as credenciais padrão do ambiente Google.
 
-## Autorização e pagamentos
+## Autorização e assinaturas
 
-O cliente se autentica com Firebase Authentication. O checkout verifica o ID token no servidor e associa a preferência a uma ordem privada no Firestore. O retorno do navegador apenas consulta o estado dessa ordem. A patente paga é liberada pelo webhook depois de validar a assinatura da notificação e consultar o pagamento aprovado no Mercado Pago, conferindo valor, moeda e ordem. Configure no painel do Mercado Pago o evento **Pagamentos** para `https://SEU_DOMINIO/api/mercadopago/webhook`.
+O cliente se autentica com Firebase Authentication. As regras impedem que ele altere diretamente seu plano. Os valores exibidos para PRO e SOVEREIGN são **mensais**, conforme a decisão do projeto, mas a implementação anterior criava somente uma cobrança única. Por isso, os botões pagos estão desativados até existir uma integração recorrente completa com confirmação de cada fatura, tratamento de falhas, cancelamento e estorno. Não libere planos com base em parâmetros de URL.
 
-As regras `firestore.rules` precisam ser publicadas no **mesmo projeto Firebase** junto com a versão corrigida do aplicativo. O Admin SDK não depende das regras do cliente e a conta de execução precisa de acesso ao Firestore. Antes de publicar, confira também compras antigas, estornos, permissões de serviço e o conteúdo já existente nas coleções globais.
+As regras `firestore.rules` precisam ser publicadas no **mesmo projeto Firebase** junto com a versão corrigida do aplicativo. O Admin SDK não depende das regras do cliente e a conta de execução precisa de acesso ao Firestore. Revise planos antigos, estornos e o conteúdo já existente nas coleções globais.
 
 ## Atualização do feed global
 
@@ -53,4 +51,4 @@ A migração oficial do espaço do Firebase Studio para o Google AI Studio deve 
 
 ## Situação
 
-O projeto ainda requer revisão em ambiente de homologação antes de publicar as alterações de segurança. Nenhum resultado exibido deve ser tratado como dado financeiro auditado.
+O projeto ainda requer revisão em ambiente de homologação antes de publicar as alterações de segurança. As assinaturas mensais não estão implementadas. Nenhum resultado exibido deve ser tratado como dado financeiro auditado.

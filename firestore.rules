@@ -68,13 +68,6 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
-    // --- CHECKOUT ORDERS (WRITTEN BY THE SERVER ONLY) ---
-
-    match /checkout_orders/{orderId} {
-      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow list, write: if false;
-    }
-
     // --- ADMIN RULES ---
 
     match /admin_roles/{adminUid} {
