@@ -14,7 +14,7 @@ Aplicativo experimental de análise de mercado e carteira com interface em portu
 
 ## Estrutura
 
-- `src/app`: páginas, painel, ações de servidor e webhook de pagamentos
+- `src/app`: páginas, painel e ações de servidor
 - `src/ai`: fluxos de análise e coleta de dados
 - `src/components`: componentes de interface
 - `src/firebase`: cliente Firebase e hooks
