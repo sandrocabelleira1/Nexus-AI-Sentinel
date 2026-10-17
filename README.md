@@ -47,7 +47,7 @@ A coleta de dados globais é iniciada por um administrador autenticado; uma trav
 
 ## Google AI Studio
 
-A migração oficial do espaço do Firebase Studio para o Google AI Studio deve ser feita **pela conta que criou o espaço**. O projeto Firebase, o banco e o App Hosting continuam sendo serviços separados do editor. Após a migração, conecte o Google AI Studio a **este repositório existente**, sem criar uma cópia, se a opção estiver disponível. Preserve o App Hosting com GitHub Sync para manter a URL e os domínios atuais. Verifique os segredos antes de conectar a branch de implantação.
+A migração oficial do espaço do Firebase Studio para o Google AI Studio deve ser feita **pela conta que criou o espaço**. O projeto Firebase, o banco e o App Hosting continuam sendo serviços separados do editor. Após a migração, conecte o Google AI Studio a **este repositório existente** pela opção de vincular ou importar do GitHub, sem criar uma cópia. Preserve o App Hosting com GitHub Sync para manter a URL e os domínios atuais. Verifique os segredos antes de conectar a branch de implantação.
 
 ## Situação
 
