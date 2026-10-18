@@ -76,7 +76,7 @@ export default function LandingPage() {
           {user ? (
             <Link href="/dashboard">
               <Button className="bg-primary text-background rounded-xl font-bold text-xs px-6 h-10 uppercase shadow-lg hover:scale-105 transition-all">
-                IR PARA O TERMINAL
+                ABRIR MEU PAINEL
               </Button>
             </Link>
           ) : (
@@ -86,7 +86,7 @@ export default function LandingPage() {
               </Link>
               <Link href="/register">
                 <Button variant="outline" className="border-primary/40 text-primary rounded-xl font-bold text-xs px-6 h-10 uppercase">
-                  RECRUTAMENTO
+                  CRIAR CONTA
                 </Button>
               </Link>
             </div>
@@ -114,11 +114,11 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto text-center space-y-8 relative z-10">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 animate-flicker">
               <Activity className="h-3 w-3 text-primary" />
-              <span className="text-[10px] font-bold text-primary uppercase tracking-[0.3em]">Omnisciente v5.6 Ativo</span>
+              <span className="text-[10px] font-bold text-primary uppercase tracking-[0.3em]">Monitoramento de mercado experimental</span>
             </div>
             
             <h2 className="text-4xl md:text-8xl font-headline font-bold text-white tracking-tighter leading-[0.9] max-w-5xl mx-auto uppercase">
-              O Olho Onisciente da <br/>
+              Acompanhe sinais da <br/>
               <span className="led-text-blue">
                 <DecryptedText text="Nova Economia" />
               </span>
@@ -131,14 +131,14 @@ export default function LandingPage() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8 px-6">
               <Link href={user ? "/dashboard" : "/register"} className="w-full sm:w-auto">
                 <Button className="w-full sm:h-16 px-10 rounded-2xl bg-primary text-background font-bold text-lg shadow-[0_0_50px_rgba(37,99,235,0.4)] hover:scale-105 transition-all group uppercase h-14">
-                  {user ? "ACESSAR SISTEMA" : "INICIAR PROTOCOLO"}
+                  {user ? "ACESSAR SISTEMA" : "CRIAR CONTA"}
                   <ArrowRight className="ml-3 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
               {!user && (
                 <Link href="/login" className="w-full sm:w-auto">
                   <Button variant="ghost" className="w-full sm:h-16 px-10 rounded-2xl border border-white/10 text-white/60 font-bold hover:bg-white/5 uppercase h-14">
-                    LOGIN ESTRATEGISTA
+                    FAZER LOGIN
                   </Button>
                 </Link>
               )}
@@ -280,7 +280,7 @@ export default function LandingPage() {
                   <CardFooter className="p-8 pt-0">
                     <Link href={user ? "/dashboard" : "/register"} className="w-full">
                       <Button variant="outline" className="w-full h-14 rounded-xl border-white/10 text-white font-bold uppercase hover:bg-white/5">
-                        {user ? "VER MEU TERMINAL" : "INICIAR RECRUTAMENTO"}
+                        {user ? "VER MEU TERMINAL" : "CRIAR CONTA"}
                       </Button>
                     </Link>
                   </CardFooter>
