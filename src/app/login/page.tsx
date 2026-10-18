@@ -54,14 +54,14 @@ export default function LoginPage() {
             <Cpu className="h-8 w-8 text-primary" />
           </Link>
           <h1 className="text-3xl font-headline font-bold text-white tracking-tighter led-text-blue">NEXUS AI SENTINEL</h1>
-          <p className="text-white/40 text-sm font-medium uppercase tracking-widest">Acesso ao Terminal de Comando</p>
+          <p className="text-white/40 text-sm font-medium uppercase tracking-widest">Acesso à sua conta</p>
         </div>
 
         <Card className="glass-panel border-white/10 rounded-[2.5rem] shadow-2xl">
           <form onSubmit={handleLogin}>
             <CardHeader className="space-y-1">
               <CardTitle className="text-xl font-bold text-white">Login</CardTitle>
-              <CardDescription className="text-white/50">Entre com suas credenciais de estrategista</CardDescription>
+              <CardDescription className="text-white/50">Use seu e-mail e senha para continuar.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -89,11 +89,11 @@ export default function LoginPage() {
             </CardContent>
             <CardFooter className="flex flex-col gap-4">
               <Button type="submit" disabled={isLoading} className="w-full h-14 bg-primary text-background font-bold text-lg rounded-xl shadow-lg hover:scale-[1.02] transition-all">
-                {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "ENTRAR NO SISTEMA"}
+                {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "ENTRAR"}
               </Button>
               <div className="text-center">
-                <span className="text-xs text-white/40">Não tem uma conta? </span>
-                <Link href="/register" className="text-xs text-primary font-bold hover:underline">Solicitar Acesso</Link>
+                <span className="text-xs text-white/40">Ainda não tem conta? </span>
+                <Link href="/register" className="text-xs text-primary font-bold hover:underline">Criar conta</Link>
               </div>
             </CardFooter>
           </form>

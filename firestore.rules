@@ -27,8 +27,7 @@ service cloud.firestore {
         && request.resource.data.subscriptionTier == 'SENTINEL';
       allow update: if isAdmin() || (isOwner(userId)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'email', 'displayName', 'whatsapp', 'age', 'address',
-          'preferredDisplayMode', 'updatedAt', 'id'
+          'email', 'displayName', 'preferredDisplayMode', 'updatedAt', 'id'
         ])
         && request.resource.data.id == userId);
       
