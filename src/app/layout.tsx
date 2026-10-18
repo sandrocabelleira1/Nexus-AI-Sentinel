@@ -6,6 +6,10 @@ import { Toaster } from '@/components/ui/toaster';
 export const metadata: Metadata = {
   title: 'Nexus AI Sentinel',
   description: 'Sentinela financeira preditiva para monitoramento global e proteção de portfólio.',
+  openGraph: {
+    title: 'Nexus AI Sentinel',
+    description: 'Sentinela financeira preditiva para monitoramento global e proteção de portfólio.',
+  },
 };
 
 export default function RootLayout({

@@ -64,6 +64,15 @@ export interface AffectedAssetDetail {
   longTermOutlook: string;
 }
 
+export interface GlobalAlert {
+  id: string;
+  title: string;
+  origin: string;
+  causality: string;
+  priority: number;
+  timestamp: string | Date;
+}
+
 export interface GlobalIntelligenceAlert {
   id: string;
   createdAt: string;

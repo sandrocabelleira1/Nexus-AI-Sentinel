@@ -1,0 +1,8 @@
+{
+  "name": "Nexus AI Sentinel",
+  "description": "Sentinela financeira preditiva para monitoramento global e proteção de portfólio.",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

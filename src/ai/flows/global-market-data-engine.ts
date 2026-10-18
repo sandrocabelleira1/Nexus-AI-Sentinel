@@ -173,6 +173,14 @@ export async function fetchGlobalMarketData(customTickers?: string[]): Promise<M
         exchange: 'AwesomeAPI',
         sparkline: [],
         candles: [],
+        dividendYield: 0,
+        pvpRatio: 1,
+        healthStatus: 'Estável',
+        fiiType: 'Misto',
+        dividendAmount: 0,
+        dataCom: 'N/A',
+        paymentDate: 'N/A',
+        vacancyRate: 0,
         nexusVerdict: 'Cotação oficial do dólar comercial sincronizada.'
       });
     }

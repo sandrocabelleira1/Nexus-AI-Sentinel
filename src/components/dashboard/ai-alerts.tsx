@@ -33,7 +33,8 @@ export function AIAlerts({ alerts }: AIAlertsProps) {
 
       <div className="grid gap-4">
         {alerts.map((alert) => {
-          const Icon = originIcons[alert.origin];
+          const Icon = (originIcons as Record<string, typeof AlertCircle>)[alert.origin] || AlertCircle;
+          const timestampDate = typeof alert.timestamp === 'string' ? new Date(alert.timestamp) : alert.timestamp;
           return (
             <Card key={alert.id} className="glass-panel border-white/5 hover:border-accent/30 transition-colors">
               <CardContent className="p-5">
@@ -47,7 +48,7 @@ export function AIAlerts({ alerts }: AIAlertsProps) {
                         {alert.origin}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        há {formatDistanceToNow(alert.timestamp, { locale: ptBR })}
+                        há {formatDistanceToNow(timestampDate, { locale: ptBR })}
                       </span>
                     </div>
                     <h4 className="font-bold text-lg mb-2">{alert.title}</h4>
