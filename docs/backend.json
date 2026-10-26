@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "UserProfile": {
@@ -20,25 +19,17 @@
           "type": "string",
           "description": "The user's preferred name for display."
         },
-        "whatsapp": {
-          "type": "string",
-          "description": "O número de WhatsApp do usuário para alertas críticos."
-        },
-        "age": {
-          "type": "number",
-          "description": "A idade do usuário."
-        },
-        "address": {
-          "type": "string",
-          "description": "O endereço residencial ou comercial do usuário."
-        },
         "preferredDisplayMode": {
           "type": "string",
           "description": "Simplified or Technical data mode."
         },
         "subscriptionTier": {
           "type": "string",
-          "enum": ["SENTINEL", "PRO", "SOVEREIGN"],
+          "enum": [
+            "SENTINEL",
+            "PRO",
+            "SOVEREIGN"
+          ],
           "description": "O nível de assinatura tática do usuário."
         },
         "createdAt": {
@@ -56,9 +47,6 @@
         "id",
         "email",
         "displayName",
-        "whatsapp",
-        "age",
-        "address",
         "preferredDisplayMode",
         "subscriptionTier",
         "createdAt",
@@ -106,14 +94,20 @@
       "properties": {
         "role": {
           "type": "string",
-          "enum": ["SUPER_ADMIN", "MODERATOR"]
+          "enum": [
+            "SUPER_ADMIN",
+            "MODERATOR"
+          ]
         },
         "assignedAt": {
           "type": "string",
           "format": "date-time"
         }
       },
-      "required": ["role", "assignedAt"]
+      "required": [
+        "role",
+        "assignedAt"
+      ]
     }
   },
   "auth": {

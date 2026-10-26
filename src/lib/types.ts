@@ -6,9 +6,6 @@ export interface UserProfile {
   id: string;
   email: string;
   displayName: string;
-  whatsapp: string;
-  age: number;
-  address: string;
   preferredDisplayMode: string;
   subscriptionTier: SubscriptionTier;
   createdAt: string;
