@@ -13,6 +13,8 @@ import { UserAsset, DisplayMode, GlobalIntelligenceAlert } from "@/lib/types";
 interface Message {
   role: 'user' | 'assistant';
   content: string;
+  provider?: string;
+  isError?: boolean;
 }
 
 interface AssistantChatProps {
@@ -72,12 +74,13 @@ export function AssistantChat({ displayMode, userName, externalOpen, onOpenChang
       );
 
       const responseText = displayMode === 'Essencial' 
-        ? result?.display_modes?.essential?.text 
-        : result?.display_modes?.full?.technical_analysis;
+        ? result.analysis?.display_modes?.essential?.text
+        : result.analysis?.display_modes?.full?.technical_analysis;
 
-      setMessages(prev => [...prev, { role: 'assistant', content: responseText || "Não consegui gerar uma análise confiável agora. Tente novamente mais tarde." }]);
+      if (!responseText) throw new Error('Resposta vazia do Gemini.');
+      setMessages(prev => [...prev, { role: 'assistant', content: responseText, provider: `${result.provider} · ${result.model.replace('googleai/', '')}` }]);
     } catch (error) {
-      setMessages(prev => [...prev, { role: 'assistant', content: "Não foi possível concluir a consulta. Verifique seu acesso ou tente mais tarde." }]);
+      setMessages(prev => [...prev, { role: 'assistant', isError: true, content: "Não foi possível consultar o Gemini agora. Verifique sua conexão e tente novamente mais tarde. Nenhuma análise foi gerada." }]);
     } finally {
       setIsLoading(false);
     }
@@ -127,12 +130,13 @@ export function AssistantChat({ displayMode, userName, externalOpen, onOpenChang
                       ? 'bg-primary text-background font-bold shadow-lg' 
                       : 'bg-white/5 border border-white/10 text-foreground font-medium'
                   }`}>
-                    {msg.role === 'assistant' && (
+                    {msg.role === 'assistant' && msg.provider && (
                       <div className="flex items-center gap-2 mb-2 opacity-50">
                         <ShieldCheck className="h-3 w-3 text-primary" />
-                        <span className="text-[8px] font-bold uppercase tracking-widest text-primary">Resposta gerada por IA</span>
+                        <span className="text-[8px] font-bold uppercase tracking-widest text-primary">{msg.provider}</span>
                       </div>
                     )}
+                    {msg.role === 'assistant' && msg.isError && <div className="mb-2 text-[8px] font-bold uppercase tracking-widest text-amber-400">Consulta não concluída</div>}
                     <div className="whitespace-pre-wrap">{msg.content}</div>
                   </div>
                 </div>

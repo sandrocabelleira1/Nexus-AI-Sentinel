@@ -3,8 +3,10 @@
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAdminApp } from '@/lib/firebase-admin';
+import { NEXUS_AI_MODEL, NEXUS_AI_PROVIDER } from '@/ai/genkit';
 import { interactivePortfolioAssistant } from '@/ai/flows/interactive-portfolio-assistant';
 import type { DisplayMode } from '@/lib/types';
+import { formatPolymarketContext, searchPolymarket } from '@/lib/polymarket';
 
 const DAILY_LIMIT = 5;
 const MIN_INTERVAL_MS = 30_000;
@@ -46,10 +48,14 @@ export async function askPortfolioAssistant(idToken: string, message: string, di
     };
   });
 
-  return interactivePortfolioAssistant({
+  const polymarket = await searchPolymarket(message.trim());
+  const analysis = await interactivePortfolioAssistant({
     message: message.trim(),
     userAssets,
-    globalEvents: 'Nenhum evento global foi confirmado nesta solicitação.',
+    globalEvents: 'Nenhum evento global adicional foi confirmado nesta solicitação.',
+    polymarketContext: formatPolymarketContext(polymarket),
     displayMode,
   });
+
+  return { analysis, provider: NEXUS_AI_PROVIDER, model: NEXUS_AI_MODEL };
 }
